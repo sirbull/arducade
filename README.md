@@ -10,6 +10,8 @@ microcontrollers.
 * Image, tile and tile map editors.
 * Templates: Platformer, Pong, Space shooter, 3D ghost hunt (ray casting
   made only from blocks), Brick breaker and Flying bird.
+* Editable JavaScript and Python views with syntax highlighting and engine API completion.
+  Text games run in the simulator and compile to C++ for the device.
 * C++ view that marks the code of the selected block.
 * Compiles in the browser with avr-gcc built for WebAssembly, shows the exact
   flash and RAM use, and uploads to the device over USB (Web Serial).
@@ -17,6 +19,8 @@ microcontrollers.
   chip, screen, bus and pins, and save the profile as a file.
 * Editor in English, Norwegian, Spanish, French and German.
 * No server code: the whole site is static files.
+
+See [JavaScript and Python](docs/text-languages.md) for supported syntax and examples.
 
 The specification is in [docs/spec.md](docs/spec.md) (Norwegian).
 
@@ -61,6 +65,7 @@ src/hw/              chips, hardware profiles, pin checks, ab_config.h
 src/ir/              intermediate representation and type checking
 src/blocks/          block definitions, toolbox, blocks to IR
 src/gen/             IR to C++ and IR to JavaScript
+src/text/            JavaScript/Python parsers and editable source generation
 src/sim/             simulator engine (a port of core/ardublocks/ardublocks.h)
 src/compile/         in-browser compiler (Web Worker)
 src/upload/          Web Serial upload: STK500v1 and AVR109
@@ -115,3 +120,12 @@ The ArduCade code does not have a license file yet. The WebAssembly compiler in
 and is GCC and GNU binutils (GPL v3). The sysroot contains avr-libc (BSD
 style license), libgcc (GPL with the GCC runtime exception) and the Arduino
 AVR core (LGPL). See `public/compiler/tools/THIRD_PARTY_NOTICES.md`.
+
+Projects can also be saved as PNG game cartridges with **Save → Download PNG**.
+The image includes the full project in a private PNG chunk and can be reopened
+with **Import**. Choose the automatic game thumbnail or play and capture a
+screenshot in the compact simulator opened from the save dialog. The simulator
+supports touch D-pad and A/B buttons, including simultaneous presses. Press B on
+the keyboard or use the screenshot button to capture the current frame. Keep the original downloaded PNG: editing or
+re-encoding it in an image tool may remove the embedded project. The save dialog
+also offers the legacy `.abproject` file for templates and JSON workflows.

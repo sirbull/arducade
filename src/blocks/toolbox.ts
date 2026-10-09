@@ -52,6 +52,8 @@ export function buildToolbox(): Json {
         block('ab_sprite_overlaps', { A: spriteVar(), B: spriteVar('otherSprite') }),
         block('ab_sprite_is_hitting', { SPRITE: spriteVar() }),
         block('variables_set', { VALUE: { block: { type: 'ab_sprite_projectile', inputs: { FROM: spriteVar(), VX: n(0), VY: n(-80) } } } }, { VAR: { name: 'projectile' } }),
+        block('ab_sprite_set_outline', { SPRITE: spriteVar() }),
+        block('ab_sprite_set_outline_width', { SPRITE: spriteVar(), WIDTH: n(1) }),
         block('ab_sprite_set_image', { SPRITE: spriteVar() }),
         block('ab_sprite_animate', { SPRITE: spriteVar(), MS: n(200) }),
         block('ab_sprite_destroy', { SPRITE: spriteVar() }),
@@ -92,6 +94,9 @@ export function buildToolbox(): Json {
       ]),
       category('GRAPHICS', 'ab_graphics', [
         block('ab_on_draw'),
+        block('ab_particle_pixel', { X: n(64), Y: n(32), VX: n(30), VY: n(-30), MS: n(500), END_VX: n(0), END_VY: n(30) }),
+        block('ab_particle_image', { X: n(64), Y: n(32), VX: n(30), VY: n(-30), MS: n(500), END_VX: n(0), END_VY: n(30) }),
+        block('ab_particles_clear'),
         block('ab_draw_text', { TEXT: s('Hello'), X: n(0), Y: n(0) }),
         block('text'),
         block('text_join'),

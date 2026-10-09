@@ -168,6 +168,21 @@ class Converter {
         return { k: 'if', cond: this.input(b, 'CONDITION', { k: 'bool', v: false }), then: [{ k: 'return', value }], id };
       }
 
+      case 'ab_particle_pixel':
+      case 'ab_particle_image': {
+        const args = ['X', 'Y', 'VX', 'VY', 'MS'].map(name => this.input(b, name));
+        // Older saved blocks retain their constant velocity when end inputs are empty.
+        const tween = !!(b.getInputTargetBlock('END_VX') || b.getInputTargetBlock('END_VY'));
+        if (tween) args.push(this.input(b, 'END_VX', args[2]), this.input(b, 'END_VY', args[3]));
+        if (!tween) args.push(args[2], args[3]);
+        args.push({ k: 'num', v: Number(f('PARTICLE_COLOR') || '1') });
+        return b.type === 'ab_particle_image'
+          ? this.api('particles.imageColor', [this.en('image', f('IMAGE')), ...args], id)
+          : this.api('particles.pixelColor', args, id);
+      }
+      case 'ab_particles_clear':
+        return this.api('particles.clear', [], id);
+
       // Game
       case 'ab_splash':
         return this.api('game.splash', [this.input(b, 'TEXT', { k: 'str', v: '' })], id);
@@ -189,6 +204,10 @@ class Converter {
         return this.api('sprites.setPosition', [this.spriteIn(b), this.input(b, 'X'), this.input(b, 'Y')], id);
       case 'ab_sprite_set_velocity':
         return this.api('sprites.setVelocity', [this.spriteIn(b), this.input(b, 'VX'), this.input(b, 'VY')], id);
+      case 'ab_sprite_set_outline_width':
+        return this.api('sprites.setOutlineWidth', [this.spriteIn(b), this.input(b, 'WIDTH', { k: 'num', v: 1 })], id);
+      case 'ab_sprite_set_outline':
+        return this.api('sprites.setOutline', [this.spriteIn(b), { k: 'num', v: Number(f('OUTLINE')) }], id);
       case 'ab_sprite_set_image':
         return this.api('sprites.setImage', [this.spriteIn(b), this.en('image', f('IMAGE'))], id);
       case 'ab_sprite_set_flag':

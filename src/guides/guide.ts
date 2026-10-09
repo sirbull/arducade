@@ -2,8 +2,9 @@
 // Each step has checks; the user can only go on when all checks pass.
 
 import type { Profile } from '../hw/profile';
+import type { Engine } from '../sim/engine';
 import { LIBRARY_IMAGES } from '../project/library';
-import { localized, newProject, type LocalizedText, type Project } from '../project/model';
+import { localized, newProject, type LocalizedText, type Project, type TileAsset, type TilemapAsset } from '../project/model';
 
 type Json = Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
 
@@ -16,11 +17,15 @@ export interface GuideContext {
   played: number;
   /** Buttons pressed while the game ran since the step was opened, one bit per button. */
   pressed: number;
+  /** Results for the current code, indexed by the step's checks. */
+  runtime?: boolean[];
 }
 
 export interface Check {
   text: LocalizedText;
   ok: (c: GuideContext) => boolean;
+  /** A deterministic test of the user's game, in an isolated simulator. */
+  run?: (engine: Engine, frame: (buttons?: number, count?: number) => Promise<void>) => Promise<boolean>;
 }
 
 export interface GuideStep {
@@ -43,6 +48,10 @@ export interface Guide {
   images: string[];
   /** Workspace the level starts with. */
   start: Json;
+  tiles?: TileAsset[];
+  tilemaps?: TilemapAsset[];
+  kinds?: string[];
+  chapters?: { title: LocalizedText; start: number }[];
   steps: GuideStep[];
   bonus?: Check;
 }
@@ -53,6 +62,8 @@ export interface GuideState {
   /** Step index; steps.length means the bonus / finish page. */
   step: number;
   done?: boolean;
+  /** Furthest unlocked step; going back does not lock completed chapters. */
+  reached?: number;
 }
 
 // Block patterns -------------------------------------------------------------
@@ -126,15 +137,18 @@ export function guideProject(g: Guide, lang: string, profile?: Profile): Project
     return { id: im.id, name: localized(im.name, lang), width: im.width, height: im.height, frames: im.frames.map((f) => [...f]) };
   });
   p.blocks = JSON.parse(JSON.stringify(g.start));
+  p.tiles = structuredClone(g.tiles ?? []);
+  p.tilemaps = structuredClone(g.tilemaps ?? []);
+  p.kinds = [...g.kinds ?? []];
   p.guide = { id: g.id, step: 0 };
   return p;
 }
 
 /** Index of each check that passes. */
 export function passing(checks: Check[], c: GuideContext): boolean[] {
-  return checks.map((ch) => {
+  return checks.map((ch, i) => {
     try {
-      return ch.ok(c);
+      return ch.ok(c) && (!ch.run || c.runtime?.[i] === true);
     } catch {
       return false;
     }

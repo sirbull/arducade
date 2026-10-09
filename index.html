@@ -12,20 +12,15 @@
   <body>
     <header class="topbar">
       <button id="btn-home" class="brand" aria-label="ArduCade" data-i18n-title="home.back">
-        <svg width="22" height="22" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">
-          <rect x="1.5" y="1.5" width="13" height="13" rx="2" />
-          <rect x="4" y="4" width="8" height="4.5" rx=".5" />
-          <path d="M5 11h2M6 10v2" stroke-linecap="round" />
-          <circle cx="10.5" cy="11" r=".6" fill="currentColor" />
-        </svg>
-        <span>ArduCade</span>
+        <img src="logo.svg" alt="ArduCade" width="145" height="40" />
       </button>
       <input id="project-name" class="project-name" type="text" data-i18n-title="project.name" spellcheck="false" />
       <nav class="actions">
+        <button id="btn-guides" data-i18n="guide.worldMenu"></button>
         <button id="btn-new" data-i18n="menu.new"></button>
         <button id="btn-open" data-i18n="menu.open"></button>
         <button id="btn-import" data-i18n="menu.import"></button>
-        <button id="btn-export" data-i18n="menu.export"></button>
+        <button id="btn-export" class="primary" data-i18n="menu.export"></button>
       </nav>
       <span class="spacer"></span>
       <div id="language-picker" class="language-picker">
@@ -44,13 +39,22 @@
           <button role="tab" data-tab="tiles" data-i18n="tab.tiles"></button>
           <button role="tab" data-tab="map" data-i18n="tab.map"></button>
           <button role="tab" data-tab="code" data-i18n="tab.code"></button>
-          <button role="tab" data-tab="text" disabled data-i18n="tab.text" data-i18n-title="tab.textSoon"></button>
+          <button role="tab" data-tab="javascript">JavaScript</button>
+          <button role="tab" data-tab="python">Python</button>
           <button id="btn-comments" type="button" aria-pressed="false" aria-controls="comments-panel" data-i18n="comments.toggle"></button>
         </nav>
         <div class="pane active" id="pane-blocks" role="tabpanel"><div class="block-search"><button type="button" class="block-search-toggle" data-i18n-title="blocks.search"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 5 5"/></svg></button><input id="block-search" type="search" size="1" data-i18n-placeholder="blocks.search" data-i18n-title="blocks.search" autocomplete="off"></div><div class="blocks-content"><div id="blockly"></div><aside id="comments-panel" hidden></aside></div></div>
         <div class="pane assets" id="pane-images" role="tabpanel"></div>
         <div class="pane assets" id="pane-tiles" role="tabpanel"></div>
         <div class="pane" id="pane-map" role="tabpanel"></div>
+        <div class="pane text-pane" id="pane-javascript" role="tabpanel">
+          <div class="code-head"><span class="muted small" data-i18n="code.textHelp"></span><button class="small" data-restore-blocks data-i18n="code.restoreBlocks"></button></div>
+          <div id="javascript-editor" class="text-editor"></div>
+        </div>
+        <div class="pane text-pane" id="pane-python" role="tabpanel">
+          <div class="code-head"><span class="muted small" data-i18n="code.textHelp"></span><button class="small" data-restore-blocks data-i18n="code.restoreBlocks"></button></div>
+          <div id="python-editor" class="text-editor"></div>
+        </div>
         <div class="pane" id="pane-code" role="tabpanel">
           <div class="code-head">
             <span class="muted small" data-i18n="code.help"></span>
@@ -107,7 +111,7 @@
         </div>
         <footer class="side-device-bar">
           <div id="meter-summary" class="meter-summary"></div>
-          <button id="btn-device-export" class="small" data-i18n="device.export"></button>
+          <button id="btn-device-export" class="primary" data-i18n="device.export"></button>
         </footer>
       </aside>
     </main>

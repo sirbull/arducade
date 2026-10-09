@@ -121,3 +121,18 @@ export function pickTextFile(accept: string): Promise<{ name: string; text: stri
 export function safeFileName(name: string): string {
   return name.replace(/[^\p{L}\p{N} _.-]/gu, '').trim().replace(/\s+/g, '_') || 'project';
 }
+
+/** Picks a project image or a legacy JSON project. */
+export function pickProjectFile(): Promise<{ name: string; bytes: ArrayBuffer } | null> {
+  return new Promise((resolve, reject) => {
+    const input = document.createElement('input');
+    input.type = 'file'; input.accept = '.png,.abproject,.json';
+    input.addEventListener('cancel', () => resolve(null));
+    input.onchange = async () => {
+      const file = input.files?.[0];
+      if (!file) return resolve(null);
+      try { resolve({ name: file.name, bytes: await file.arrayBuffer() }); } catch (error) { reject(error); }
+    };
+    input.click();
+  });
+}

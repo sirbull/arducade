@@ -5,10 +5,13 @@ import { h } from './dom';
 
 type Color = '1' | '0' | '.';
 export type Tool = 'pencil' | 'erase' | 'fill' | 'line' | 'rectangle' | 'select';
+type EditorState = { rows: PixelRows; selection: Rect | null; tool: Tool };
 type Rect = { x: number; y: number; w: number; h: number };
-// ponytail: in-memory clipboard shared by every editor in the tab, not the system clipboard
-let clipboard: Color[][] | null = null;
+let pixelClipboard: PixelRows | null = null;
+const CLIPBOARD_PREFIX = 'ARDUBLOCKS_PIXELS\n';
 const icons: Record<string, string> = {
+  copy: 'M9 9h12v12H9z M15 9V3H3v12h6',
+  paste: 'M9 5H5v16h14V5h-4 M9 3h6v4H9z',
   pencil: 'M4 16l-1 5 5-1L20 8l-4-4L4 16z M14 6l4 4',
   erase: 'M3 14l9-10 9 8-8 9H9l-6-7z M7 10l9 8 M13 21h9',
   fill: 'M4 12l8-8 8 8-8 8-8-8z M2 3l10 9 M20 15s-3 4-3 5a3 3 0 006 0c0-1-3-5-3-5z',
@@ -41,8 +44,8 @@ export class PixelEditor {
   private before: PixelRows = [];
   private strokeColor: Color = '1';
   private visited = new Set<string>();
-  private undo: PixelRows[] = [];
-  private redo: PixelRows[] = [];
+  private undo: EditorState[] = [];
+  private redo: EditorState[] = [];
   private toolButtons = new Map<Tool, HTMLButtonElement>();
   private undoButton: HTMLButtonElement;
   private redoButton: HTMLButtonElement;
@@ -50,8 +53,11 @@ export class PixelEditor {
   private showGrid = true;
   private sel: Rect | null = null;
   // Pasted or lifted pixels hovering over `base` until dropped; `before` is what undo restores.
-  private floating: { pixels: Color[][]; base: PixelRows; before: PixelRows } | null = null;
+  private floating: { pixels: Color[][]; base: PixelRows; before: PixelRows; beforeState?: EditorState } | null = null;
   private grab: number[] | null = null;
+  private selectionBefore: EditorState | null = null;
+  private pendingLift = false;
+  private selectionMoved = false;
 
   constructor(private width: number, private height: number, rows: PixelRows, private onChange: (rows: PixelRows) => void) {
     this.canvas = h('canvas', { class: 'pixel-canvas', 'aria-label': t('pixel.canvas') });
@@ -63,7 +69,7 @@ export class PixelEditor {
     }
     this.undoButton = button('undo', () => this.history(false));
     this.redoButton = button('redo', () => this.history(true));
-    tools.append(this.undoButton, this.redoButton, ...(['flipH', 'flipV', 'clear'] as const).map(k => button(k, () => this.transform(k))));
+    tools.append(button('copy', () => this.copy()), button('paste', () => { void this.pasteFromClipboard(); }), this.undoButton, this.redoButton, ...(['flipH', 'flipV', 'clear'] as const).map(k => button(k, () => this.transform(k))));
     const colors = h('div', { class: 'pixel-tools pixel-colors', role: 'toolbar', 'aria-label': t('pixel.colors') });
     const colorButtons: HTMLButtonElement[] = [];
     for (const [c, name] of [['1', 'white'], ['0', 'black'], ['.', 'transparent']] as const) {
@@ -82,21 +88,54 @@ export class PixelEditor {
         h('button', { 'aria-label': t('pixel.zoomOut'), onclick: () => zoom(-0.25) }, '−'), zoomLabel,
         h('button', { 'aria-label': t('pixel.zoomIn'), onclick: () => zoom(0.25) }, '+')));
     this.setRows(rows, width, height); this.setTool('pencil'); this.updateHistory();
+    const outside = (event: PointerEvent) => {
+      if (!this.el.isConnected) { document.removeEventListener('pointerdown', outside, true); document.removeEventListener('keydown', outsideHistory); return; }
+      if (event.target instanceof Node && !this.el.contains(event.target)) this.deselect();
+      else if (event.target instanceof HTMLElement && event.target.closest('.pixel-wrap') && event.target !== this.canvas) this.deselect();
+    };
+    const outsideHistory = (event: KeyboardEvent) => {
+      if (!this.el.isConnected || this.el.contains(event.target as Node) || this.isTextTarget(event.target)) return;
+      const pane = this.el.closest('.pane');
+      if (!pane?.classList.contains('active') || !pane.contains(event.target as Node)) return;
+      const key = event.key.toLowerCase();
+      if ((event.ctrlKey || event.metaKey) && (key === 'z' || key === 'y')) {
+        event.preventDefault(); this.history(key === 'y' || event.shiftKey);
+      }
+    };
+    document.addEventListener('pointerdown', outside, true);
+    document.addEventListener('keydown', outsideHistory);
+    this.el.addEventListener('copy', e => {
+      if (this.isTextTarget(e.target)) return;
+      const rows = this.selectionRows();
+      pixelClipboard = rows;
+      e.clipboardData?.setData('text/plain', CLIPBOARD_PREFIX + JSON.stringify(rows));
+      e.preventDefault();
+    });
+    this.el.addEventListener('paste', e => {
+      if (this.isTextTarget(e.target)) return;
+      const text = e.clipboardData?.getData('text/plain') ?? '';
+      const rows = this.decodeClipboard(text);
+      if (rows) { e.preventDefault(); pixelClipboard = rows; this.paste(rows); }
+      else if (!text && pixelClipboard) { e.preventDefault(); this.paste(pixelClipboard); }
+    });
     this.el.addEventListener('keydown', e => {
-      if ((e.target as HTMLElement).matches('input, button')) return;
+      if (this.isTextTarget(e.target)) return;
       const key = e.key.toLowerCase();
       if (e.ctrlKey || e.metaKey) {
-        const actions: Record<string, () => void> = { z: () => this.history(e.shiftKey), c: () => this.copy(), x: () => { this.copy(); this.deleteSelection(); }, v: () => this.paste() };
-        if (actions[key]) { e.preventDefault(); actions[key](); }
+        if (key === 'c') { e.preventDefault(); this.copy(); }
+        else if (key === 'v' && pixelClipboard) { e.preventDefault(); this.paste(pixelClipboard); }
+        else if (key === 'x') { e.preventDefault(); this.copy(); this.deleteSelection(); }
+        else if (key === 'a') { e.preventDefault(); this.drop(); const before = this.snapshot(); this.sel = { x: 0, y: 0, w: this.width, h: this.height }; this.setTool('select'); this.record(before); this.draw(); }
+        else if (key === 'z' || key === 'y') { e.preventDefault(); this.history(key === 'y' || e.shiftKey); }
+        // With no internal copy, let the browser deliver its system paste event.
         return;
       }
-      if (e.key === 'Delete' || e.key === 'Backspace') { e.preventDefault(); this.deleteSelection(); return; }
-      if (e.key === 'Enter') { e.preventDefault(); this.drop(); return; }
-      if (e.key === 'Escape') { if (this.floating) this.load(this.floating.before); this.floating = null; this.sel = null; this.draw(); return; }
+      if (key === 'escape') { this.deselect(); return; }
+      if (key === 'enter') { this.drop(); return; }
+      if (key === 'delete' || key === 'backspace') { e.preventDefault(); this.deleteSelection(); return; }
       const shortcuts: Record<string, Tool> = { b: 'pencil', p: 'pencil', e: 'erase', g: 'fill', l: 'line', u: 'rectangle', m: 'select' };
-      if (shortcuts[e.key]) { e.preventDefault(); this.setTool(shortcuts[e.key]); }
+      if (shortcuts[key]) { e.preventDefault(); this.setTool(shortcuts[key]); }
     });
-    this.el.addEventListener('focusout', e => { if (!this.el.contains(e.relatedTarget as Node)) this.drop(); });
     const position = (e: PointerEvent) => {
       const r = this.canvas.getBoundingClientRect();
       return [Math.max(0, Math.min(this.width - 1, Math.floor((e.clientX - r.left) / r.width * this.width))), Math.max(0, Math.min(this.height - 1, Math.floor((e.clientY - r.top) / r.height * this.height)))];
@@ -113,7 +152,17 @@ export class PixelEditor {
       else this.paintTo(this.start);
     });
     this.canvas.addEventListener('pointermove', e => { if (!this.drawing) return; if (this.tool === 'select') this.selectMove(position(e)); else if (this.tool !== 'fill') this.paintTo(position(e)); });
-    this.canvas.addEventListener('pointerup', () => { if (!this.drawing) return; this.drawing = false; if (this.tool !== 'select') this.commit(this.before); });
+    this.canvas.addEventListener('pointerup', () => {
+      if (!this.drawing) return;
+      this.drawing = false;
+      if (this.tool !== 'select') this.commit(this.before);
+      else if (this.grab && !this.selectionMoved && this.sel?.w === 1 && this.sel.h === 1 && this.floating) this.deselect();
+      else if (!this.floating && this.selectionBefore) {
+        if (this.pendingLift && this.sel?.w === 1 && this.sel.h === 1) this.sel = null;
+        this.record(this.selectionBefore); this.draw();
+      }
+      this.pendingLift = false; this.selectionBefore = null;
+    });
     this.canvas.addEventListener('pointercancel', () => { if (!this.drawing) return; this.drawing = false; if (this.tool !== 'select') { this.load(this.before); this.draw(); } });
   }
   setRows(rows: PixelRows, width: number, height: number) { this.sel = null; this.floating = null; this.width = width; this.height = height; this.load(rows); this.undo = []; this.redo = []; this.resizeCanvas(); }
@@ -137,21 +186,55 @@ export class PixelEditor {
     } else this.line(this.last, p);
     this.last = p; this.draw();
   }
-  private commit(before: PixelRows) { if (before.join('\n') === this.rows().join('\n')) return; this.undo.push(before); if (this.undo.length > 100) this.undo.shift(); this.redo = []; this.updateHistory(); this.onChange(this.rows()); }
+  private snapshot(): EditorState { return { rows: this.rows(), selection: this.sel ? { ...this.sel } : null, tool: this.tool }; }
+  private record(before: EditorState) {
+    const after = this.snapshot();
+    if (JSON.stringify(before) === JSON.stringify(after)) return;
+    this.undo.push(before); if (this.undo.length > 100) this.undo.shift(); this.redo = []; this.updateHistory();
+    if (before.rows.join('\n') !== after.rows.join('\n')) this.onChange(after.rows);
+  }
+  private commit(before: PixelRows) {
+    if (before.join('\n') === this.rows().join('\n')) return;
+    this.record({ rows: before, selection: this.sel ? { ...this.sel } : null, tool: this.tool });
+  }
+  private deselect() {
+    this.drop();
+    if (!this.sel) return;
+    const before = this.snapshot(); this.sel = null; this.grab = null; this.pendingLift = false;
+    this.record(before); this.draw();
+  }
   private updateHistory() { this.undoButton.disabled = !this.undo.length; this.redoButton.disabled = !this.redo.length; }
-  private history(redo: boolean) { this.drop(); this.sel = null; const source = redo ? this.redo : this.undo, dest = redo ? this.undo : this.redo; const rows = source.pop(); if (!rows) return; dest.push(this.rows()); this.load(rows); this.draw(); this.updateHistory(); this.onChange(this.rows()); }
+  private history(redo: boolean) {
+    this.drop();
+    const source = redo ? this.redo : this.undo, dest = redo ? this.undo : this.redo;
+    const state = source.pop(); if (!state) return;
+    const before = this.rows(); dest.push(this.snapshot()); this.load(state.rows);
+    this.sel = state.selection ? { ...state.selection } : null;
+    this.grab = null; this.pendingLift = false;
+    this.setTool(state.tool); this.draw(); this.updateHistory();
+    if (before.join('\n') !== state.rows.join('\n')) this.onChange(this.rows());
+  }
   private transform(kind: 'flipH' | 'flipV' | 'clear') { this.drop(); const before = this.rows(); if (kind === 'flipH') this.grid = this.grid.map(r => [...r].reverse()); else if (kind === 'flipV') this.grid.reverse(); else this.grid = this.grid.map(r => r.map(() => '.')); this.draw(); this.commit(before); }
   private selectDown(p: number[]) {
+    this.selectionBefore = this.snapshot(); this.pendingLift = false; this.selectionMoved = false;
     const s = this.sel;
     if (s && p[0] >= s.x && p[0] < s.x + s.w && p[1] >= s.y && p[1] < s.y + s.h) {
-      if (!this.floating) { const before = this.rows(), pixels = this.region(s); this.clearRegion(s); this.floating = { pixels, base: this.rows(), before }; }
+      this.pendingLift = !this.floating;
       this.grab = [p[0] - s.x, p[1] - s.y]; return;
     }
-    this.drop(); this.grab = null; this.sel = { x: p[0], y: p[1], w: 1, h: 1 }; this.draw();
+    this.drop(); this.selectionBefore = this.snapshot();
+    this.grab = null; this.sel = { x: p[0], y: p[1], w: 1, h: 1 }; this.draw();
   }
   private selectMove(p: number[]) {
-    if (this.grab && this.sel) { this.sel.x = p[0] - this.grab[0]; this.sel.y = p[1] - this.grab[1]; this.stamp(); }
-    else { const [x, y] = this.start; this.sel = { x: Math.min(x, p[0]), y: Math.min(y, p[1]), w: Math.abs(p[0] - x) + 1, h: Math.abs(p[1] - y) + 1 }; }
+    if (p[0] !== this.start[0] || p[1] !== this.start[1]) this.selectionMoved = true;
+    if (this.grab && this.sel) {
+      if (this.pendingLift) {
+        if (p[0] === this.start[0] && p[1] === this.start[1]) return;
+        const beforeState = this.snapshot(), before = this.rows(), pixels = this.region(this.sel); this.clearRegion(this.sel);
+        this.floating = { pixels, base: this.rows(), before, beforeState }; this.pendingLift = false;
+      }
+      this.sel.x = p[0] - this.grab[0]; this.sel.y = p[1] - this.grab[1]; this.stamp();
+    } else { const [x, y] = this.start; this.sel = { x: Math.min(x, p[0]), y: Math.min(y, p[1]), w: Math.abs(p[0] - x) + 1, h: Math.abs(p[1] - y) + 1 }; }
     this.draw();
   }
   private region(s: Rect): Color[][] { return Array.from({ length: s.h }, (_, y) => Array.from({ length: s.w }, (_, x) => this.grid[s.y + y]?.[s.x + x] ?? '.')); }
@@ -161,14 +244,7 @@ export class PixelEditor {
     const f = this.floating!, s = this.sel!; this.load(f.base);
     f.pixels.forEach((row, dy) => row.forEach((c, dx) => { const x = s.x + dx, y = s.y + dy; if (c !== '.' && x >= 0 && y >= 0 && x < this.width && y < this.height) this.grid[y][x] = c; }));
   }
-  private drop() { if (!this.floating) return; const { before } = this.floating; this.floating = null; this.draw(); this.commit(before); }
-  private copy() { clipboard = this.floating?.pixels ?? this.region(this.sel ?? { x: 0, y: 0, w: this.width, h: this.height }); }
-  private paste() {
-    if (!clipboard) return; this.drop();
-    const before = this.rows();
-    this.sel = { x: this.sel?.x ?? 0, y: this.sel?.y ?? 0, w: clipboard[0].length, h: clipboard.length };
-    this.floating = { pixels: clipboard, base: before, before }; this.setTool('select'); this.stamp(); this.draw();
-  }
+  private drop() { if (!this.floating) return; const { before, beforeState } = this.floating; this.floating = null; this.draw(); if (beforeState) this.record(beforeState); else this.commit(before); }
   private deleteSelection() {
     if (!this.sel) return;
     const before = this.floating?.before ?? this.rows();
@@ -178,6 +254,38 @@ export class PixelEditor {
   private fill(x: number, y: number) {
     const target = this.grid[y][x]; const color = this.toggle && target === this.strokeColor ? '.' : this.strokeColor; if (target === color) return;
     const stack = [[x, y]]; while (stack.length) { const [cx, cy] = stack.pop()!; if (cx < 0 || cy < 0 || cx >= this.width || cy >= this.height || this.grid[cy][cx] !== target) continue; this.grid[cy][cx] = color; stack.push([cx + 1, cy], [cx - 1, cy], [cx, cy + 1], [cx, cy - 1]); } this.draw();
+  }
+  private isTextTarget(target: EventTarget | null) {
+    return target instanceof HTMLElement && (target.isContentEditable || !!target.closest('input, textarea, select'));
+  }
+  private selectionRows(): PixelRows {
+    return (this.floating?.pixels ?? this.region(this.sel ?? { x: 0, y: 0, w: this.width, h: this.height })).map(row => row.join(''));
+  }
+  private copy() {
+    pixelClipboard = this.selectionRows();
+    const text = CLIPBOARD_PREFIX + JSON.stringify(pixelClipboard);
+    if (navigator.clipboard?.writeText) void navigator.clipboard.writeText(text).catch(() => {});
+  }
+  private decodeClipboard(text: string): PixelRows | null {
+    if (!text.startsWith(CLIPBOARD_PREFIX)) return null;
+    try {
+      const rows: unknown = JSON.parse(text.slice(CLIPBOARD_PREFIX.length));
+      if (!Array.isArray(rows) || !rows.length || rows.length > 255 || typeof rows[0] !== 'string' || !rows[0].length || rows[0].length > 255) return null;
+      return rows.every(row => typeof row === 'string' && row.length === rows[0].length && /^[.01]+$/.test(row)) ? rows : null;
+    } catch { return null; }
+  }
+  private async pasteFromClipboard() {
+    let rows = pixelClipboard;
+    try { const text = await navigator.clipboard.readText(); rows = this.decodeClipboard(text) ?? rows; } catch { /* Internal clipboard also works between sprites and frames. */ }
+    if (rows) this.paste(rows);
+  }
+  private paste(rows: PixelRows) {
+    if (this.drawing) return;
+    this.drop();
+    const beforeState = this.snapshot(), before = this.rows();
+    this.sel = { x: Math.max(0, this.sel?.x ?? 0), y: Math.max(0, this.sel?.y ?? 0), w: rows[0].length, h: rows.length };
+    this.floating = { pixels: rows.map(row => [...row] as Color[]), base: before, before, beforeState };
+    this.setTool('select'); this.stamp(); this.draw();
   }
   private draw() {
     const cw = this.canvas.width / this.width, ch = this.canvas.height / this.height, ctx = this.ctx;
@@ -190,7 +298,7 @@ export class PixelEditor {
     ctx.strokeStyle = 'rgba(128,128,128,0.35)'; ctx.lineWidth = 1; ctx.beginPath();
     for (let x = 0; x <= this.width; x++) { ctx.moveTo(x * cw + .5, 0); ctx.lineTo(x * cw + .5, this.canvas.height); }
     for (let y = 0; y <= this.height; y++) { ctx.moveTo(0, y * ch + .5); ctx.lineTo(this.canvas.width, y * ch + .5); } ctx.stroke();
-  }
+    }
   private drawSelection(cw: number, ch: number) {
     if (!this.sel) return; const { x, y, w, h } = this.sel, ctx = this.ctx;
     ctx.lineWidth = 2;

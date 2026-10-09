@@ -3,7 +3,7 @@
 
 import { API, getApi } from '../engine/api';
 import { BUILTIN_KINDS } from '../engine/enums';
-import { checkProgram, typeOf, type TypeInfo } from '../ir/check';
+import { checkProgram, forEachExpr, typeOf, type TypeInfo } from '../ir/check';
 import type { Diagnostic, Expr, Program, Stmt, Ty } from '../ir/ir';
 import { encodeImage, encodeTilemap, type Project } from '../project/model';
 import { enumNumber, eventsOf, hash16, melodies, Names } from './common';
@@ -53,6 +53,9 @@ class CppGen {
     w.line('// Made with ArduCade. This file is generated from the blocks.');
     w.line();
     w.line('#include "ab_config.h"');
+    let hasParticles = false;
+    forEachExpr(p, e => { if (e.k === 'api' && e.fn.startsWith('particles.')) hasParticles = true; });
+    if (hasParticles) w.line('#define AB_HAS_PARTICLES 1');
     if (eventsOf(p, 'overlap').length) w.line('#define AB_HAS_OVERLAP 1');
     if (eventsOf(p, 'tile').length) w.line('#define AB_HAS_TILE_OVERLAP 1');
     const cells = Math.max(8, ...this.project.tilemaps.map((m) => m.width * m.height));

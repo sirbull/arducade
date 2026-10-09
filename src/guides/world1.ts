@@ -3,6 +3,8 @@
 import { blk, get, num, set, workspace } from '../templates/dsl';
 import type { LocalizedText } from '../project/model';
 import { blocksOfType, hasTop, numIn, type Check, type Guide, type Pattern } from './guide';
+import { level13, level14, castle1 } from './world1-games';
+import { COURSES } from './courses';
 
 const L = (en: string, nb: string, es: string, fr: string, de: string): LocalizedText => ({ en, nb, es, fr, de });
 
@@ -28,6 +30,7 @@ const hasStart: Check = {
 const hasHero: Check = {
   text: L('The hero is made in "on start"', 'Helten lages i «når spillet starter»', 'El héroe se crea en «al iniciar»', 'Le héros est créé dans « au démarrage »', 'Der Held wird in „beim Start“ erstellt'),
   ok: inStart(createPattern),
+  run: async (e) => e.sprites.some((s) => s.alive && s.kind === 0),
 };
 const played: Check = {
   text: L('You pressed ▶', 'Du har trykket ▶', 'Has pulsado ▶', 'Tu as appuyé sur ▶', 'Du hast ▶ gedrückt'),
@@ -44,10 +47,24 @@ const bottomLeft: Check = {
 const hasAnimate: Check = {
   text: L('The hero is animated', 'Helten er animert', 'El héroe está animado', 'Le héros est animé', 'Der Held ist animiert'),
   ok: inStart({ type: 'ab_sprite_animate' }),
+  run: async (e, frame) => {
+    const hero = e.sprites.find((s) => s.alive && s.kind === 0);
+    if (!hero || hero.animRate <= 0) return false;
+    const before = hero.frame;
+    for (let i = 0; i < 120; i++) { await frame(); if (hero.frame !== before) return true; }
+    return false;
+  },
 };
 const hasMove: Check = {
   text: L('"move with buttons" is in "on start"', '«flytt med knappene» er i «når spillet starter»', '«mover con los botones» está en «al iniciar»', '« déplacer avec les boutons » est dans « au démarrage »', '„bewege mit den Tasten“ ist in „beim Start“'),
   ok: inStart({ type: 'ab_move_sprite' }),
+  run: async (e, frame) => {
+    const hero = e.sprites.find((s) => s.alive && s.kind === 0);
+    if (!hero) return false;
+    const x = hero.x;
+    await frame(1 << 3, 15);
+    return hero.x > x;
+  },
 };
 const movedHero: Check = {
   text: L('You moved the hero with the arrows', 'Du har flyttet helten med pilene', 'Has movido al héroe con las flechas', 'Tu as déplacé le héros avec les flèches', 'Du hast den Helden mit den Pfeilen bewegt'),
@@ -60,6 +77,15 @@ const hasStay: Check = {
 const sideOnly: Check = {
   text: L('vy is 0', 'vy er 0', 'vy es 0', 'vy vaut 0', 'vy ist 0'),
   ok: inStart({ type: 'ab_move_sprite', inputs: { VY: numIn(0, 0) } }),
+  run: async (e, frame) => {
+    const hero = e.sprites.find((s) => s.alive && s.kind === 0);
+    if (!hero) return false;
+    const { x, y } = hero;
+    await frame(1 << 3, 15);
+    if (hero.x <= x) return false;
+    await frame(1, 15);
+    return hero.y === y;
+  },
 };
 
 export const level11: Guide = {
@@ -230,4 +256,4 @@ export const level12: Guide = {
   },
 };
 
-export const GUIDES: Guide[] = [level11, level12];
+export const GUIDES: Guide[] = [level11, level12, level13, level14, castle1, ...COURSES];

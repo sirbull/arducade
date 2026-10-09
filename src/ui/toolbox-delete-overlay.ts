@@ -2,20 +2,31 @@ import * as Blockly from 'blockly/core';
 import { t } from '../i18n/i18n';
 
 /**
- * A visible delete target covering the categories and open block palette.
- * Also keeps the palette open until its category or close button is clicked.
+ * A visible delete target covering only the categories during block drags.
+ * Temporarily hides the palette while keeping its contents and scroll position.
  */
 export class ToolboxDeleteOverlay extends Blockly.DeleteArea {
   override id = 'toolbox-delete-overlay';
   private overlay = document.createElement('div');
   private closeButton = document.createElement('button');
+  private restorePalette = false;
+  private originalFlyoutRect?: Blockly.Flyout['getClientRect'];
   private change = (event: Blockly.Events.Abstract) => {
     if (event.type === Blockly.Events.TOOLBOX_ITEM_SELECT || event.type === Blockly.Events.VIEWPORT_CHANGE) this.placeClose();
     if (event.type !== Blockly.Events.BLOCK_DRAG) return;
     const drag = event as Blockly.Events.BlockDrag;
     this.overlay.hidden = !drag.isStart;
     this.overlay.classList.remove('active');
-    if (drag.isStart) this.position();
+    const flyout = this.ws.getFlyout() as Blockly.Flyout | null;
+    if (drag.isStart) {
+      this.restorePalette = flyout?.isVisible() ?? false;
+      if (this.restorePalette) flyout?.setVisible(false);
+      this.position();
+    } else {
+      if (this.restorePalette) flyout?.setVisible(true);
+      this.restorePalette = false;
+    }
+    this.placeClose();
   };
 
   constructor(private ws: Blockly.WorkspaceSvg) {
@@ -39,8 +50,14 @@ export class ToolboxDeleteOverlay extends Blockly.DeleteArea {
       this.placeClose();
     };
     ws.getInjectionDiv().append(this.overlay, this.closeButton);
-    const flyout = ws.getFlyout();
-    if (flyout) flyout.autoClose = false;
+    const flyout = ws.getFlyout() as Blockly.Flyout | null;
+    if (flyout) {
+      flyout.autoClose = false;
+      // Targets are cached before BLOCK_DRAG fires. The open palette must
+      // never reserve a delete area over the space freed during the drag.
+      this.originalFlyoutRect = flyout.getClientRect;
+      flyout.getClientRect = () => null;
+    }
     ws.getComponentManager().addComponent({
       component: this,
       capabilities: [Blockly.ComponentManager.Capability.DRAG_TARGET, Blockly.ComponentManager.Capability.DELETE_AREA],
@@ -50,11 +67,7 @@ export class ToolboxDeleteOverlay extends Blockly.DeleteArea {
   }
 
   private width() {
-    const toolboxWidth = this.ws.getToolbox()?.getWidth() ?? 0;
-    const flyout = this.ws.getFlyout();
-    // An auto-closing palette vanishes as the drag starts, after Blockly has
-    // cached this rect for the whole drag, so it must not widen the target.
-    return toolboxWidth + (flyout?.isVisible() && !flyout.autoClose ? flyout.getWidth() : 0);
+    return this.ws.getToolbox()?.getWidth() ?? 0;
   }
 
   private position() {
@@ -62,9 +75,9 @@ export class ToolboxDeleteOverlay extends Blockly.DeleteArea {
   }
 
   private placeClose() {
-    const flyout = this.ws.getFlyout();
+    const flyout = this.ws.getFlyout() as Blockly.Flyout | null;
     this.closeButton.hidden = !flyout?.isVisible();
-    this.closeButton.style.left = `${this.width() - 34}px`;
+    this.closeButton.style.left = `${this.width() + (flyout?.getWidth() ?? 0) - 34}px`;
   }
 
   override getClientRect() {
@@ -80,6 +93,9 @@ export class ToolboxDeleteOverlay extends Blockly.DeleteArea {
   override onDragExit() { this.overlay.classList.remove('active'); }
 
   dispose() {
+    const flyout = this.ws.getFlyout() as Blockly.Flyout | null;
+    if (flyout && this.originalFlyoutRect) flyout.getClientRect = this.originalFlyoutRect;
+    if (this.restorePalette) flyout?.setVisible(true);
     this.ws.removeChangeListener(this.change);
     this.ws.getComponentManager().removeComponent(this.id);
     this.overlay.remove();

@@ -41,6 +41,8 @@ interface Sprite {
   img: Uint8Array | null;
   kind: number;
   flags: number;
+  outline: number;
+  outlineWidth: number;
   hit: number;
   frame: number;
   animRate: number;
@@ -49,7 +51,7 @@ interface Sprite {
 }
 
 function newSprite(): Sprite {
-  return { x: 0, y: 0, vx: 0, vy: 0, ax: 0, ay: 0, img: null, kind: 0, flags: 0, hit: 0, frame: 0, animRate: 0, animCount: 0, alive: false };
+  return { x: 0, y: 0, vx: 0, vy: 0, ax: 0, ay: 0, img: null, kind: 0, flags: 0, outline: 0, outlineWidth: 1, hit: 0, frame: 0, animRate: 0, animCount: 0, alive: false };
 }
 
 const w16 = (v: number) => (v << 16) >> 16;
@@ -136,6 +138,38 @@ export class Engine {
   constructor(private opts: EngineOptions) {
     this.maxSprites = opts.maxSprites;
     this.sprites = Array.from({ length: this.maxSprites }, newSprite);
+  }
+
+  particles: { x: number; y: number; vx: number; vy: number; endVx: number; endVy: number; duration: number; color: number; img: Uint8Array | null; remaining: number }[] = [];
+
+  get maxParticles() { return this.maxSprites <= 12 ? 12 : 16; }
+
+  clearParticles() { this.particles = []; }
+
+  emitParticle(img: Uint8Array | null, x: number, y: number, vx: number, vy: number, ms: number, endVx = vx, endVy = vy, color = -1) {
+    if (ms <= 0 || this.particles.length >= this.maxParticles) return;
+    this.particles.push({ img, x: x * 256, y: y * 256, vx, vy, endVx, endVy, duration: ms, remaining: ms, color: color === 2 ? this.random(0, 1) : color });
+  }
+
+  private updateParticles() {
+    for (const p of this.particles) {
+      const step = Math.min(p.remaining, FRAME_MS);
+      const midpoint = p.duration - p.remaining + tdiv(step, 2);
+      const vx = p.vx + tdiv((p.endVx - p.vx) * midpoint, p.duration);
+      const vy = p.vy + tdiv((p.endVy - p.vy) * midpoint, p.duration);
+      p.x += tdiv(vx * 256 * step, 1000);
+      p.y += tdiv(vy * 256 * step, 1000);
+      p.remaining -= step;
+    }
+    this.particles = this.particles.filter(p => p.remaining > 0);
+  }
+
+  private drawParticles() {
+    for (const p of this.particles) {
+      const x = Math.floor(p.x / 256) - this.camX, y = Math.floor(p.y / 256) - this.camY;
+      if (p.img) this.drawImage(x - tdiv(p.img[0], 2), y - tdiv(p.img[1], 2), p.img, 0, p.color);
+      else this.drawPixel(x, y, p.color === 0 ? 0 : 1);
+    }
   }
 
   // Helpers used by the generated code ------------------------------------
@@ -271,7 +305,7 @@ export class Engine {
     }
   }
 
-  drawImage(x: number, y: number, img: Uint8Array | null, frame: number) {
+  drawImage(x: number, y: number, img: Uint8Array | null, frame: number, tint = -1) {
     if (!img) return;
     const w = img[0];
     const h = img[1];
@@ -290,8 +324,9 @@ export class Engine {
         const col = x + i;
         if (col < 0 || col >= 128) continue;
         const src = p * w + i;
-        const d = img[data + src] << shift;
+        let d = img[data + src] << shift;
         const m = hasMask ? img[mask + src] << shift : d;
+        if (tint >= 0) d = tint ? m : 0;
         if (page >= 0 && page < 8) {
           const b = page * 128 + col;
           this.buffer[b] = (this.buffer[b] & ~m & 0xff) | (d & 0xff);
@@ -650,6 +685,14 @@ export class Engine {
     this.sprites[s].vy = clamp16(vy * 16);
   }
 
+  setOutlineWidth(s: number, width: number) {
+    if (this.exists(s)) this.sprites[s].outlineWidth = Math.max(1, Math.min(8, Math.trunc(width)));
+  }
+
+  setOutline(s: number, mode: number) {
+    if (this.exists(s)) this.sprites[s].outline = mode >= 0 && mode <= 3 ? Math.trunc(mode) : 0;
+  }
+
   setFlag(s: number, flag: number, on: boolean) {
     if (!this.exists(s)) return;
     if (on) this.sprites[s].flags |= flag;
@@ -862,7 +905,28 @@ export class Engine {
       if (!sp.alive || sp.flags & FLAG_INVISIBLE) continue;
       const w = sp.img ? sp.img[0] : 0;
       const h = sp.img ? sp.img[1] : 0;
-      this.drawImage(px(sp.x) - tdiv(w, 2) - this.camX, px(sp.y) - tdiv(h, 2) - this.camY, sp.img, sp.frame);
+      const x = px(sp.x) - tdiv(w, 2) - this.camX;
+      const y = px(sp.y) - tdiv(h, 2) - this.camY;
+      if (sp.outline && sp.img) {
+        const radius = sp.outlineWidth;
+        const img = sp.img;
+        const size = ((h + 7) >> 3) * w;
+        const masked = img[3] & 1;
+        const frame = sp.frame < img[2] ? sp.frame : 0;
+        const offset = 4 + frame * size * (masked ? 2 : 1) + (masked ? size : 0);
+        const solid = (cx: number, cy: number) => cx >= 0 && cy >= 0 && cx < w && cy < h && !!(img[offset + (cy >> 3) * w + cx] & (1 << (cy & 7)));
+        // Visit each contour pixel once, so automatic inversion never cancels itself.
+        for (let cy = Math.max(-radius, -y); cy <= Math.min(h - 1 + radius, 63 - y); cy++) {
+          for (let cx = Math.max(-radius, -x); cx <= Math.min(w - 1 + radius, 127 - x); cx++) {
+            if (solid(cx, cy)) continue;
+            let adjacent = false;
+            for (let dy = -radius; dy <= radius && !adjacent; dy++)
+              for (let dx = -radius; dx <= radius; dx++) if (solid(cx + dx, cy + dy)) { adjacent = true; break; }
+            if (adjacent) this.drawPixel(x + cx, y + cy, sp.outline === 3 ? 2 : sp.outline - 1);
+          }
+        }
+      }
+      this.drawImage(x, y, sp.img, sp.frame);
     }
   }
 
@@ -941,6 +1005,7 @@ export class Engine {
   }
 
   private async restart() {
+    this.clearParticles();
     this.sprites = Array.from({ length: this.maxSprites }, newSprite);
     this.map = null;
     this.camX = this.camY = 0;
@@ -1022,6 +1087,7 @@ export class Engine {
       await this.hooks.update();
       if (this.stopped) return false;
       this.updateSprites();
+      this.updateParticles();
       await this.checkOverlaps();
       this.updateCamera();
       this.updateSound();
@@ -1029,6 +1095,7 @@ export class Engine {
       this.clear();
       this.drawMap();
       this.drawSprites();
+      this.drawParticles();
       await this.hooks.draw();
       if (this.stopped) return false;
       this.drawHud();

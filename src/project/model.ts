@@ -76,8 +76,12 @@ export interface Project {
   created: number;
   modified: number;
   profile: Profile;
+  /** Simulator display colour, saved with this game. */
+  pixelColor?: 'white' | 'blue' | 'yellow';
   /** Blockly workspace saved with Blockly.serialization.workspaces.save. */
   blocks: unknown;
+  /** Text mode keeps the original block workspace as a recoverable copy. */
+  source?: { language: 'javascript' | 'python'; code: string };
   images: ImageAsset[];
   tiles: TileAsset[];
   tilemaps: TilemapAsset[];
@@ -108,6 +112,7 @@ export function newProject(name: string, profile?: Profile): Project {
     created: now,
     modified: now,
     profile: profile ?? BUILTIN_PROFILES.find((p) => p.id === DEFAULT_PROFILE_ID)!,
+    pixelColor: 'white',
     blocks: {},
     images: [],
     tiles: [],
@@ -142,6 +147,8 @@ function upgradeProject(p: Partial<Project>): Project {
     tiles: Array.isArray(p.tiles) ? p.tiles : [],
     tilemaps: Array.isArray(p.tilemaps) ? p.tilemaps : [],
     kinds: Array.isArray(p.kinds) ? p.kinds : [],
+    pixelColor: p.pixelColor === 'blue' || p.pixelColor === 'yellow' ? p.pixelColor : 'white',
+    source: p.source && ['javascript', 'python'].includes(p.source.language) && typeof p.source.code === 'string' ? p.source : undefined,
   };
 }
 
@@ -214,6 +221,7 @@ export function instantiateTemplate(template: Project, lang: string): Project {
   copy.blocks = replace(copy.blocks);
   copy.id = newId('p');
   copy.name = localized(template.template?.title, lang) || template.name;
+  copy.pixelColor = 'white';
   copy.created = now;
   copy.modified = now;
   return copy;

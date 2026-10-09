@@ -58,3 +58,86 @@ describe('sprite drawing', () => {
     key('x', true); expect(editor.rows()).toEqual(['.0.', '...']);
   });
 });
+
+describe('selection clipboard', () => {
+  function clipboard(editor: PixelEditor, type: 'copy' | 'paste', initial = '') {
+    let text = initial;
+    const event = Object.assign(new Event(type, { bubbles: true, cancelable: true }), {
+      clipboardData: { setData: (_type: string, value: string) => { text = value; }, getData: () => text },
+    });
+    editor.el.dispatchEvent(event);
+    return { text, prevented: event.defaultPrevented };
+  }
+  it('selects without painting and pastes black, white and transparent pixels into another frame', () => {
+    const source = setup(['10.', '.01']);
+    source.button('pixel.select');
+    source.pointer('pointerdown', 1, 1); source.pointer('pointermove', 0, 0); source.pointer('pointerup', 0, 0);
+    expect(source.changed).not.toHaveBeenCalled();
+    const copied = clipboard(source.editor, 'copy');
+    expect(copied.prevented).toBe(true);
+    const target = setup(['111', '111']);
+    target.button('pixel.select'); target.pointer('pointerdown', 1); target.pointer('pointerup', 1);
+    clipboard(target.editor, 'paste', copied.text);
+    target.editor.el.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    expect(target.editor.rows()).toEqual(['110', '110']);
+    expect(target.changed).toHaveBeenCalledTimes(1);
+    target.button('pixel.undo'); expect(target.editor.rows()).toEqual(['111', '111']);
+    target.button('pixel.redo'); expect(target.editor.rows()).toEqual(['110', '110']);
+  });
+  it('clips oversized pastes at the edge and ignores ordinary clipboard text', () => {
+    const source = setup(['10.', '.01']);
+    const copied = clipboard(source.editor, 'copy');
+    const target = setup(['...', '...']);
+    target.button('pixel.select'); target.pointer('pointerdown', 2, 1); target.pointer('pointerup', 2, 1);
+    clipboard(target.editor, 'paste', copied.text);
+    expect(target.editor.rows()).toEqual(['...', '..1']);
+    expect(clipboard(target.editor, 'paste', 'ordinary text').prevented).toBe(false);
+    expect(target.editor.rows()).toEqual(['...', '..1']);
+  });
+  it('supports modifier shortcuts without changing drawing tools and leaves text inputs alone', () => {
+    const { editor, button } = setup();
+    button('pixel.line');
+    editor.el.dispatchEvent(new KeyboardEvent('keydown', { key: 'a', ctrlKey: true, bubbles: true, cancelable: true }));
+    expect(editor.el.querySelector('button[aria-label="pixel.select"]')?.getAttribute('aria-pressed')).toBe('true');
+    editor.el.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    const input = editor.el.querySelector('input')!;
+    const event = new KeyboardEvent('keydown', { key: 'c', metaKey: true, bubbles: true, cancelable: true });
+    input.dispatchEvent(event);
+    expect(event.defaultPrevented).toBe(false);
+  });
+});
+
+describe('selection history', () => {
+  it('undoes and redoes deselection of a single pixel with Cmd+Z and Cmd+Y', () => {
+    const { editor, pointer, button, changed } = setup();
+    const strokes = vi.mocked(HTMLCanvasElement.prototype.getContext).mock.results.at(-1)!.value;
+    const outline = vi.spyOn(strokes, 'strokeRect');
+    button('pixel.select'); pointer('pointerdown', 1); pointer('pointerup', 1);
+    outline.mockClear();
+    pointer('pointerdown', 1); pointer('pointerup', 1);
+    expect(editor.rows()).toEqual(['10.', '...']);
+    editor.el.dispatchEvent(new KeyboardEvent('keydown', { key: 'z', metaKey: true, bubbles: true, cancelable: true }));
+    expect(outline).toHaveBeenCalled();
+    outline.mockClear();
+    editor.el.dispatchEvent(new KeyboardEvent('keydown', { key: 'y', metaKey: true, bubbles: true, cancelable: true }));
+    expect(outline).not.toHaveBeenCalled();
+    expect(changed).not.toHaveBeenCalled();
+  });
+  it('clears a selection on an outside click and restores earlier selection rectangles without editing pixels', () => {
+    const { editor, pointer, button, changed } = setup();
+    document.body.append(editor.el);
+    const ctx = vi.mocked(HTMLCanvasElement.prototype.getContext).mock.results.at(-1)!.value;
+    const outline = vi.spyOn(ctx, 'strokeRect');
+    button('pixel.select'); pointer('pointerdown', 0); pointer('pointermove', 1); pointer('pointerup', 1);
+    pointer('pointerdown', 2, 1); pointer('pointerup', 2, 1);
+    document.body.dispatchEvent(new Event('pointerdown', { bubbles: true }));
+    outline.mockClear();
+    editor.el.dispatchEvent(new KeyboardEvent('keydown', { key: 'z', ctrlKey: true, bubbles: true }));
+    expect(outline).toHaveBeenCalledWith(97, 49, 46, 46);
+    outline.mockClear();
+    editor.el.dispatchEvent(new KeyboardEvent('keydown', { key: 'z', ctrlKey: true, bubbles: true }));
+    expect(outline).toHaveBeenCalledWith(1, 1, 94, 46);
+    expect(changed).not.toHaveBeenCalled();
+    editor.el.remove();
+  });
+});

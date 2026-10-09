@@ -8,7 +8,7 @@ import { hasErrors, validateProfile, profileToConfigH } from '../hw/profile';
 import { t } from '../i18n/i18n';
 import type { Diagnostic } from '../ir/ir';
 import { CORE_HEADERS } from '../project/sketch';
-import { touch1200, uploadAvr109 } from '../upload/avr109';
+import { resetAndRequestPort, touch1200, uploadAvr109 } from '../upload/avr109';
 import { parseHex, serialApi, sleep, UploadError, type SerialPortLike } from '../upload/serial';
 import { uploadStk500v1 } from '../upload/stk500v1';
 import type { App } from './app';
@@ -112,6 +112,7 @@ export class DeviceTools {
   }
 
   private async compileNow(): Promise<CompileOutput | null> {
+    this.app.runBuild(false);
     const chip = this.chip();
     const build = this.app.build;
     if (!chip || !build) return null;
@@ -215,19 +216,39 @@ export class DeviceTools {
     const serial = serialApi()!;
     const info = port.getInfo();
     if (info.usbProductId !== undefined && BOOTLOADER_PIDS.has(info.usbProductId)) return port;
-    const before = new Set(await serial.getPorts());
-    this.status(t('upload.reset'));
-    await touch1200(port);
-    for (let i = 0; i < 30; i++) {
-      await sleep(100);
-      const now = await serial.getPorts();
-      const fresh = now.find((p) => !before.has(p) || (p.getInfo().usbProductId !== undefined && BOOTLOADER_PIDS.has(p.getInfo().usbProductId!)));
-      if (fresh && fresh !== port) return fresh;
+    const granted = await serial.getPorts();
+    // Only reset automatically when this board's bootloader was already allowed.
+    // Otherwise the short bootloader window must start with the chooser click.
+    const matchesBootloader = (p: SerialPortLike) => {
+      const candidate = p.getInfo();
+      return candidate.usbVendorId === info.usbVendorId
+        && candidate.usbProductId !== undefined && BOOTLOADER_PIDS.has(candidate.usbProductId);
+    };
+    if (granted.some(matchesBootloader)) {
+      this.status(t('upload.reset'));
+      await touch1200(port);
+      for (let i = 0; i < 80; i++) {
+        await sleep(100);
+        const boot = (await serial.getPorts()).find(matchesBootloader);
+        if (boot) {
+          // getPorts also returns disconnected ports with retained permission.
+          // Probe availability before handing it to the uploader.
+          try {
+            await boot.open({ baudRate: 57600 });
+          } catch {
+            continue;
+          }
+          await boot.close();
+          return boot;
+        }
+      }
+      throw new UploadError('upload.noBootloader');
     }
-    // The bootloader port has not been allowed yet: the user must pick it.
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
+      let closed = false;
+      let choosing = false;
       let chosen: SerialPortLike | null = null;
-      const d = openDialog(t('upload.pickBootloader'), { onClose: () => resolve(chosen) });
+      const d = openDialog(t('upload.pickBootloader'), { onClose: () => { closed = true; resolve(chosen); } });
       d.body.append(h('p', {}, t('upload.pickBootloaderHelp')));
       d.footer.append(
         h('button', { onclick: () => d.close() }, t('ui.cancel')),
@@ -236,12 +257,16 @@ export class DeviceTools {
           {
             class: 'primary',
             onclick: async () => {
+              if (choosing || closed) return;
+              choosing = true;
+              this.status(t('upload.reset'));
               try {
-                chosen = await serial.requestPort();
-              } catch {
-                chosen = null;
+                const selected = await resetAndRequestPort(port, () => serial.requestPort());
+                if (!closed) chosen = selected;
+              } catch (e) {
+                if (!closed && (e as Error).name !== 'NotFoundError') reject(e);
               }
-              d.close();
+              if (!closed) d.close();
             },
           },
           t('upload.pickPort'),

@@ -9,7 +9,7 @@ import { Engine, LoopError, StopSignal } from './engine';
 
 export type PixelColor = 'white' | 'blue' | 'yellow';
 
-const PIXEL_RGB: Record<PixelColor, [number, number, number]> = {
+export const PIXEL_RGB: Record<PixelColor, [number, number, number]> = {
   white: [235, 240, 245],
   blue: [90, 190, 255],
   yellow: [255, 214, 70],

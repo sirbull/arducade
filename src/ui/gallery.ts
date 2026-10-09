@@ -5,6 +5,7 @@ import { currentLanguage, t } from '../i18n/i18n';
 import { localized, parseProject, type Project } from '../project/model';
 import { projects as projectStore } from '../project/store';
 import { gameThumbnail } from './build';
+import type { PixelColor } from '../sim/runner';
 import { confirmDialog, openDialog } from './dialogs';
 import { clear, h } from './dom';
 
@@ -34,12 +35,12 @@ export async function loadTemplates(): Promise<Project[]> {
 
 const thumbs = new Map<string, Promise<string>>();
 
-export function thumbnail(p: Project): Promise<string> {
-  // Keyed on modified so an edited project gets a fresh picture.
-  const key = `${p.id}:${p.modified}`;
+export function thumbnail(p: Project, pixelColor: PixelColor = p.pixelColor ?? 'white'): Promise<string> {
+  // Refresh the picture when either the project or simulator colour changes.
+  const key = `${p.id}:${p.modified}:${pixelColor}`;
   let th = thumbs.get(key);
   if (!th) {
-    th = gameThumbnail(p).catch(() => '');
+    th = gameThumbnail(p, 45, pixelColor).catch(() => '');
     thumbs.set(key, th);
   }
   return th;
@@ -77,7 +78,7 @@ export async function openProjectsDialog(currentId: string, onOpen: (p: Project)
       d.body.append(h('p', { class: 'muted' }, t('projects.none')));
       return;
     }
-    const fmt = new Intl.DateTimeFormat(currentLanguage(), { dateStyle: 'medium', timeStyle: 'short' });
+    const fmt = new Intl.DateTimeFormat(currentLanguage(), { dateStyle: 'medium', timeStyle: 'short', hourCycle: 'h23' });
     d.body.append(
       h(
         'ul',
@@ -86,7 +87,7 @@ export async function openProjectsDialog(currentId: string, onOpen: (p: Project)
           h(
             'li',
             { class: p.id === currentId ? 'active' : '' },
-            h('button', { class: 'link', onclick: () => (d.close(), onOpen(p)) }, h('strong', {}, p.name), h('span', { class: 'muted small' }, ` ${fmt.format(p.modified)}`)),
+            h('button', { class: 'link', onclick: () => (d.close(), onOpen(p)) }, h('strong', {}, p.name), h('span', { class: 'muted project-date' }, ` ${fmt.format(p.modified)}`)),
             h(
               'button',
               {

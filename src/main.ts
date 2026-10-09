@@ -1,6 +1,8 @@
 import './styles.css';
 import { App } from './ui/app';
+import { installScrollGuard } from './ui/scroll-guard';
 
+installScrollGuard();
 const app = new App();
 app.init().catch((err) => {
   console.error(err);

@@ -8,9 +8,28 @@ import type { UploadProgress } from './stk500v1';
 /** Restarts the board into the bootloader. */
 export async function touch1200(port: SerialPortLike) {
   await port.open({ baudRate: 1200 });
-  await port.setSignals({ dataTerminalReady: false });
-  await sleep(50);
-  await port.close();
+  try {
+    await port.setSignals({ dataTerminalReady: false });
+    await sleep(50);
+  } finally {
+    await port.close();
+  }
+}
+
+/** Open the chooser during the click, while resetting in parallel.
+ * Awaiting the reset first can lose browser user activation and wastes the
+ * board's short bootloader window.
+ */
+export async function resetAndRequestPort(port: SerialPortLike, requestPort: () => Promise<SerialPortLike>) {
+  const reset = touch1200(port);
+  let selection: Promise<SerialPortLike>;
+  try {
+    selection = requestPort();
+  } catch (error) {
+    selection = Promise.reject(error);
+  }
+  const [, selected] = await Promise.all([reset, selection]);
+  return selected;
 }
 
 async function cr(c: Connection, bytes: number[], timeout = 1000) {

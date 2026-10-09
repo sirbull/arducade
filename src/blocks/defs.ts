@@ -29,6 +29,7 @@ const COLOR = dropdown('COLOR', [
   ['AB_COLOR_BLACK', 'black'],
   ['AB_COLOR_INVERT', 'invert'],
 ]);
+const PARTICLE_COLOR = dropdown('PARTICLE_COLOR', [['AB_COLOR_WHITE', '1'], ['AB_COLOR_BLACK', '0'], ['AB_PARTICLE_RANDOM', '2']]);
 const PROP = dropdown('PROP', [
   ['AB_PROP_X', 'x'],
   ['AB_PROP_Y', 'y'],
@@ -94,6 +95,9 @@ const MATH = { icon: 'math', style: 'ab_math' } as const;
 const CUSTOM = { icon: 'custom', style: 'ab_custom' } as const;
 
 export const DEFS: Def[] = [
+  { type: 'ab_particle_pixel', ...GRAPHICS, msg: 'AB_PARTICLE_PIXEL', args: [num('X'), num('Y'), num('VX'), num('VY'), num('MS'), num('END_VX'), num('END_VY'), PARTICLE_COLOR], statement: true },
+  { type: 'ab_particle_image', ...GRAPHICS, msg: 'AB_PARTICLE_IMAGE', args: [image(), num('X'), num('Y'), num('VX'), num('VY'), num('MS'), num('END_VX'), num('END_VY'), PARTICLE_COLOR], statement: true },
+  { type: 'ab_particles_clear', ...GRAPHICS, msg: 'AB_PARTICLES_CLEAR', statement: true },
   // Game
   { type: 'ab_on_start', ...GAME, msg: 'AB_ON_START', hat: true, body: true },
   { type: 'ab_on_update', ...GAME, msg: 'AB_ON_UPDATE', hat: true, body: true },
@@ -114,6 +118,8 @@ export const DEFS: Def[] = [
   { type: 'ab_sprite_get_prop', ...SPRITES, msg: 'AB_SPRITE_GET_PROP', args: [sprite('SPRITE'), PROP_GET], output: 'Number', inline: true },
   { type: 'ab_sprite_set_position', ...SPRITES, msg: 'AB_SPRITE_SET_POSITION', args: [sprite('SPRITE'), num('X'), num('Y')], statement: true, inline: true },
   { type: 'ab_sprite_set_velocity', ...SPRITES, msg: 'AB_SPRITE_SET_VELOCITY', args: [sprite('SPRITE'), num('VX'), num('VY')], statement: true, inline: true },
+  { type: 'ab_sprite_set_outline_width', ...SPRITES, msg: 'AB_SPRITE_SET_OUTLINE_WIDTH', args: [sprite('SPRITE'), num('WIDTH')], statement: true, inline: true },
+  { type: 'ab_sprite_set_outline', ...SPRITES, msg: 'AB_SPRITE_SET_OUTLINE', args: [sprite('SPRITE'), dropdown('OUTLINE', [['AB_OUTLINE_AUTO', '3'], ['AB_OUTLINE_OFF', '0'], ['AB_COLOR_BLACK', '1'], ['AB_COLOR_WHITE', '2']])], statement: true, inline: true },
   { type: 'ab_sprite_set_image', ...SPRITES, msg: 'AB_SPRITE_SET_IMAGE', args: [sprite('SPRITE'), image()], statement: true, inline: true },
   {
     type: 'ab_sprite_set_flag',

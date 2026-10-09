@@ -3,6 +3,7 @@
 // few rules, so they always fit together.
 
 import type { LocalizedText, PixelRows } from './model';
+import { GUIDE_IMAGES } from './guide-art';
 
 export type LibraryView = 'side' | 'top' | 'any';
 
@@ -84,6 +85,7 @@ function bigTree(): PixelRows {
 }
 
 export const LIBRARY_IMAGES: LibraryImage[] = [
+  ...GUIDE_IMAGES,
   // Characters
   { id: 'hero-run', group: 'characters', view: 'side', name: { en: 'hero', nb: 'helt' }, width: 8, height: 8, frames: [
     [...heroHead, ...px('.11111.. 1.1111.. ..1..1.. .1....1.')],

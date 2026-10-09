@@ -16,7 +16,8 @@
   "dependencies": {
     "@blockly/field-multilineinput": "^13.3.0",
     "@horang-corp/avr-gcc-wasm": "^0.2.0",
-    "blockly": "^13.3.0"
+    "blockly": "^13.3.0",
+    "monaco-editor": "^0.57.0"
   },
   "devDependencies": {
     "@types/node": "^22.20.5",

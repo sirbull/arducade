@@ -4,14 +4,14 @@
 const svg = (body: string) =>
   'data:image/svg+xml;utf8,' +
   encodeURIComponent(
-    `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${body}</svg>`,
+    `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="butt" stroke-linejoin="miter">${body}</svg>`,
   );
 
 export const ICONS = {
-  game: svg('<rect x="1.5" y="4" width="13" height="8" rx="3"/><path d="M4.5 8h3M6 6.5v3"/><circle cx="11" cy="7" r=".6"/><circle cx="12.3" cy="9" r=".6"/>'),
+  game: svg('<rect x="1.5" y="4" width="13" height="8"/><path d="M4.5 8h3M6 6.5v3"/><circle cx="11" cy="7" r=".6"/><circle cx="12.3" cy="9" r=".6"/>'),
   sprites: svg('<path d="M4 2.5h8v3h2v6h-2v2H4v-2H2v-6h2z"/><path d="M6 7h1M9 7h1"/>'),
   controller: svg('<circle cx="8" cy="8" r="6"/><path d="M8 4.5v2M8 9.5v2M4.5 8h2M9.5 8h2"/>'),
-  scene: svg('<rect x="1.5" y="2.5" width="13" height="11" rx="1"/><path d="M1.5 10l3.5-3 3 2.5 2.5-2 4 3.5"/>'),
+  scene: svg('<rect x="1.5" y="2.5" width="13" height="11"/><path d="M1.5 10l3.5-3 3 2.5 2.5-2 4 3.5"/>'),
   info: svg('<path d="M8 2.5l1.7 3.5 3.8.5-2.8 2.6.7 3.8L8 11l-3.4 1.9.7-3.8-2.8-2.6 3.8-.5z"/>'),
   graphics: svg('<path d="M2.5 13.5l3-1 7.5-7.5-2-2L3.5 10.5z"/><path d="M9.5 4.5l2 2"/>'),
   music: svg('<path d="M6 12.5V3.5l7-1.5v9"/><circle cx="4.5" cy="12.5" r="1.8"/><circle cx="11.5" cy="11" r="1.8"/>'),

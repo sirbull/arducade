@@ -1,0 +1,9 @@
+Generated with the built-in image_gen tool.
+
+Shared prompt: Use case: stylized-concept. Asset type: landscape 2:1 course thumbnail for ArduCade beginner game lessons. Style: polished original retro pixel-art game cover, crisp square pixels and angular silhouettes, rich midnight navy with vibrant cyan, warm orange and gold accents. Exciting welcoming arcade adventure, striking readable focal subject at small thumbnail size. Full bleed wide composition. No text, no letters, no logos, no UI, no borders, no rounded rectangles or oval shapes. Circles allowed for coins. Output one landscape image.
+
+w1-hello.jpg: Hello hero: a lovable tiny angular robot adventurer standing triumphantly on a square stone platform, sunrise and geometric mountains.
+w1-move.jpg: Move it: a tiny angular robot adventurer sprinting and jumping between square platforms, bold directional arrows and kinetic pixel trails.
+w1-coins.jpg: Coin hunt: a tiny angular robot adventurer reaching for a huge glowing circular gold coin inside a mysterious geometric treasure cave.
+w1-danger.jpg: Watch out: a tiny angular robot adventurer dodging a menacing red block-shaped enemy mid-leap, dramatic danger sparks and angular obstacles.
+w1-castle.jpg: Coin hunt deluxe: a tiny angular robot adventurer in an epic angular castle treasure arena with glowing circular golden coins, a red enemy and a circular clock face.

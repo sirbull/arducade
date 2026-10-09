@@ -1,6 +1,6 @@
 # Plan: Oppstartsguider og «spillverden»
 
-Utkast 9. oktober 2026. Skal diskuteres før vi bygger.
+Arbeidsplan, oppdatert 9. oktober 2026.
 
 ## 1. Mål
 
@@ -141,9 +141,9 @@ Guidebrettene bruker bare grafikk fra biblioteket.
 ## 9. Rekkefølge for å bygge
 
 1. **Guidemotor (gjort):** panel, strukturkrav, hjelp med hele koden, «Tilbake» og «Neste», bonusoppgave og stjerner. Brett 1-1 og 1-2. Brettene ligger på startsiden som kort, låst i rekkefølge, med «Velg brett fritt». Koden ligger i `src/guides/` og `src/ui/guide-panel.ts`.
-2. **Kjørekrav** og «Prøv spillet»-trinn. Enkle versjoner finnes («du har trykket ▶», «du har brukt pilene»). Det som mangler, er å kjøre spillet uten skjerm og sjekke resultatet.
-3. **Verden 1** (fire brett og slottet), med test av alle fasiter.
-4. **Spillverdenen** på startskjermen, med fremgang og stjerner.
+2. **Kjørekrav (gjort for verden 1):** brukerens kode bygges i en skjult Blockly-flate og kjøres i en isolert simulator uten lyd eller lagring. Sjekkene tester bevegelse, animasjon, myntsamling, fiendens vending, liv, tidsfrist og seier. En virtuell klokke gjør at 20 sekunder kan testes uten å vente. Resultater forkastes når koden eller trinnet endres. «Neste» venter på både strukturkrav og kjørekrav.
+3. **Verden 1 (gjort):** 1-1, 1-2, 1-3 Myntjakt, 1-4 Pass deg! og 1-5 Myntjakt deluxe (slottet), med tekster på alle fem språk og test av alle fasiter. Nye brett bruker ferdige helte-, mynt- og slim-sprites. Slottet introduserer variabelen `timeLeft` og «hvis», og setter sammen mynter, fiende, liv og en frist på 20 sekunder.
+4. **Spillverdenen (gjort):** egen kartvisning fra «Guider» i editoren eller inngangen øverst på startsiden. Kartet bruker programmets temafarger, pixeltrær, slott, en bro, stier og en figur som går mellom ti prosjekter. Mus, berøring og piltaster kan velge brett; låste brett kan undersøkes før de åpnes. Stjerner, rekkefølge og frivalg beholdes.
 5. **Verdenene 2a, 2b og 2c** og det store spillet.
 6. **Verden P: Programmering.**
 
@@ -156,3 +156,36 @@ Det lønner seg også å lage en «auto-pensel» i tilekarteditoren, som velger 
 * Brettene låses opp i rekkefølge, med «Velg brett fritt» for å åpne alle.
 * Fremgang lagres lokalt i nettleseren til vi har kontoer.
 * Alle guider på alle fem språk.
+
+## 11. Status og neste arbeid
+
+Alle ti prosjekter kan åpnes fra spillverden-kartet. Slottet i verden 1 er merket 1-5. Kartet viser også kapittelstier for de fem større prosjektene. Et kapittel fortsetter i samme brukerprosjekt; senere kapitler låses opp når man når dem. Høyeste nådde trinn lagres separat, slik at «Tilbake» ikke låser tidligere åpne kapitler igjen.
+
+Kjøretestene avviser også feil som riktige blokktyper alene ikke fanger: feil spritevariabel, at helten fjernes i stedet for mynten, feil nedtellingsvariabel og seier etter bare én mynt. Hver test bruker et nytt spill. Tester som venter på en splash-skjerm stoppes etter en kort tidsgrense. Sjekkene kjører bare når prosjektet endres, etter en kort pause i redigeringen.
+
+Gjenstår fra den større planen: synlig nedtelling i slottet, automatisk kopi av fullført slott til et vanlig prosjekt, eksport/import av samlet guidefremgang, merker og de senere verdenene. Guidene har automatiske kjørekrav og krav om å starte spillet; de registrerer foreløpig ikke at brukeren selv har samlet en mynt i den synlige simulatoren.
+
+
+## 12. Fem større prosjekter (gjort)
+
+De nye prosjektene er en egen progresjon, inspirert av MakeCode Arcades prosjektstier med flere deler (https://arcade.makecode.com/skillmap/space). Ingen blokkode settes inn når man åpner et kapittel; brukerens egen kode beholdes.
+
+| Brett | Prosjekt | Trinn | Kapitler | Nye begreper |
+|---|---|---:|---:|---|
+| 2-1 | Ut av labyrinten | 8 | 3 | Faste ruter, nøkkel, en variabel som husker |
+| 2-2 | Vakten som skifter humør | 10 | 3 | Patrulje, jakt, stopp, tilstander og samarbeid mellom tidtakere |
+| 2-3 | Lommevenn | 12 | 3 | Energi, glede, avgrensede verdier, ELLER, søvn og humør |
+| 2-4 | Tre på rad | 14 | 3 | Spill for to, funksjoner med argumenter og retur, løkker, alle vinnerlinjer og uavgjort |
+| 2-5 | Bombelabyrinten | 16 | 4 | Bombe med lunte, kryssformet eksplosjon, ødeleggbare kasser, egne sprite-typer og seiersvilkår |
+
+Alle tekster, inkludert kapitteltitler, karttekster og navn på ny grafikk, finnes på norsk, engelsk, spansk, fransk og tysk. Original 8×8-grafikk ligger i `src/project/guide-art.ts`, er tilgjengelig i Biblioteket og kopieres inn i hvert prosjekt. Labyrint- og bombekartene er også ferdige og redigerbare. Nye guider ligger i `src/guides/courses/`; kartet ligger i `src/ui/guide-catalog.ts`.
+
+Tre på rad lagrer ni felt som ett tall i tretallsystemet (0 tom, 1 kryss, 2 sirkel). Dette holder seg innenfor enhetens 16-bits heltall og begrenser spritebruken til ti. Poengfeltet viser hvilken spiller som skal trekke; null og «=» betyr uavgjort. Det er et spill for to lokale spillere, uten datamotstander.
+
+Bombespillet er en liten variant med én bombe om gangen og eksplosjonsradius én rute. Både spilleren og roboten rammes av eksplosjonen. Steinvegger fjernes aldri, kasser gir poeng, og utgangen krever at roboten er slått. De mer omfattende plattform-, rom- og eventyrverdenene fra det opprinnelige utkastet er fortsatt senere arbeid.
+
+Verifikasjon: alle trinns fasiter og kodebilder, tekster på fem språk, kjøretester, alle åtte vinnerlinjer i tre på rad, andre spiller som vinner, uavgjort, opptatte felt, eget bombetap, metere som ikke kan vokse over maks, kapitteltilgang og tastaturnavigasjon. Alle fem endelige spill kompileres også til AVR med prosjektets standardprofil.
+
+### Oppdatert guideoversikt
+
+Kartet er erstattet med en prosjektoversikt i programmets fargepalett. Oversikten viser et anbefalt prosjekt eller «Fortsett», fem korte startprosjekter og fem større spill med forhåndsvisning. Prosjektkortene viser fremgang og stjerner. Kapitler åpnes fra prosjektets dialog; låsing, fritt valg og lagret fremgang fungerer som før.

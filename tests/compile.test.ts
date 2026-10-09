@@ -22,6 +22,34 @@ const src: FileSource = {
 const headers = Object.fromEntries(['ardublocks.h', 'ab_display.h', 'ab_font.h'].map((f) => [f, readFileSync(join(__dirname, '../core/ardublocks', f), 'utf8')]));
 
 describe.skipIf(!haveTools)('WebAssembly compiler', () => {
+  it('compiles adjustable sprite outlines for a 2 KB RAM device', async () => {
+    const project = newProject('Outline');
+    project.images = [{ id: 'dot', name: 'dot', width: 1, height: 1, frames: [['1']] }];
+    const program = { ...emptyProgram(), events: [{ k: 'start' as const, body: [
+      { k: 'expr' as const, e: { k: 'api' as const, fn: 'sprites.setOutlineWidth', args: [
+        { k: 'api' as const, fn: 'sprites.create', args: [{ k: 'enum' as const, type: 'image' as const, v: 'dot' }, { k: 'enum' as const, type: 'kind' as const, v: 'Player' }] },
+        { k: 'num' as const, v: 3 },
+      ] } },
+    ] }] };
+    const profile = BUILTIN_PROFILES.find(p => p.id === 'nano-sh1106-i2c')!;
+    const out = await compileGame(src, { mcu: profile.chip, game: generateCpp(program, project).code, config: profileToConfigH(profile), headers });
+    expect(out.hex.startsWith(':')).toBe(true);
+    expect(out.ram).toBeLessThanOrEqual(1792); // Leave at least 256 bytes for the stack.
+  }, 120000);
+  it('compiles pixel and image particles for a 2 KB RAM device', async () => {
+    const project = newProject('Particles');
+    project.images = [{ id: 'spark', name: 'spark', width: 2, height: 2, frames: [['11', '11']] }];
+    const args = [64, 32, 30, -30, 500].map(v => ({ k: 'num' as const, v }));
+    const program = { ...emptyProgram(), events: [{ k: 'start' as const, body: [
+      { k: 'expr' as const, e: { k: 'api' as const, fn: 'particles.pixel', args } },
+      { k: 'expr' as const, e: { k: 'api' as const, fn: 'particles.pixelColor', args: [...args, { k: 'num' as const, v: 0 }, { k: 'num' as const, v: 30 }, { k: 'num' as const, v: 2 }] } },
+      { k: 'expr' as const, e: { k: 'api' as const, fn: 'particles.imageColor', args: [{ k: 'enum' as const, type: 'image' as const, v: 'spark' }, ...args, { k: 'num' as const, v: 0 }, { k: 'num' as const, v: 30 }, { k: 'num' as const, v: 0 }] } },
+    ] }] };
+    const profile = BUILTIN_PROFILES.find(p => p.id === 'nano-sh1106-i2c')!;
+    const out = await compileGame(src, { mcu: profile.chip, game: generateCpp(program, project).code, config: profileToConfigH(profile), headers });
+    expect(out.hex.startsWith(':')).toBe(true);
+    expect(out.ram).toBeLessThan(2048);
+  }, 120000);
   it('compiles connected levels for the device', async () => {
     const project = newProject('Levels');
     project.tilemaps = [

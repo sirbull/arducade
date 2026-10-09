@@ -32,6 +32,15 @@ export const API = api({
   'game.runtime': { ret: 'num', args: [], cpp: '(int16_t)ab::runtime()', js: 'E.runtime()', name: 'game.runtime' },
   'game.invert': { ret: 'void', args: ['bool'], cpp: 'ab::displayInvert($0)', js: 'E.invert($0)', name: 'scene.invert' },
 
+  // Lightweight visual particles (no collisions).
+  'particles.pixel': { ret: 'void', args: ['num', 'num', 'num', 'num', 'num'], cpp: 'ab::emitParticle(0, $0, $1, $2, $3, $4)', js: 'E.emitParticle(null, $0, $1, $2, $3, $4)', name: 'particles.pixel' },
+  'particles.image': { ret: 'void', args: ['image', 'num', 'num', 'num', 'num', 'num'], cpp: 'ab::emitParticle($0, $1, $2, $3, $4, $5)', js: 'E.emitParticle($0, $1, $2, $3, $4, $5)', name: 'particles.image' },
+  'particles.pixelTween': { ret: 'void', args: ['num', 'num', 'num', 'num', 'num', 'num', 'num'], cpp: 'ab::emitParticleTween(0, $0, $1, $2, $3, $4, $5, $6)', js: 'E.emitParticle(null, $0, $1, $2, $3, $4, $5, $6)', name: 'particles.pixelTween' },
+  'particles.imageTween': { ret: 'void', args: ['image', 'num', 'num', 'num', 'num', 'num', 'num', 'num'], cpp: 'ab::emitParticleTween($0, $1, $2, $3, $4, $5, $6, $7)', js: 'E.emitParticle($0, $1, $2, $3, $4, $5, $6, $7)', name: 'particles.imageTween' },
+  'particles.pixelColor': { ret: 'void', args: ['num', 'num', 'num', 'num', 'num', 'num', 'num', 'num'], cpp: 'ab::emitParticleTween(0, $0, $1, $2, $3, $4, $5, $6, $7)', js: 'E.emitParticle(null, $0, $1, $2, $3, $4, $5, $6, $7)', name: 'particles.pixelColor' },
+  'particles.imageColor': { ret: 'void', args: ['image', 'num', 'num', 'num', 'num', 'num', 'num', 'num', 'num'], cpp: 'ab::emitParticleTween($0, $1, $2, $3, $4, $5, $6, $7, $8)', js: 'E.emitParticle($0, $1, $2, $3, $4, $5, $6, $7, $8)', name: 'particles.imageColor' },
+  'particles.clear': { ret: 'void', args: [], cpp: 'ab::clearParticles()', js: 'E.clearParticles()', name: 'particles.clear' },
+
   // Sprites
   'sprites.create': { ret: 'sprite', args: ['image', 'kind'], cpp: 'ab::create($0, $1)', js: 'E.create($0, $1)', name: 'sprites.create' },
   'sprites.projectile': {
@@ -46,6 +55,8 @@ export const API = api({
   'sprites.change': { ret: 'void', args: ['sprite', 'prop', 'num'], cpp: 'ab::changeProp($0, $1, $2)', js: 'E.changeProp($0, $1, $2)', name: 'sprite.change' },
   'sprites.setPosition': { ret: 'void', args: ['sprite', 'num', 'num'], cpp: 'ab::setPosition($0, $1, $2)', js: 'E.setPosition($0, $1, $2)', name: 'sprite.setPosition' },
   'sprites.setVelocity': { ret: 'void', args: ['sprite', 'num', 'num'], cpp: 'ab::setVelocity($0, $1, $2)', js: 'E.setVelocity($0, $1, $2)', name: 'sprite.setVelocity' },
+  'sprites.setOutlineWidth': { ret: 'void', args: ['sprite', 'num'], cpp: 'ab::setOutlineWidth($0, $1)', js: 'E.setOutlineWidth($0, $1)', name: 'sprite.setOutlineWidth' },
+  'sprites.setOutline': { ret: 'void', args: ['sprite', 'num'], cpp: 'ab::setOutline($0, $1)', js: 'E.setOutline($0, $1)', name: 'sprite.setOutline' },
   'sprites.setImage': { ret: 'void', args: ['sprite', 'image'], cpp: 'ab::setImage($0, $1)', js: 'E.setImage($0, $1)', name: 'sprite.setImage' },
   'sprites.setFlag': { ret: 'void', args: ['sprite', 'flag', 'bool'], cpp: 'ab::setFlag($0, $1, $2)', js: 'E.setFlag($0, $1, $2)', name: 'sprite.setFlag' },
   'sprites.animate': { ret: 'void', args: ['sprite', 'num'], cpp: 'ab::animate($0, $1)', js: 'E.animate($0, $1)', name: 'animation.run' },

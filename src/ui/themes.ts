@@ -154,8 +154,8 @@ export function applyPageTheme(id: ThemeId) {
 
 /** Block sizes used by the editor and the guide pictures. */
 export const BLOCK_RENDERER = {
-  CORNER_RADIUS: 3,
-  FIELD_BORDER_RECT_RADIUS: 3,
+  CORNER_RADIUS: 0,
+  FIELD_BORDER_RECT_RADIUS: 0,
   SMALL_PADDING: 5,
   MEDIUM_PADDING: 8,
   MEDIUM_LARGE_PADDING: 12,

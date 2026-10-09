@@ -5,6 +5,7 @@ import * as Blockly from 'blockly/core';
 import { currentLanguage, t } from '../i18n/i18n';
 import { passing, type Guide, type GuideContext } from '../guides/guide';
 import { GUIDES } from '../guides/world1';
+import { runChecks } from '../guides/runtime';
 import { localized, type Project } from '../project/model';
 import { openDialog } from './dialogs';
 import { clear, h } from './dom';
@@ -53,6 +54,11 @@ export class GuidePanel {
   private checklist?: HTMLElement;
   private nextButton?: HTMLButtonElement;
   private allOk = false;
+  private runtimeKey = '';
+  private runtime?: boolean[];
+  private runtimeTimer?: ReturnType<typeof setTimeout>;
+  private runtimeGeneration = 0;
+  private visit = '';
 
   constructor(private el: HTMLElement, private host: GuideHost) {}
 
@@ -79,7 +85,7 @@ export class GuidePanel {
 
   private context(): GuideContext {
     const project = this.host.project();
-    return { blocks: project.blocks as Json, project, played: this.played, pressed: this.pressed };
+    return { blocks: project.blocks as Json, project, played: this.played, pressed: this.pressed, runtime: this.runtime };
   }
 
   /** Draws the panel for the current step. */
@@ -94,6 +100,12 @@ export class GuidePanel {
     this.el.hidden = !g;
     if (!g) return;
     const state = this.host.project().guide!;
+    const visit = `${this.host.project().id}:${g.id}:${state.step}`;
+    if (visit !== this.visit) {
+      this.visit = visit;
+      this.played = 0;
+      this.pressed = 0;
+    }
     const lang = currentLanguage();
     const total = g.steps.length;
     const head = h('div', { class: 'guide-head' },
@@ -108,6 +120,8 @@ export class GuidePanel {
       return;
     }
     const step = g.steps[state.step];
+    const chapter = g.chapters?.slice().reverse().find((c) => c.start <= state.step);
+    if (chapter) this.el.append(h('p', { class: 'guide-chapter muted small' }, localized(chapter.title, lang)));
     this.el.append(h('p', { class: 'guide-text' }, localized(step.text, lang)));
     if (step.show) {
       const pic = h('div', { class: 'guide-picture', role: 'img', 'aria-label': t('guide.picture') });
@@ -157,6 +171,7 @@ export class GuidePanel {
 
   private go(step: number) {
     const state = this.host.project().guide!;
+    state.reached = Math.max(state.reached ?? state.step, state.step, step);
     state.step = Math.max(0, step);
     this.played = 0;
     this.pressed = 0;
@@ -171,6 +186,23 @@ export class GuidePanel {
     const state = this.host.project().guide!;
     const lang = currentLanguage();
     const checks = state.step < g.steps.length ? g.steps[state.step].checks : g.bonus ? [g.bonus] : [];
+    const key = JSON.stringify([this.host.project(), state.step]);
+    if (key !== this.runtimeKey) {
+      this.runtimeKey = key;
+      this.runtime = undefined;
+      const generation = ++this.runtimeGeneration;
+      if (this.runtimeTimer) clearTimeout(this.runtimeTimer);
+      if (checks.some((c) => c.run)) {
+        const project = structuredClone(this.host.project());
+        this.runtimeTimer = setTimeout(() => {
+          void runChecks(checks, project).then((results) => {
+            if (generation !== this.runtimeGeneration) return;
+            this.runtime = results;
+            this.update();
+          });
+        }, 200);
+      }
+    }
     const ok = passing(checks, this.context());
     clear(this.checklist);
     checks.forEach((c, i) => this.checklist!.append(h('li', { class: ok[i] ? 'ok' : '' },

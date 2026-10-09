@@ -91,6 +91,8 @@ struct Sprite {
   const uint8_t *img;
   uint8_t kind;
   uint8_t flags;
+  uint8_t outlineWidth; // 0 means default thickness of 1
+  uint8_t outline;    // 0 off, 1 black, 2 white, 3 automatic
   uint8_t hit;
   uint8_t frame;
   uint8_t animRate;  // frames between animation steps, 0 for no animation
@@ -261,7 +263,7 @@ static uint8_t imgW(const uint8_t *img) { return img ? pgm_read_byte(img) : 0; }
 static uint8_t imgH(const uint8_t *img) { return img ? pgm_read_byte(img + 1) : 0; }
 static uint8_t imgFrames(const uint8_t *img) { return img ? pgm_read_byte(img + 2) : 0; }
 
-static void drawImage(int16_t x, int16_t y, const uint8_t *img, uint8_t frame) {
+static void drawImage(int16_t x, int16_t y, const uint8_t *img, uint8_t frame, int8_t tint = -1) {
   if (!img) return;
   uint8_t w = pgm_read_byte(img);
   uint8_t h = pgm_read_byte(img + 1);
@@ -282,6 +284,7 @@ static void drawImage(int16_t x, int16_t y, const uint8_t *img, uint8_t frame) {
       uint16_t src = (uint16_t)p * w + i;
       uint16_t d = pgm_read_byte(data + src) << shift;
       uint16_t m = hasMask ? (uint16_t)pgm_read_byte(mask + src) << shift : d;
+      if (tint >= 0) d = tint ? m : 0;
       if (page >= 0 && page < 8) {
         uint8_t *b = &buffer[page * 128 + col];
         *b = (*b & ~(uint8_t)m) | (uint8_t)d;
@@ -663,6 +666,14 @@ static void setVelocity(uint8_t s, int16_t vx, int16_t vy) {
   sprites[s].vy = clamp16((int32_t)vy * 16);
 }
 
+static void setOutlineWidth(uint8_t s, int16_t width) {
+  if (exists(s)) sprites[s].outlineWidth = width < 1 ? 1 : width > 8 ? 8 : width;
+}
+
+static void setOutline(uint8_t s, int16_t mode) {
+  if (exists(s)) sprites[s].outline = mode >= 0 && mode <= 3 ? mode : 0;
+}
+
 static void setFlag(uint8_t s, uint8_t flag, bool on) {
   if (!exists(s)) return;
   if (on) sprites[s].flags |= flag;
@@ -832,14 +843,92 @@ static void checkOverlaps() {
 #endif
 }
 
+static bool outlineSolid(const uint8_t *shape, int16_t w, int16_t h, int16_t x, int16_t y) {
+  return x >= 0 && y >= 0 && x < w && y < h && (pgm_read_byte(shape + (y >> 3) * w + x) & (1 << (y & 7)));
+}
+
 static void drawSprites() {
   for (uint8_t i = 0; i < AB_MAX_SPRITES; i++) {
     Sprite &sp = sprites[i];
     if (!sp.alive || (sp.flags & FLAG_INVISIBLE)) continue;
     int16_t w = imgW(sp.img), h = imgH(sp.img);
-    drawImage(px(sp.x) - w / 2 - camX, px(sp.y) - h / 2 - camY, sp.img, sp.frame);
+    int16_t x = px(sp.x) - w / 2 - camX, y = px(sp.y) - h / 2 - camY;
+    if (sp.outline && sp.img) {
+      int16_t radius = sp.outlineWidth ? sp.outlineWidth : 1;
+      uint16_t size = ((h + 7) >> 3) * w;
+      uint8_t masked = pgm_read_byte(sp.img + 3) & 1;
+      uint8_t frame = sp.frame < imgFrames(sp.img) ? sp.frame : 0;
+      const uint8_t *shape = sp.img + 4 + frame * size * (masked ? 2 : 1) + (masked ? size : 0);
+      // Clip first and visit each contour pixel once, including diagonal neighbors.
+      for (int16_t cy = y < radius ? -y : -radius; cy < h + radius && cy + y < 64; cy++) {
+        for (int16_t cx = x < radius ? -x : -radius; cx < w + radius && cx + x < 128; cx++) {
+          if (outlineSolid(shape, w, h, cx, cy)) continue;
+          bool adjacent = false;
+          for (int8_t dy = -radius; dy <= radius && !adjacent; dy++)
+            for (int8_t dx = -radius; dx <= radius; dx++)
+              if (outlineSolid(shape, w, h, cx + dx, cy + dy)) { adjacent = true; break; }
+          if (adjacent) drawPixel(x + cx, y + cy, sp.outline == 3 ? 2 : sp.outline - 1);
+        }
+      }
+    }
+    drawImage(x, y, sp.img, sp.frame);
   }
 }
+
+// Visual particles, independent of the sprite pool. 25 bytes each on AVR.
+#ifdef AB_HAS_PARTICLES
+struct Particle {
+  int32_t x, y; // 1/256 pixel, world coordinates
+  int16_t vx, vy, endVx, endVy; // pixels per second
+  const uint8_t *img; // null means one white pixel
+  uint16_t remaining, duration;
+  int8_t color;
+};
+#ifndef AB_MAX_PARTICLES
+#define AB_MAX_PARTICLES (AB_MAX_SPRITES <= 12 ? 12 : 16)
+#endif
+static Particle particles[AB_MAX_PARTICLES];
+static void clearParticles() { memset(particles, 0, sizeof(particles)); }
+static void emitParticleTween(const uint8_t *img, int16_t x, int16_t y, int16_t vx, int16_t vy, int16_t ms, int16_t endVx, int16_t endVy, int8_t color = -1) {
+  if (ms <= 0) return;
+  for (uint8_t i = 0; i < AB_MAX_PARTICLES; i++) {
+    Particle &p = particles[i];
+    if (p.remaining) continue;
+    p.x = (int32_t)x * 256; p.y = (int32_t)y * 256;
+    p.vx = vx; p.vy = vy; p.img = img; p.remaining = p.duration = ms;
+    p.endVx = endVx; p.endVy = endVy;
+    p.color = color == 2 ? random(0, 1) : color;
+    return;
+  }
+}
+static void emitParticle(const uint8_t *img, int16_t x, int16_t y, int16_t vx, int16_t vy, int16_t ms) {
+  emitParticleTween(img, x, y, vx, vy, ms, vx, vy);
+}
+static void updateParticles() {
+  for (uint8_t i = 0; i < AB_MAX_PARTICLES; i++) {
+    Particle &p = particles[i];
+    if (!p.remaining) continue;
+    uint16_t step = p.remaining < AB_FRAME_MS ? p.remaining : AB_FRAME_MS;
+    uint16_t midpoint = p.duration - p.remaining + step / 2;
+    int32_t vx = p.vx + ((int32_t)p.endVx - p.vx) * midpoint / p.duration;
+    int32_t vy = p.vy + ((int32_t)p.endVy - p.vy) * midpoint / p.duration;
+    p.x += vx * 256 * step / 1000;
+    p.y += vy * 256 * step / 1000;
+    p.remaining -= step;
+  }
+}
+static void drawParticles() {
+  for (uint8_t i = 0; i < AB_MAX_PARTICLES; i++) {
+    Particle &p = particles[i];
+    if (!p.remaining) continue;
+    int32_t x = (p.x >> 8) - camX, y = (p.y >> 8) - camY;
+    int16_t w = p.img ? imgW(p.img) : 1, h = p.img ? imgH(p.img) : 1;
+    if (x + w / 2 < 0 || y + h / 2 < 0 || x - w / 2 >= 128 || y - h / 2 >= 64) continue;
+    if (p.img) drawImage(x - w / 2, y - h / 2, p.img, 0, p.color);
+    else drawPixel(x, y, p.color == 0 ? 0 : 1);
+  }
+}
+#endif
 
 // Score and lives -------------------------------------------------------
 
@@ -917,6 +1006,9 @@ static uint32_t runtime() { return millis(); }
 
 static void restart() {
   memset(sprites, 0, sizeof(sprites));
+#ifdef AB_HAS_PARTICLES
+  clearParticles();
+#endif
   map = 0;
   camX = camY = 0;
   cameraSprite = controlled = NONE;
@@ -989,6 +1081,9 @@ static void frame() {
   }
   ab_on_update();
   updateSprites();
+#ifdef AB_HAS_PARTICLES
+  updateParticles();
+#endif
   checkOverlaps();
   updateCamera();
   updateSound();
@@ -996,6 +1091,9 @@ static void frame() {
   clear();
   drawMap();
   drawSprites();
+#ifdef AB_HAS_PARTICLES
+  drawParticles();
+#endif
   ab_on_draw();
   drawHud();
   displayShow(buffer);

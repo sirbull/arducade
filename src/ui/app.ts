@@ -12,16 +12,20 @@ import { getChip } from '../hw/chips';
 import { BUILTIN_PROFILES, DEFAULT_PROFILE_ID, type Profile } from '../hw/profile';
 import { currentLanguage, kindName, LANGUAGES, loadLanguage, t, translatePage } from '../i18n/i18n';
 import type { Diagnostic } from '../ir/ir';
-import { instantiateTemplate, localized, newProject, parseProject, PROJECT_EXTENSION, serializeProject, type Project } from '../project/model';
+import { instantiateTemplate, localized, newProject, parseProject, type Project } from '../project/model';
 import { sketchZip } from '../project/sketch';
-import { downloadFile, loadSettings, pickTextFile, profiles as profileStore, projects as projectStore, safeFileName, saveSettings, type Settings } from '../project/store';
+import { downloadFile, loadSettings, pickProjectFile, profiles as profileStore, projects as projectStore, safeFileName, saveSettings, type Settings } from '../project/store';
+import { readCartridge } from '../project/cartridge';
+import { saveCartridge } from './save-dialog';
 import { Runner, type PixelColor } from '../sim/runner';
 import { BUTTON_IDS } from '../engine/enums';
 import { ImagesPane, MapPane, TilesPane } from './assets-panes';
 import { buildWorkspace, type BuildResult } from './build';
+import type { TextEditor } from './text-editor';
+import { generateSource, parseSource, SourceError, type TextLanguage } from '../text/languages';
 import { CodeView } from './code-view';
 import { confirmDialog } from './dialogs';
-import { $, clear, h, icon, LOCK_ICON, toast } from './dom';
+import { $, clear, h, toast } from './dom';
 import { loadTemplates, openGallery, openProjectsDialog, thumbnail } from './gallery';
 import { allProfiles, loadServerProfiles, openProfileDialog, profileFromUrl } from './profile-editor';
 import { openFirstRun, openSettings } from './settings-dialog';
@@ -32,6 +36,7 @@ import { DeviceTools } from './device';
 import { GuidePanel } from './guide-panel';
 import { guideProject, type Guide } from '../guides/guide';
 import { GUIDES } from '../guides/world1';
+import { renderGuideCatalog, reachedStep } from './guide-catalog';
 
 const DEFAULT_SETTINGS: Settings = {
   language: 'en',
@@ -51,15 +56,18 @@ export class App {
   runner!: Runner;
   build: BuildResult | null = null;
   private codeView!: CodeView;
+  private textEditors: Partial<Record<TextLanguage, TextEditor>> = {};
   private images!: ImagesPane;
   private tiles!: TilesPane;
   private map!: MapPane;
   private device!: DeviceTools;
   private guide!: GuidePanel;
+  private guidesVisible = false;
   private buildTimer = 0;
   private saveTimer = 0;
   private loading = false;
   private activeTab = 'blocks';
+  private tabRequest = 0;
   private lastJs = '';
   private homeVisible = false;
   private simStandalone = false;
@@ -94,7 +102,8 @@ export class App {
         });
       },
     });
-    this.runner.pixelColor = this.settings.pixelColor as PixelColor;
+    this.runner.pixelColor = 'white';
+    this.settings.pixelColor = 'white';
     this.runner.muted = this.settings.muted;
     const host = { project: () => this.project, changed: (structural: boolean) => this.assetsChanged(structural) };
     this.images = new ImagesPane($('#pane-images'), host);
@@ -113,7 +122,7 @@ export class App {
       },
       changed: () => this.scheduleSave(),
       openLevel: (g) => void this.openGuide(g),
-      home: () => void this.showHome(),
+      home: () => void this.showGuides(),
     });
 
     this.injectWorkspace();
@@ -198,7 +207,7 @@ export class App {
     });
     this.ws.addChangeListener(Blockly.Events.disableOrphans);
     this.ws.addChangeListener((e) => {
-      if (this.loading) return;
+      if (this.loading || this.project.source) return;
       if (e.type === Blockly.Events.SELECTED) {
         this.showSelected((e as Blockly.Events.Selected).newElementId ?? undefined);
         return;
@@ -225,6 +234,9 @@ export class App {
     $('#home').hidden = true;
     $('#editor-layout').hidden = false;
     this.project = p;
+    this.runner.pixelColor = p.pixelColor ?? 'white';
+    this.settings.pixelColor = this.runner.pixelColor;
+    this.renderSimControls();
     setAssetProject(p);
     this.loading = true;
     this.ws.clear();
@@ -244,6 +256,7 @@ export class App {
     this.renderProfile();
     this.renderActivePane();
     this.runBuild(true);
+    this.selectTab(this.project.source?.language ?? 'blocks');
     Blockly.svgResize(this.ws);
     void projectStore.save(this.project).catch(() => {});
   }
@@ -265,6 +278,11 @@ export class App {
   runBuild(forceStop: boolean) {
     this.project.blocks = Blockly.serialization.workspaces.save(this.ws);
     this.build = buildWorkspace(this.ws, this.project);
+    if (this.project.source) {
+      const {language, code} = this.project.source;
+      try {parseSource(code, language, this.project);this.textEditors[language]?.showError();}
+      catch(error) {this.textEditors[language]?.showError(error instanceof Error ? error.message : String(error), error instanceof SourceError ? error.line : 1);}
+    }
     this.codeView.setCode(this.build.cpp.code);
     this.renderProblems(this.build.diagnostics);
     this.device.estimate();
@@ -327,14 +345,14 @@ export class App {
     size.title = t(size.dataset.i18nTitle);
     size.setAttribute('aria-label', size.title);
     const width = [8, 13, 18][this.simSize];
-    size.innerHTML = `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2" stroke-dasharray="2 3" opacity="0.45"/><rect x="${12 - width / 2}" y="${12 - width / 4}" width="${width}" height="${width / 2}" rx="1"/></svg>`;
+    size.innerHTML = `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" stroke-dasharray="2 3" opacity="0.45"/><rect x="${12 - width / 2}" y="${12 - width / 4}" width="${width}" height="${width / 2}"/></svg>`;
   }
 
   private renderSimControls() {
     const icons: Record<string, string> = {
       play: '<path d="m8 5 11 7-11 7Z" fill="currentColor" stroke="none"/>',
       pause: '<path d="M8 5v14M16 5v14" stroke-width="4"/>',
-      stop: '<rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor" stroke="none"/>',
+      stop: '<rect x="6" y="6" width="12" height="12" fill="currentColor" stroke="none"/>',
       restart: '<path d="M4 10a8 8 0 1 1 1 8M4 4v6h6"/>',
       sound: '<path d="M11 5 6 9H3v6h3l5 4Z"/><path d="M15 8a6 6 0 0 1 0 8M18 5a10 10 0 0 1 0 14"/>',
       color: '<circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 1 0 16Z" fill="currentColor"/>',
@@ -448,14 +466,46 @@ export class App {
     if (this.activeTab === 'map') this.map.render();
   }
 
-  selectTab(tab: string) {
+  async selectTab(tab: string) {
+    const request = ++this.tabRequest;
+    if (tab === 'javascript' || tab === 'python') {
+      clearTimeout(this.buildTimer);
+      this.runBuild(false);
+      let code: string;
+      if (this.project.source?.language === tab) code = this.project.source.code;
+      else {
+        if (this.build?.diagnostics.some(d => d.level === 'error')) {
+          toast(t('code.fixErrors'), 'error'); return;
+        }
+        code = generateSource(this.build!.program, this.project, tab);
+      }
+      if (!this.textEditors[tab]) {
+        const {TextEditor} = await import('./text-editor');
+        if (request !== this.tabRequest) return;
+        this.textEditors[tab] = new TextEditor($(`#${tab}-editor`), tab, code => {
+          this.project.source = {language: tab, code};
+          this.scheduleBuild();
+        });
+      }
+      this.textEditors[tab]!.setCode(code);
+      // Opening a text view does not take ownership until the first edit.
+      if (this.project.source) {
+        this.project.source = {language: tab, code};
+        this.runBuild(false);
+      }
+    }
     this.activeTab = tab;
     document.querySelectorAll<HTMLElement>('.tabs [data-tab]').forEach((b) => {
       b.classList.toggle('active', b.dataset.tab === tab);
       b.setAttribute('aria-selected', String(b.dataset.tab === tab));
     });
     document.querySelectorAll<HTMLElement>('.pane').forEach((p) => p.classList.toggle('active', p.id === `pane-${tab}`));
-    if (tab === 'blocks') Blockly.svgResize(this.ws);
+    if (tab === 'blocks') {
+      $('#pane-blocks').inert = !!this.project.source;
+      $('#blockly').classList.toggle('text-mode-blocks', !!this.project.source);
+      Blockly.svgResize(this.ws);
+      if (this.project.source) toast(t('code.blocksCopy'));
+    }
     this.renderActivePane();
     if (tab === 'code') this.showSelected(Blockly.getSelected()?.id);
   }
@@ -470,6 +520,11 @@ export class App {
     saveSettings(this.settings);
     applyPageTheme(this.settings.theme as ThemeId);
     this.runner.pixelColor = this.settings.pixelColor as PixelColor;
+    if (this.hasProject && this.project.pixelColor !== this.runner.pixelColor) {
+      this.project.pixelColor = this.runner.pixelColor;
+      this.scheduleSave();
+    }
+    this.renderSimControls();
     this.runner.setMuted(this.settings.muted);
     if (langChanged) {
       this.project.blocks = Blockly.serialization.workspaces.save(this.ws);
@@ -487,7 +542,10 @@ export class App {
       this.ws.setTheme(blocklyTheme(this.settings.theme as ThemeId));
       this.guide.render();
     }
-    if (this.homeVisible) await this.showHome(false);
+    if (this.homeVisible) {
+      if (this.guidesVisible) await this.showGuides(false);
+      else await this.showHome(false);
+    }
     if (profileChanged && this.project) {
       const p = await this.defaultProfile();
       if (await confirmDialog(t('settings.profile'), t('settings.applyProfile', { name: p.name }), t('ui.yes'))) this.setProfile(p);
@@ -528,6 +586,7 @@ export class App {
   // Projects --------------------------------------------------------------
 
   async showHome(save = true) {
+    this.guidesVisible = false;
     if (save && !this.homeVisible && this.hasProject) {
       clearTimeout(this.buildTimer);
       clearTimeout(this.saveTimer);
@@ -553,7 +612,7 @@ export class App {
       h('div', { class: 'row' },
         h('button', { class: 'primary', onclick: async () => this.loadProject(newProject(t('project.defaultName'), await this.defaultProfile())) }, t('home.create')),
         h('button', { onclick: () => this.importProject() }, t('menu.import')))),
-      projectsSection, templatesSection, guidesSection);
+      guidesSection, projectsSection, templatesSection);
     this.renderGuides(guidesSection);
     heading.focus();
     projectsSection.append(h('h2', {}, t('projects.title')), h('p', { class: 'muted' }, t('ui.loading')));
@@ -564,7 +623,7 @@ export class App {
     clear(templatesSection);
     projectsSection.append(h('h2', {}, t('projects.title')));
     templatesSection.append(h('h2', {}, t('home.templates')));
-    const fmt = new Intl.DateTimeFormat(currentLanguage(), { dateStyle: 'medium', timeStyle: 'short' });
+    const fmt = new Intl.DateTimeFormat(currentLanguage(), { dateStyle: 'medium', timeStyle: 'short', hourCycle: 'h23' });
     const projectGrid = h('div', { class: 'gallery home-projects' });
     for (const project of projects) {
       const remove = h('button', {
@@ -597,14 +656,14 @@ export class App {
         class: 'home-project-action',
         title: `${t('menu.export')} ${project.name}`,
         'aria-label': `${t('menu.export')} ${project.name}`,
-        onclick: () => downloadFile(safeFileName(project.name) + PROJECT_EXTENSION, serializeProject(project)),
+        onclick: () => void saveCartridge(project),
       });
       download.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/></svg>';
       const img = h('img', { alt: '', class: 'thumb' });
       void thumbnail(project).then((src) => { if (src) img.src = src; });
       projectGrid.append(h('div', { class: 'home-project-card' },
         h('button', { class: 'card', onclick: () => this.loadProject(project) }, img,
-          h('strong', {}, project.name), h('span', { class: 'muted small' }, fmt.format(project.modified))), h('div', { class: 'home-project-actions' }, download, remove)));
+          h('strong', {}, project.name), h('span', { class: 'muted project-date' }, fmt.format(project.modified))), h('div', { class: 'home-project-actions' }, download, remove)));
     }
     projectsSection.append(projects.length ? projectGrid : h('p', { class: 'muted' }, t('projects.none')));
     const templateGrid = h('div', { class: 'gallery' });
@@ -624,40 +683,43 @@ export class App {
   }
 
   private renderGuides(section: HTMLElement) {
-    const stars = this.settings.guideStars ?? {};
-    const lang = currentLanguage();
-    const free = h('input', { type: 'checkbox', checked: !!this.settings.guideFree, onchange: () => {
-      this.settings.guideFree = free.checked;
-      saveSettings(this.settings);
-      clear(section);
-      this.renderGuides(section);
-    } });
-    const grid = h('div', { class: 'guide-levels' });
-    GUIDES.forEach((g, i) => {
-      const done = stars[g.id] ?? 0;
-      const open = i === 0 || !!this.settings.guideFree || (stars[GUIDES[i - 1].id] ?? 0) > 0;
-      const title = localized(g.title, lang);
-      grid.append(h('button', {
-        class: `guide-level ${done ? 'done' : ''}`,
-        disabled: !open,
-        'aria-label': `${g.number} ${title}${open ? '' : `, ${t('guide.locked')}`}${done ? `, ${t('guide.stars', { n: done })}` : ''}`,
-        onclick: () => void this.openGuide(g),
-      },
-      h('span', { class: 'guide-badge' }, open ? g.number : icon(LOCK_ICON)),
-      h('strong', {}, title),
-      h('span', { class: 'muted small' }, localized(g.description, lang)),
-      h('span', { class: 'guide-level-stars', 'aria-hidden': 'true' }, done ? '★'.repeat(done) + '☆'.repeat((g.bonus ? 2 : 1) - done) : '')));
+    section.append(h('button', { class: 'guide-launcher', onclick: () => void this.showGuides(false) },
+      h('span', { class: 'guide-launcher-copy' },
+        h('span', { class: 'catalog-eyebrow' }, t('guide.worldEyebrow')),
+        h('strong', {}, t('guide.worldTitle')),
+        h('span', { class: 'muted' }, t('guide.worldTeaser', { n: GUIDES.length })),
+        h('span', { class: 'guide-launcher-link' }, t('guide.worldEnter') + ' →'))));
+  }
+
+  private async showGuides(save = true) {
+    await this.showHome(save);
+    const version = ++this.homeRender;
+    this.guidesVisible = true;
+    const projects = await projectStore.list().catch(() => [] as Project[]);
+    if (!this.homeVisible || version !== this.homeRender) return;
+    renderGuideCatalog($('#home'), {
+      stars: this.settings.guideStars ?? {},
+      free: !!this.settings.guideFree,
+      projects,
+      setFree: (value) => { this.settings.guideFree = value; saveSettings(this.settings); },
+      open: (g, step) => void this.openGuide(g, step),
+      home: () => void this.showHome(false),
     });
-    section.append(h('h2', {}, t('guide.homeTitle')), h('p', { class: 'muted' }, t('guide.homeHelp')), grid,
-      h('label', { class: 'inline guide-free' }, free, t('guide.free')));
   }
 
   /** Opens the user's project for a guide level, or starts the level. */
-  private async openGuide(g: Guide) {
+  private async openGuide(g: Guide, step?: number) {
     if (!this.homeVisible && this.hasProject) await this.showHome();
     const projects = await projectStore.list().catch(() => [] as Project[]);
     const existing = projects.find((p) => p.guide?.id === g.id);
-    this.loadProject(existing ?? guideProject(g, currentLanguage(), await this.defaultProfile()));
+    const project = existing ?? guideProject(g, currentLanguage(), await this.defaultProfile());
+    if (step !== undefined && project.guide) {
+      const reached = reachedStep(project);
+      project.guide.reached = reached;
+      project.guide.step = Math.min(Math.max(0, step), reached, g.steps.length - 1);
+    }
+    this.guidesVisible = false;
+    this.loadProject(project);
     this.selectTab('blocks');
   }
 
@@ -671,10 +733,10 @@ export class App {
   }
 
   private async importProject() {
-    const file = await pickTextFile(`${PROJECT_EXTENSION},.json`);
+    const file = await pickProjectFile();
     if (!file) return;
     try {
-      const p = parseProject(file.text);
+      const p = file.name.toLowerCase().endsWith('.png') ? readCartridge(new Uint8Array(file.bytes)) : parseProject(new TextDecoder().decode(file.bytes));
       const known = await allProfiles();
       const profile = p.profile;
       if (!known.some((x) => x.id === profile.id)) {
@@ -695,11 +757,14 @@ export class App {
 
   private exportProject() {
     this.project.blocks = Blockly.serialization.workspaces.save(this.ws);
-    downloadFile(safeFileName(this.project.name) + PROJECT_EXTENSION, serializeProject(this.project));
+    void saveCartridge(this.project, this.runner.pixelColor);
   }
 
   downloadSketch() {
+    clearTimeout(this.buildTimer);
+    this.runBuild(false);
     if (!this.build) return;
+    if (this.build.diagnostics.some(d => d.level === 'error')) {toast(t('device.fixErrors'), 'error');return;}
     const zip = sketchZip(this.project, this.build.cpp.code);
     downloadFile(`${safeFileName(this.project.name)}.zip`, zip as BlobPart, 'application/zip');
   }
@@ -709,6 +774,7 @@ export class App {
   private bindUi() {
     document.querySelectorAll<HTMLElement>('.tabs [data-tab]').forEach((b) => b.addEventListener('click', () => this.selectTab(b.dataset.tab!)));
     $('#btn-home').addEventListener('click', () => this.showHome());
+    $('#btn-guides').addEventListener('click', () => void this.showGuides());
     $('#btn-new').addEventListener('click', () => this.newFromGallery());
     $('#btn-open').addEventListener('click', () => openProjectsDialog(this.project.id, (p) => this.loadProject(p)));
     $('#btn-import').addEventListener('click', () => this.importProject());
@@ -768,6 +834,17 @@ export class App {
       }
     });
 
+    document.querySelectorAll<HTMLButtonElement>('[data-restore-blocks]').forEach(button => button.addEventListener('click', async () => {
+      if (!this.project.source) {this.selectTab('blocks');return;}
+      if (await confirmDialog(t('code.restoreBlocks'), t('code.restoreConfirm'))) {
+        delete this.project.source;
+        $('#pane-blocks').inert = false;
+        $('#blockly').classList.remove('text-mode-blocks');
+        this.runBuild(true);
+        this.selectTab('blocks');
+      }
+    }));
+
     // Simulator controls
     this.renderSimView();
     $('#btn-sim-view').addEventListener('click', () => {
@@ -805,6 +882,8 @@ export class App {
     });
     $('#btn-sim-color').addEventListener('click', () => {
       this.settings.pixelColor = this.runner.cyclePixelColor();
+      this.project.pixelColor = this.runner.pixelColor;
+      this.scheduleSave();
       saveSettings(this.settings);
       this.renderSimControls();
     });
@@ -828,7 +907,7 @@ export class App {
       b.addEventListener('pointercancel', up);
     });
     const editable = (el: EventTarget | null) =>
-      el instanceof HTMLElement && (el.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName) || !!el.closest('.blocklyWidgetDiv, dialog, .pixel-editor, .language-picker'));
+      el instanceof HTMLElement && (el.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName) || !!el.closest('.blocklyWidgetDiv, dialog, .pixel-editor, .language-picker, .monaco-editor'));
     window.addEventListener('keydown', (e) => {
       if (e.code === 'Escape' && this.simStandalone) {
         this.simStandalone = false;

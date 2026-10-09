@@ -261,7 +261,27 @@ Man kan skrive spillet som tekst i JavaScript eller Python i stedet for blokker.
 
 * JavaScript leses med en liten parser (for eksempel acorn), og Python med tree-sitter, begge i nettleseren.
 * Koden gjøres om til mellomformatet. Derfra lages C++ til enheten og JavaScript til simulatoren. Brukerens kode kjøres altså aldri direkte, slik at simulatoren regner likt med enheten.
-* Kode som tilsvarer blokker, blir blokker når man bytter tilbake. Kode som ikke har en blokk, vises som en grå blokk med koden inni, som i MakeCode.
+* Kode som tilsvarer blokker, blir blokker når man bytter tilbake.
+
+**Bytte mellom språk**
+
+* All oversetting går via mellomformatet. JavaScript blir til Python og omvendt uten at noe går tapt, så lenge koden holder seg innenfor det forenklede språket.
+* Kommentarer følger med når koden oversettes, og blir kommentarer på blokkene.
+* Navn som brukeren har valgt, beholdes. Bare navnene i spillmotoren endres mellom camelCase og snake_case.
+
+**Kodeblokk**
+
+* Kode som ikke har en egen blokk, blir en kodeblokk. Den viser koden inni blokken, og man kan skrive og endre kode direkte i den.
+* Kodeblokken finnes også i verktøykassen under Custom, slik at man kan dra den inn og skrive kode selv.
+* Kodeblokken lagrer koden i mellomformatet, ikke som tekst. Den vises derfor på det tekstspråket man sist brukte (JavaScript eller Python), og oversettes når man bytter. Hvilket språk kodeblokker viser, kan også velges under innstillinger.
+* Kodeblokken virker i simulatoren og på enheten, akkurat som andre blokker.
+* Skriver man noe som ikke er gyldig, blir blokken merket med en feil og en forklaring på valgt språk. Teksten man skrev beholdes, slik at man kan rette den.
+
+**C++ blokk**
+
+* C++ blokken (Custom) er noe annet enn kodeblokken. Den inneholder ren C++ som ikke kan oversettes.
+* Den beholdes uendret i alle visninger. I JavaScript og Python vises den som et kall med C++ koden som tekst, for eksempel `custom.cpp("...")`.
+* Den kjøres ikke i simulatoren før AVR-emulatoren er på plass, og simulatoren sier tydelig fra om det.
 
 **Et forenklet språk**
 

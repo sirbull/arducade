@@ -6,6 +6,7 @@ import { registerFieldMultilineInput } from '@blockly/field-multilineinput';
 import { registerAssetFields } from './assets';
 import { registerPointPicker } from './point-picker';
 import { registerAltDrag } from './alt-drag';
+import { registerBlockInfo } from './info-icon';
 import { ICONS, type IconName } from './icons';
 import { NOTE_CHOICES } from '../engine/melody';
 
@@ -336,6 +337,7 @@ export function defineBlocks() {
   registerAssetFields();
   registerPointPicker();
   registerAltDrag();
+  registerBlockInfo();
   for (const name of Object.keys(ICONS) as IconName[]) {
     Blockly.Extensions.register(`ab_icon_${name}`, function (this: Blockly.Block) {
       const first = this.inputList[0];

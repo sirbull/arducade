@@ -25,7 +25,7 @@ export interface GuideHost {
 }
 
 /** A small read only workspace that shows blocks as a picture. */
-function blockPicture(el: HTMLElement, blocks: Json[], theme: ThemeId, maxHeight: number): Blockly.WorkspaceSvg {
+export function blockPicture(el: HTMLElement, blocks: Json[], theme: ThemeId, maxHeight: number): Blockly.WorkspaceSvg {
   const ws = Blockly.inject(el, {
     readOnly: true,
     theme: blocklyTheme(theme),

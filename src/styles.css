@@ -1549,3 +1549,28 @@ input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='
 .cartridge-simulator-dialog .dialog-footer button { white-space: normal; }
 
 .project-preview-dialog .dialog-footer { grid-template-columns: minmax(0, 1fr); }
+
+/* Documentation: a list of sections beside the text and block pictures. */
+dialog.docs-dialog { width: min(1100px, calc(100vw - 32px)); height: min(820px, calc(100dvh - 48px)); max-height: none; }
+dialog.docs-dialog[open] { display: flex; flex-direction: column; }
+.dialog-body.docs { flex: 1; min-height: 0; max-height: none; display: grid; grid-template-columns: 210px 1fr; gap: 18px; overflow: hidden; }
+.docs-nav { display: flex; flex-direction: column; gap: 4px; overflow: auto; padding: 2px 4px 8px 2px; }
+.docs-nav h3 { margin: 12px 0 4px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.docs-nav h3:first-child { margin-top: 0; }
+.docs-nav button { text-align: left; box-shadow: none; background: transparent; }
+.docs-nav button[aria-current='true'] { background: var(--panel-2); border-color: var(--text); color: var(--accent); }
+.docs-content { overflow: auto; min-height: 0; padding-right: 6px; }
+.docs-content h2 { margin: 0 0 12px; font-size: 22px; }
+.docs-content p { line-height: 1.55; max-width: 70ch; }
+.docs-block { padding: 14px 0 18px; border-bottom: 1px solid var(--border); scroll-margin-top: 8px; }
+.docs-block.focus { border-left: 4px solid var(--accent); padding-left: 12px; }
+.docs-block h4 { margin: 14px 0 6px; font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+/* Pictures only: the page scrolls over them with touch and the wheel. */
+.docs-picture { min-height: 60px; pointer-events: none; }
+#btn-docs::before { content: '?'; margin-right: 7px; font-weight: 700; }
+@media (max-width: 700px) {
+  .dialog-body.docs { grid-template-columns: 1fr; grid-template-rows: auto 1fr; gap: 10px; }
+  .docs-nav { flex-direction: row; overflow-x: auto; padding-bottom: 6px; }
+  .docs-nav h3 { display: none; }
+  .docs-nav button { flex-shrink: 0; }
+}

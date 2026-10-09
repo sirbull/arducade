@@ -6,6 +6,7 @@ import 'blockly/blocks';
 import '../blocks/category';
 import { setAssetLabels, setAssetProject } from '../blocks/assets';
 import { defineBlocks } from '../blocks/defs';
+import { setBlockInfoHandler } from '../blocks/info-icon';
 import { buildToolbox } from '../blocks/toolbox';
 import { searchBlocks } from '../blocks/search';
 import { getChip } from '../hw/chips';
@@ -25,6 +26,7 @@ import type { TextEditor } from './text-editor';
 import { generateSource, parseSource, SourceError, type TextLanguage } from '../text/languages';
 import { CodeView } from './code-view';
 import { confirmDialog } from './dialogs';
+import { openDocs } from './docs';
 import { $, clear, h, toast } from './dom';
 import { loadTemplates, openGallery, openProjectsDialog, starButton, thumbnail } from './gallery';
 import { allProfiles, loadServerProfiles, openProfileDialog, profileFromUrl } from './profile-editor';
@@ -767,6 +769,8 @@ export class App {
     $('#btn-import').addEventListener('click', () => this.importProject());
     $('#btn-export').addEventListener('click', () => this.exportProject());
     $('#btn-settings').addEventListener('click', () => openSettings(this));
+    $('#btn-docs').addEventListener('click', () => openDocs(this.settings.theme as ThemeId));
+    setBlockInfoHandler((type) => openDocs(this.settings.theme as ThemeId, type));
     const languageTrigger = $('#lang');
     const languageMenu = $('#language-menu');
     const closeLanguageMenu = (restoreFocus = false) => {

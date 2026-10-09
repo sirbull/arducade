@@ -20,7 +20,7 @@ Editoren skal virke med alt fra en original Arduboy til hjemmelagde løsninger m
 ## 3. Arkitektur
 
 1. **Blokker:** Google Blockly med egne blokker.
-2. **To generatorer fra samme blokker:** C++ for enheten og JavaScript for simulatoren. JavaScript-koden regner med samme heltallsbredder som AVR (8 og 16 bit), slik at simulator og enhet oppfører seg likt.
+2. **Felles mellomformat (IR):** Blokker, JavaScript og Python gjøres alle om til samme mellomformat, et typet syntakstre for spillet. Fra mellomformatet lages C++ for enheten, JavaScript for simulatoren, og blokker, JavaScript eller Python når man bytter visning. Simulatorkoden regner med samme heltallsbredder som AVR (8 og 16 bit), slik at simulator og enhet oppfører seg likt. Mellomformatet bygges inn fra starten, selv om tekstspråkene kommer i runde 2.
 3. **Maskinvarelag:** Et eget tynt C++ lag (skjerm, knapper, lyd, EEPROM). Arduboy2 brukes ikke direkte, fordi pinnene der er hardkodet for originalen. Profilen blir til en `config.h`, og bare det valgte oppsettet kompileres inn. Egen minimal I2C-kode i stedet for `Wire` for å spare RAM. Sprites bruker samme byteformat som Arduboy2.
 4. **Kompilering i nettleseren:** avr-gcc kompilert til WebAssembly, kjørt i en Web Worker. Kompilatoren lastes ned første gang og lagres i nettleseren. All kode samles i én fil før kompilering, og ubrukt kode fjernes med `--gc-sections`.
    * Reserveplan hvis dette ikke holder: ferdig kompilert program per profil som kjører spillet som bytekode. Custom-blokker med C++ virker da ikke.
@@ -52,6 +52,7 @@ Editoren skal virke med alt fra en original Arduboy til hjemmelagde løsninger m
 * Flere spill på enheten: valgte prosjekter kompileres sammen til ett program med meny. Spillene deler maskinvarelag. Realistisk to til fire små spill.
 * Kode tilbake til blokker: gjenkjent kode blir vanlige blokker, alt annet blir custom-blokker. Bruker tree-sitter (WebAssembly).
 * Konverter til kode: gjør prosjektet om til et rent tekstprosjekt. Går én vei, blokkene beholdes som kopi.
+* Skriv spillet i JavaScript eller Python, og bytt fritt mellom dem og blokkene, som i MakeCode Arcade (se punkt 15).
 
 ### Senere
 
@@ -246,7 +247,48 @@ Editoren kan vises på flere språk, slik som MakeCode Arcade. All kode er likev
 * Et lite skript lister opp tekster som mangler i hvert språk.
 * Senere: oversettelse via en tjeneste som Crowdin, slik at andre kan bidra.
 
-## 15. Åpne spørsmål
+## 15. JavaScript og Python
+
+Man kan skrive spillet som tekst i JavaScript eller Python i stedet for blokker. Koden gjøres om til C++ som virker på alle chiper og profiler, akkurat som blokkene.
+
+**Visning**
+
+* Faner øverst: Blocks, JavaScript og Python, som i MakeCode Arcade. Man kan bytte fritt, og koden gjøres om mellom dem.
+* C++ vises i en egen fane som kun kan leses. Den kan gjøres om til et rent C++ prosjekt (se Konverter til kode).
+* Kodeeditoren er Monaco (samme som i VS Code), med fargelegging, autofullføring og forklaring av funksjonene i spillmotoren på valgt språk.
+
+**Slik virker det**
+
+* JavaScript leses med en liten parser (for eksempel acorn), og Python med tree-sitter, begge i nettleseren.
+* Koden gjøres om til mellomformatet. Derfra lages C++ til enheten og JavaScript til simulatoren. Brukerens kode kjøres altså aldri direkte, slik at simulatoren regner likt med enheten.
+* Kode som tilsvarer blokker, blir blokker når man bytter tilbake. Kode som ikke har en blokk, vises som en grå blokk med koden inni, som i MakeCode.
+
+**Et forenklet språk**
+
+En mikrokontroller med 2 KB RAM kan ikke kjøre fullt JavaScript eller Python. Begge språkene er derfor et avgrenset utvalg, med samme regler:
+
+* Variabler får fast type som finnes ut fra koden: heltall, desimaltall (fastpunkt), sann/usann, tekst, sprite og lister.
+* Desimaltall gjøres om til fastpunkt, aldri flyttall.
+* Lister har en fast maks lengde.
+* Tekst er faste tekster som lagres i flash, pluss tall som skrives ut.
+* Funksjoner, hendelser, `if`, `while`, `for` og spillmotorens API er med.
+* Ikke med: egne klasser, closures, dynamiske objekter og ordbøker, unntak, `eval`, og import av andre biblioteker.
+* Bruker man noe som ikke er med, gir editoren en vennlig feilmelding på valgt språk som peker på linjen og foreslår et alternativ.
+
+**Eksempel (Python)**
+
+```python
+player = sprites.create(images.ship, SpriteKind.Player)
+controller.move_sprite(player, 60, 0)
+
+def on_a_pressed():
+    shot = sprites.create_projectile(images.shot, 0, -80, player)
+controller.A.on_event(ControllerButtonEvent.PRESSED, on_a_pressed)
+```
+
+Samme spill i JavaScript bruker de samme navnene i camelCase, som i MakeCode: `controller.moveSprite(player, 60, 0)`.
+
+## 16. Åpne spørsmål
 
 * Hvilken skjerm, buss og pinner har den første enheten (Nano)?
 * Hvilken bootloader har den?

@@ -925,10 +925,11 @@ export class Engine {
   }
 
   /** Runs one frame if it is time for it. Returns false if it was not. */
-  async frame(): Promise<boolean> {
+  /** force runs the frame now, used for gallery pictures. */
+  async frame(force = false): Promise<boolean> {
     if (this.busy || this.stopped) return false;
     const now = this.millis();
-    if (now - this.nextFrame < 0) return false;
+    if (!force && now - this.nextFrame < 0) return false;
     this.busy = true;
     try {
       this.nextFrame += FRAME_MS;

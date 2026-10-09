@@ -15,6 +15,10 @@ export function setAssetProject(p: Project | null) {
   previewCache.clear();
 }
 
+export function getAssetProject(): Project | null {
+  return current;
+}
+
 export function setAssetLabels(kind: (name: string) => string, none: string) {
   kindLabel = kind;
   noneLabel = none;

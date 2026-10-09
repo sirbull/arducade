@@ -83,6 +83,8 @@ interface Def {
   /** Statement input after the text, for event and loop blocks. */
   body?: boolean;
   inline?: boolean;
+  /** Inputs that start a new row, so long inline blocks stay narrow. */
+  rows?: string[];
 }
 
 const GAME = { icon: 'game', style: 'ab_game' } as const;
@@ -96,8 +98,8 @@ const MATH = { icon: 'math', style: 'ab_math' } as const;
 const CUSTOM = { icon: 'custom', style: 'ab_custom' } as const;
 
 export const DEFS: Def[] = [
-  { type: 'ab_particle_pixel', ...GRAPHICS, msg: 'AB_PARTICLE_PIXEL', args: [num('X'), num('Y'), num('VX'), num('VY'), num('MS'), num('END_VX'), num('END_VY'), PARTICLE_COLOR], statement: true },
-  { type: 'ab_particle_image', ...GRAPHICS, msg: 'AB_PARTICLE_IMAGE', args: [image(), num('X'), num('Y'), num('VX'), num('VY'), num('MS'), num('END_VX'), num('END_VY'), PARTICLE_COLOR], statement: true },
+  { type: 'ab_particle_pixel', ...GRAPHICS, msg: 'AB_PARTICLE_PIXEL', args: [num('X'), num('Y'), num('VX'), num('VY'), num('MS'), num('END_VX'), num('END_VY'), PARTICLE_COLOR], statement: true, inline: true, rows: ['VX', 'MS'] },
+  { type: 'ab_particle_image', ...GRAPHICS, msg: 'AB_PARTICLE_IMAGE', args: [image(), num('X'), num('Y'), num('VX'), num('VY'), num('MS'), num('END_VX'), num('END_VY'), PARTICLE_COLOR], statement: true, inline: true, rows: ['VX', 'MS'] },
   { type: 'ab_particles_clear', ...GRAPHICS, msg: 'AB_PARTICLES_CLEAR', statement: true },
   // Game
   { type: 'ab_on_start', ...GAME, msg: 'AB_ON_START', hat: true, body: true },
@@ -325,6 +327,7 @@ function toJson(d: Def): Record<string, unknown> {
     json.args1 = [{ type: 'input_statement', name: 'DO' }];
   }
   if (d.inline) json.inputsInline = true;
+  if (d.rows) (json.extensions as string[]).push('ab_rows');
   return json;
 }
 
@@ -344,6 +347,13 @@ export function defineBlocks() {
       if (first) first.insertFieldAt(0, new Blockly.FieldImage(ICONS[name], 16, 16, ''), 'ICON');
     });
   }
+  const rows = new Map(DEFS.map((d) => [d.type, d.rows ?? []]));
+  Blockly.Extensions.register('ab_rows', function (this: Blockly.Block) {
+    rows.get(this.type)!.forEach((name, i) => {
+      this.appendEndRowInput(`ROW${i}`);
+      this.moveInputBefore(`ROW${i}`, name);
+    });
+  });
   Blockly.common.defineBlocksWithJsonArray(DEFS.map(toJson));
 }
 

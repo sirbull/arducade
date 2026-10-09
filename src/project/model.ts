@@ -123,7 +123,7 @@ export function newProject(name: string, profile?: Profile): Project {
     modified: now,
     profile: profile ?? BUILTIN_PROFILES.find((p) => p.id === DEFAULT_PROFILE_ID)!,
     pixelColor: 'white',
-    blocks: {},
+    blocks: { blocks: { languageVersion: 0, blocks: [{ type: 'ab_on_start', x: 20, y: 20 }] } },
     images: [],
     tiles: [],
     tilemaps: [],

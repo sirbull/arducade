@@ -781,12 +781,8 @@ legend {
   padding: 12px;
 }
 
-/* Narrow screens: stack the editor and the simulator. */
+/* Narrow screens: wrap the top bar. */
 @media (max-width: 900px) {
-  html,
-  body {
-    overflow: auto;
-  }
   .topbar {
     flex-wrap: wrap;
     height: auto;
@@ -794,6 +790,13 @@ legend {
   }
   .actions {
     flex-wrap: wrap;
+  }
+}
+/* Phones: stack the editor and the simulator and let the page scroll. */
+@media (max-width: 600px) {
+  html,
+  body {
+    overflow: auto;
   }
   .layout {
     display: flex;
@@ -983,8 +986,10 @@ dialog::backdrop { background: #17211980; backdrop-filter: blur(5px); }
   .layout { height: calc(100% - 112px); }
   .brand { font-size: 18px; }
 }
-@media (max-width: 900px) {
+@media (max-width: 600px) {
   .layout { height: auto; }
+}
+@media (max-width: 900px) {
   .topbar .spacer { display: none; }
   .project-name { width: 160px; }
   .tabs { gap: 4px; padding: 10px; }
@@ -1012,7 +1017,7 @@ body { display: flex; flex-direction: column; }
 .home h2 { letter-spacing: -.5px; }
 .home .gallery { grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); max-width: 1000px; }
 .brand { box-shadow: none; background: transparent; border-color: transparent; padding: 0; }
-@media (max-width: 900px) {
+@media (max-width: 600px) {
   body { display: block; }
   .layout { min-height: 0; }
   .home { overflow: visible; }

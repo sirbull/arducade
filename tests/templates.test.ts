@@ -1,9 +1,8 @@
 // @vitest-environment jsdom
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { div16, mod16 } from '../src/sim/intmath';
+import { loadGame } from '../src/sim/load';
 import { Engine } from '../src/sim/engine';
-import type { GameHooks } from '../src/gen/js';
 import { TEMPLATE_SOURCES, templateToProject } from '../src/templates';
 import { compileProject } from './helpers';
 
@@ -31,13 +30,10 @@ describe.each(TEMPLATE_SOURCES.map((t) => [t.id, t] as const))('template %s', (i
       show: () => frames++,
       tone: () => {},
       storage: { read: () => 0, write: () => {} },
-      onSkippedCpp: () => {},
       maxSprites: 12,
       hiscoreMagic: js.hiscoreKey,
     });
-    const factory = new Function('E', '$w', '$div', '$mod', '$lg', js.code) as (...a: unknown[]) => GameHooks;
-    const hooks = factory(engine, (v: number) => (v << 16) >> 16, div16, mod16, engine.loopGuard);
-    await engine.begin(hooks);
+    await engine.begin(loadGame(js.code, engine));
     for (let i = 0; i < 300; i++) {
       // Hold right and press A now and then.
       engine.input = (1 << 3) | (i % 20 < 3 ? 1 << 4 : 0);

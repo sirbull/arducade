@@ -64,8 +64,11 @@ export interface EngineOptions {
   tone(freq: number, ms?: number): void;
   /** Reads and writes the simulated EEPROM. */
   storage: { read(addr: number): number; write(addr: number, v: number): void };
-  /** Called once when the game uses a C++ block. */
-  onSkippedCpp(): void;
+  /**
+   * Reports a problem found while the game runs, with the block that was
+   * running. Used to mark the block and explain what to do.
+   */
+  onWarning?(key: string, params: Record<string, string | number> | undefined, blockId: string | undefined): void;
   maxSprites: number;
   hiscoreMagic: number;
 }
@@ -111,7 +114,8 @@ export class Engine {
   private stopped = false;
   private busy = false;
   private loopCount = 0;
-  private warnedCpp = false;
+  /** Block that is running now, set by the generated code. */
+  currentBlock: string | undefined;
 
   constructor(private opts: EngineOptions) {
     this.maxSprites = opts.maxSprites;
@@ -129,11 +133,26 @@ export class Engine {
     if (++this.loopCount > 200000) throw new LoopError();
   };
 
+  /** Called by the generated code before each block runs. */
+  at = (id: string) => {
+    this.currentBlock = id;
+  };
+
+  warn(key: string, params?: Record<string, string | number>) {
+    this.opts.onWarning?.(key, params, this.currentBlock);
+  }
+
   skippedCpp() {
-    if (!this.warnedCpp) {
-      this.warnedCpp = true;
-      this.opts.onSkippedCpp();
+    this.warn('runtime.cppSkipped');
+  }
+
+  /** Warns when a sprite variable was never given a sprite. */
+  private need(s: number): boolean {
+    if (s === NONE) {
+      this.warn('runtime.noSprite');
+      return false;
     }
+    return true;
   }
 
   millis(): number {
@@ -474,6 +493,7 @@ export class Engine {
   }
 
   getProp(s: number, prop: number): number {
+    if (!this.need(s)) return 0;
     if (!this.exists(s)) return 0;
     const sp = this.sprites[s];
     const w = sp.img ? sp.img[0] : 0;
@@ -496,6 +516,7 @@ export class Engine {
   }
 
   setProp(s: number, prop: number, v: number) {
+    if (!this.need(s)) return;
     if (!this.exists(s)) return;
     const sp = this.sprites[s];
     const w = sp.img ? sp.img[0] : 0;
@@ -531,10 +552,12 @@ export class Engine {
         return i;
       }
     }
+    this.warn('runtime.tooManySprites', { max: this.maxSprites });
     return NONE;
   }
 
   createProjectile(img: Uint8Array | null, vx: number, vy: number, from: number): number {
+    if (!this.need(from)) return NONE;
     const s = this.create(img, KIND_PROJECTILE);
     if (s === NONE) return s;
     const sp = this.sprites[s];
@@ -549,6 +572,7 @@ export class Engine {
   }
 
   destroy(s: number) {
+    if (!this.need(s)) return;
     if (s >= 0 && s < this.maxSprites) this.sprites[s].alive = false;
     if (s === this.cameraSprite) this.cameraSprite = NONE;
   }
@@ -562,10 +586,12 @@ export class Engine {
   }
 
   setKind(s: number, kind: number) {
+    if (!this.need(s)) return;
     if (this.exists(s)) this.sprites[s].kind = kind;
   }
 
   setImage(s: number, img: Uint8Array | null) {
+    if (!this.need(s)) return;
     if (this.exists(s)) {
       this.sprites[s].img = img;
       this.sprites[s].frame = 0;
@@ -573,24 +599,28 @@ export class Engine {
   }
 
   setPosition(s: number, x: number, y: number) {
+    if (!this.need(s)) return;
     if (!this.exists(s)) return;
     this.sprites[s].x = x * 256;
     this.sprites[s].y = y * 256;
   }
 
   setVelocity(s: number, vx: number, vy: number) {
+    if (!this.need(s)) return;
     if (!this.exists(s)) return;
     this.sprites[s].vx = clamp16(vx * 16);
     this.sprites[s].vy = clamp16(vy * 16);
   }
 
   setFlag(s: number, flag: number, on: boolean) {
+    if (!this.need(s)) return;
     if (!this.exists(s)) return;
     if (on) this.sprites[s].flags |= flag;
     else this.sprites[s].flags &= ~flag;
   }
 
   animate(s: number, ms: number) {
+    if (!this.need(s)) return;
     if (!this.exists(s)) return;
     const f = ms <= 0 ? 0 : tdiv(ms + tdiv(FRAME_MS, 2), FRAME_MS);
     this.sprites[s].animRate = f <= 0 ? (ms > 0 ? 1 : 0) : Math.min(f, 255);
@@ -598,10 +628,12 @@ export class Engine {
   }
 
   isHitting(s: number, dir: number): boolean {
+    if (!this.need(s)) return false;
     return this.exists(s) && (this.sprites[s].hit & dir) !== 0;
   }
 
   overlaps(a: number, b: number): boolean {
+    if (!this.need(a) || !this.need(b)) return false;
     if (!this.exists(a) || !this.exists(b) || a === b) return false;
     const sa = this.sprites[a];
     const sb = this.sprites[b];
@@ -617,12 +649,14 @@ export class Engine {
   }
 
   moveWithButtons(s: number, vx: number, vy: number) {
+    if (!this.need(s)) return;
     this.controlled = s;
     this.controlVx = vx;
     this.controlVy = vy;
   }
 
   cameraFollow(s: number) {
+    if (!this.need(s)) return;
     this.cameraSprite = s;
   }
 

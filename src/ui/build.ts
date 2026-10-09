@@ -2,13 +2,15 @@
 
 import * as Blockly from 'blockly/core';
 import { getAssetProject, setAssetProject } from '../blocks/assets';
+import { EVENT_BLOCKS } from '../blocks/defs';
 import { workspaceToIR } from '../blocks/toIR';
+import { lintProgram } from '../ir/lint';
 import { generateCpp, type CppResult } from '../gen/cpp';
-import { generateJs, type GameHooks, type JsResult } from '../gen/js';
+import { generateJs, type JsResult } from '../gen/js';
 import type { Diagnostic, Program } from '../ir/ir';
 import type { Project } from '../project/model';
 import { Engine } from '../sim/engine';
-import { div16, mod16 } from '../sim/intmath';
+import { loadGame } from '../sim/load';
 
 export interface BuildResult {
   program: Program;
@@ -21,8 +23,13 @@ export function buildWorkspace(ws: Blockly.Workspace, project: Project): BuildRe
   const ir = workspaceToIR(ws);
   const cpp = generateCpp(ir.program, project);
   const js = generateJs(ir.program, project);
+  // Blocks that are not inside an event or a function never run.
+  const orphans: Diagnostic[] = ws
+    .getTopBlocks(false)
+    .filter((b) => !EVENT_BLOCKS.has(b.type) && !b.type.startsWith('procedures_def') && !b.isShadow())
+    .map((b) => ({ level: 'warning', key: 'diag.orphan', id: b.id }));
   const seen = new Set<string>();
-  const diagnostics = [...ir.diagnostics, ...cpp.diagnostics].filter((d) => {
+  const diagnostics = [...ir.diagnostics, ...cpp.diagnostics, ...lintProgram(ir.program), ...orphans].filter((d) => {
     const key = `${d.key}|${d.id}|${JSON.stringify(d.params ?? {})}`;
     if (seen.has(key)) return false;
     seen.add(key);
@@ -53,13 +60,11 @@ export async function gameThumbnail(project: Project, frames = 45): Promise<stri
     show: (b) => (last = b.slice()),
     tone: () => {},
     storage: { read: () => 0, write: () => {} },
-    onSkippedCpp: () => {},
     maxSprites: 16,
     hiscoreMagic: js.hiscoreKey,
   });
   const run = async () => {
-    const factory = new Function('E', '$w', '$div', '$mod', '$lg', js.code) as (...a: unknown[]) => GameHooks;
-    await engine.begin(factory(engine, (v: number) => (v << 16) >> 16, div16, mod16, engine.loopGuard));
+    await engine.begin(loadGame(js.code, engine));
     for (let i = 0; i < frames; i++) await engine.frame(true);
   };
   // A game waiting for a button (splash) must not block the gallery.

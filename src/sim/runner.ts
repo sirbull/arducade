@@ -3,7 +3,7 @@
 
 import { BUTTON_IDS } from '../engine/enums';
 import type { GameHooks, JsResult } from '../gen/js';
-import { div16, mod16 } from './intmath';
+import { loadGame } from './load';
 import { Engine, LoopError, StopSignal } from './engine';
 
 export type PixelColor = 'white' | 'blue' | 'yellow';
@@ -25,8 +25,10 @@ const KEYS: string[][] = [
 ];
 
 export interface RunnerEvents {
-  onError(key: string, detail?: string): void;
-  onSkippedCpp(): void;
+  /** The game stopped. blockId is the block that was running. */
+  onError(key: string, params: Record<string, string | number> | undefined, blockId: string | undefined): void;
+  /** A problem while the game runs; the game goes on. */
+  onWarning(key: string, params: Record<string, string | number> | undefined, blockId: string | undefined): void;
 }
 
 export class Runner {
@@ -142,14 +144,6 @@ export class Runner {
   /** Starts a game from generated JavaScript. */
   async start(game: JsResult, storageKey: string, maxSprites = 16) {
     this.stop();
-    let hooksFactory: (E: Engine, ...helpers: unknown[]) => GameHooks;
-    try {
-      // The generated code only uses the engine and the helpers passed in.
-      hooksFactory = new Function('E', '$w', '$div', '$mod', '$lg', game.code) as typeof hooksFactory;
-    } catch (err) {
-      this.events.onError('sim.compileError', String(err));
-      return;
-    }
     const storage = loadStorage(storageKey);
     const engine = new Engine({
       show: (buf, inv) => this.show(buf, inv),
@@ -161,13 +155,19 @@ export class Runner {
           storage.save();
         },
       },
-      onSkippedCpp: () => this.events.onSkippedCpp(),
+      onWarning: (key, params, id) => this.events.onWarning(key, params, id),
       maxSprites,
       hiscoreMagic: game.hiscoreKey,
     });
     this.engine = engine;
     this.syncInput();
-    const hooks = hooksFactory(engine, (v: number) => (v << 16) >> 16, div16, mod16, engine.loopGuard);
+    let hooks: GameHooks;
+    try {
+      hooks = loadGame(game.code, engine);
+    } catch (err) {
+      this.events.onError('runtime.error', { detail: String(err) }, undefined);
+      return;
+    }
     this.running = true;
     try {
       await engine.begin(hooks);
@@ -185,9 +185,10 @@ export class Runner {
 
   private fail(err: unknown) {
     if (err instanceof StopSignal) return;
+    const block = this.engine?.currentBlock;
     this.stop();
-    if (err instanceof LoopError) this.events.onError('sim.infiniteLoop');
-    else this.events.onError('sim.runtimeError', err instanceof Error ? err.message : String(err));
+    if (err instanceof LoopError) this.events.onError('runtime.infiniteLoop', undefined, block);
+    else this.events.onError('runtime.error', { detail: err instanceof Error ? err.message : String(err) }, block);
   }
 
   stop() {

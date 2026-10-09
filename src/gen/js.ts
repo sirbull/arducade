@@ -154,7 +154,11 @@ class JsGen {
   }
 
   stmts(list: Stmt[]) {
-    for (const s of list) this.stmt(s);
+    for (const s of list) {
+      // Tell the engine which block runs, to point at it if something goes wrong.
+      if (s.id) this.w.line(`$at(${JSON.stringify(s.id)});`);
+      this.stmt(s);
+    }
   }
 
   block(body: Stmt[]) {

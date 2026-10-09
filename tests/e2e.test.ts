@@ -8,10 +8,9 @@ import { pathToFileURL } from 'node:url';
 import { AVREEPROM, AVRIOPort, AVRTimer, AVRTWI, avrInstruction, CPU, EEPROMMemoryBackend, portBConfig, portCConfig, portDConfig, timer0Config, timer1Config, timer2Config, twiConfig } from 'avr8js';
 import { describe, expect, it } from 'vitest';
 import { compileGame, type FileSource } from '../src/compile/avrgcc';
-import type { GameHooks } from '../src/gen/js';
 import { BUILTIN_PROFILES, profileToConfigH } from '../src/hw/profile';
 import { Engine } from '../src/sim/engine';
-import { div16, mod16 } from '../src/sim/intmath';
+import { loadGame } from '../src/sim/load';
 import { TEMPLATE_SOURCES, templateToProject } from '../src/templates';
 import { parseHex } from '../src/upload/serial';
 import { compileProject } from './helpers';
@@ -134,12 +133,10 @@ async function runInSimulator(js: { code: string; hiscoreKey: number }, frames: 
     show: (b) => out.push(b.slice()),
     tone: () => {},
     storage: { read: () => 0xff, write: () => {} },
-    onSkippedCpp: () => {},
     maxSprites: 12,
     hiscoreMagic: js.hiscoreKey,
   });
-  const factory = new Function('E', '$w', '$div', '$mod', '$lg', js.code) as (...a: unknown[]) => GameHooks;
-  await engine.begin(factory(engine, (v: number) => (v << 16) >> 16, div16, mod16, engine.loopGuard));
+  await engine.begin(loadGame(js.code, engine));
   while (out.length < frames) {
     engine.input = inputFor(out.length + 1);
     await engine.frame(true);

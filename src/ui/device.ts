@@ -125,6 +125,14 @@ export class DeviceTools {
     } catch (e) {
       const log = (e as { log?: string[] }).log ?? [];
       this.status(t('device.compileFailed'));
+      // Point at the blocks whose C++ the compiler complained about.
+      const problems = compilerErrorsToBlocks(log, build.cpp.ranges);
+      this.app.compileProblems = problems;
+      this.app.refreshProblems();
+      if (problems.length) {
+        toast(t('device.compileFailedBlocks'), 'error');
+        return null;
+      }
       const d = openDialog(t('device.compileFailed'), { wide: true });
       d.body.append(h('p', {}, t('device.compileFailedHelp')), h('pre', { class: 'log' }, log.join('\n') || String((e as Error).message)));
       d.footer.append(h('button', { class: 'primary', onclick: () => d.close() }, t('ui.ok')));
@@ -234,4 +242,24 @@ export class DeviceTools {
       );
     });
   }
+}
+
+/** Turns "game.cpp:12:5: error: ..." lines into problems on the block that made line 12. */
+export function compilerErrorsToBlocks(log: string[], ranges: Map<string, [number, number]>): Diagnostic[] {
+  const out: Diagnostic[] = [];
+  for (const line of log) {
+    const m = /game\.cpp:(\d+):\d+: (?:fatal )?error: (.*)$/.exec(line);
+    if (!m) continue;
+    const ln = Number(m[1]) - 1;
+    let best: string | undefined;
+    let size = Infinity;
+    for (const [id, [a, b]] of ranges) {
+      if (ln >= a && ln <= b && b - a < size) {
+        best = id;
+        size = b - a;
+      }
+    }
+    if (best && !out.some((d) => d.id === best)) out.push({ level: 'error', key: 'cpp.error', params: { detail: m[2] }, id: best });
+  }
+  return out;
 }

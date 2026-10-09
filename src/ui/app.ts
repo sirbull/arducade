@@ -26,6 +26,12 @@ import { openFirstRun, openSettings } from './settings-dialog';
 import { applyPageTheme, blocklyTheme, THEME_IDS, type ThemeId } from './themes';
 import { DeviceTools } from './device';
 
+/** The hint for a problem: what the user can do about it. Empty if none. */
+function hintText(key: string, params?: Record<string, string | number>): string {
+  const hint = t(`${key}.hint`, params);
+  return hint === `${key}.hint` ? '' : hint;
+}
+
 const DEFAULT_SETTINGS: Settings = {
   language: 'en',
   theme: 'arduboy',
@@ -51,6 +57,13 @@ export class App {
   private loading = false;
   private activeTab = 'blocks';
   private lastJs = '';
+  /** Problems found while the simulator runs. */
+  private runtimeProblems: Diagnostic[] = [];
+  /** Errors from the C++ compiler, linked to blocks. */
+  compileProblems: Diagnostic[] = [];
+  private problemTimer = 0;
+  /** Blocks that have a problem marker. */
+  private markedBlocks = new Set<string>();
 
   async init() {
     const params = new URLSearchParams(location.search);
@@ -67,8 +80,11 @@ export class App {
 
     this.codeView = new CodeView($('#code'));
     this.runner = new Runner($('#screen') as HTMLCanvasElement, {
-      onError: (key, detail) => this.simMessage(t(key) + (detail ? `: ${detail}` : ''), 'error'),
-      onSkippedCpp: () => this.simMessage(t('sim.skippedCpp'), 'info'),
+      onError: (key, params, id) => {
+        this.addRuntimeProblem({ level: 'error', key, params, id });
+        this.simMessage(`${t(key, params)} ${hintText(key, params)}`, 'error');
+      },
+      onWarning: (key, params, id) => this.addRuntimeProblem({ level: 'warning', key, params, id }),
     });
     this.runner.pixelColor = this.settings.pixelColor as PixelColor;
     this.runner.muted = this.settings.muted;
@@ -178,9 +194,11 @@ export class App {
   /** Regenerates code from the blocks and restarts the simulator. */
   runBuild(forceRestart: boolean) {
     this.project.blocks = Blockly.serialization.workspaces.save(this.ws);
+    const before = this.build?.cpp.code;
     this.build = buildWorkspace(this.ws, this.project);
+    if (this.build.cpp.code !== before) this.compileProblems = [];
     this.codeView.setCode(this.build.cpp.code);
-    this.renderProblems(this.build.diagnostics);
+    this.refreshProblems();
     this.device.estimate();
     this.scheduleSave();
     if (forceRestart || this.build.js.code !== this.lastJs) {
@@ -220,6 +238,10 @@ export class App {
   restartSim() {
     if (!this.build) return;
     this.simMessage('', 'info');
+    if (this.runtimeProblems.length) {
+      this.runtimeProblems = [];
+      this.refreshProblems();
+    }
     const errors = this.build.diagnostics.filter((d) => d.level === 'error');
     if (errors.length) {
       this.runner.stop();
@@ -247,30 +269,70 @@ export class App {
 
   // Panels ----------------------------------------------------------------
 
-  private renderProblems(list: Diagnostic[]) {
+  private addRuntimeProblem(d: Diagnostic) {
+    const same = (x: Diagnostic) => x.key === d.key && x.id === d.id;
+    if (this.runtimeProblems.some(same)) return;
+    this.runtimeProblems.push({ ...d, runtime: true } as Diagnostic);
+    // Many warnings can come in one frame: update the panel once.
+    clearTimeout(this.problemTimer);
+    this.problemTimer = window.setTimeout(() => this.refreshProblems(), 50);
+  }
+
+  /** Shows all problems in the panel and marks the blocks they belong to. */
+  refreshProblems() {
+    const all = [...(this.build?.diagnostics ?? []), ...this.device.warnings(), ...this.compileProblems, ...this.runtimeProblems];
     const ul = $('#problems');
     clear(ul);
-    const extra = this.device.warnings();
-    const all = [...list, ...extra];
     $('#problems-panel').hidden = all.length === 0;
-    for (const d of all) {
-      const params: Record<string, string | number> = { ...(d.params ?? {}) };
-      const li = h('li', { class: d.level }, t(d.key, params));
+    // Errors first, then warnings.
+    const sorted = [...all].sort((a, b) => (a.level === b.level ? 0 : a.level === 'error' ? -1 : 1));
+    for (const d of sorted) {
+      const li = h(
+        'li',
+        { class: d.level },
+        h('span', { class: 'problem-text' }, t(d.key, d.params)),
+        (d as { runtime?: boolean }).runtime ? h('span', { class: 'problem-tag' }, t('problems.runtime')) : null,
+        hintText(d.key, d.params) ? h('span', { class: 'problem-hint' }, hintText(d.key, d.params)) : null,
+      );
       if (d.id) {
         li.classList.add('clickable');
         li.tabIndex = 0;
-        const go = () => {
-          const b = this.ws.getBlockById(d.id!);
-          if (b) {
-            this.selectTab('blocks');
-            this.ws.centerOnBlock(b.id);
-            (b as Blockly.BlockSvg).select();
-          }
-        };
+        const go = () => this.showBlock(d.id!);
         li.addEventListener('click', go);
         li.addEventListener('keydown', (e) => e.key === 'Enter' && go());
       }
       ul.append(li);
+    }
+    this.markBlocks(all);
+  }
+
+  private showBlock(id: string) {
+    const b = this.ws.getBlockById(id);
+    if (!b) return;
+    this.selectTab('blocks');
+    this.ws.centerOnBlock(b.id);
+    (b as Blockly.BlockSvg).select();
+  }
+
+  /** Puts a coloured outline and a warning bubble on blocks with problems. */
+  private markBlocks(list: Diagnostic[]) {
+    for (const id of this.markedBlocks) {
+      const b = this.ws.getBlockById(id) as Blockly.BlockSvg | null;
+      if (!b) continue;
+      b.setWarningText(null, 'ab');
+      b.removeClass('ab-error');
+      b.removeClass('ab-warning');
+    }
+    this.markedBlocks.clear();
+    const byBlock = new Map<string, Diagnostic[]>();
+    for (const d of list) if (d.id) byBlock.set(d.id, [...(byBlock.get(d.id) ?? []), d]);
+    for (const [id, ds] of byBlock) {
+      const b = this.ws.getBlockById(id) as Blockly.BlockSvg | null;
+      if (!b) continue;
+      const error = ds.some((d) => d.level === 'error');
+      b.addClass(error ? 'ab-error' : 'ab-warning');
+      b.setWarningText(ds.map((d) => [t(d.key, d.params), hintText(d.key, d.params)].filter(Boolean).join('\n')).join('\n\n'), 'ab');
+      this.markedBlocks.add(id);
     }
   }
 

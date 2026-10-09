@@ -799,3 +799,33 @@ legend {
     width: 100%;
   }
 }
+
+/* Blocks with problems: a coloured outline, like a highlight pen. */
+.ab-error > .blocklyPath {
+  stroke: #ff5a4a !important;
+  stroke-width: 3px !important;
+  filter: drop-shadow(0 0 4px rgba(255, 90, 74, 0.8));
+}
+.ab-warning > .blocklyPath {
+  stroke: #ffc24a !important;
+  stroke-width: 3px !important;
+  filter: drop-shadow(0 0 3px rgba(255, 194, 74, 0.7));
+}
+.problem-text {
+  display: block;
+}
+.problem-hint {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+  margin-top: 2px;
+}
+.problem-tag {
+  display: inline-block;
+  font-size: 11px;
+  color: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0 4px;
+  margin-top: 2px;
+}

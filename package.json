@@ -10,9 +10,9 @@
     "preview": "vite preview",
     "gen": "node scripts/gen-core.mjs && tsx scripts/build-templates.ts && node scripts/copy-compiler.mjs",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "check-locales": "node scripts/check-locales.mjs"
   },
-  "license": "MIT",
   "dependencies": {
     "@blockly/field-multilineinput": "^13.3.0",
     "@horang-corp/avr-gcc-wasm": "^0.2.0",

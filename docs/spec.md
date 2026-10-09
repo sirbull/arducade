@@ -75,7 +75,10 @@ En profil består av mikrokontroller, skjerm, buss, pinner for knapper, skjerm o
 
 **Custom**
 
-* Mikrokontroller: ATmega328P eller ATmega32U4.
+* Mikrokontroller: alle chiper med nok minne for en Arduboy-skjerm (minst 2 KB RAM og 32 KB flash):
+  * Kompileres og lastes opp i nettleseren: ATmega328P, ATmega328PB, ATmega32U4 og ATmega644P.
+  * Lastes ned som sketch til Arduino IDE: ATmega1284P, ATmega2560, ATmega4809, LGT8F328P, RP2040, ESP32, ESP8266, SAMD21 og STM32F103.
+  * Chiper med for lite RAM (ATmega168, ATmega8, ATtiny85) vises med en forklaring.
 * Skjerm: SSD1306, SH1106 eller SSD1309. Buss: I2C eller SPI.
 * I2C: adresse 0x3C eller 0x3D.
 * SPI: valgfri pinne for CS, DC og RST.
@@ -308,7 +311,23 @@ controller.A.on_event(ControllerButtonEvent.PRESSED, on_a_pressed)
 
 Samme spill i JavaScript bruker de samme navnene i camelCase, som i MakeCode: `controller.moveSprite(player, 60, 0)`.
 
-## 16. Åpne spørsmål
+## 16. Status
+
+Versjon 0.1 (9. oktober 2026) har:
+
+* Blokkeditor med alle kategoriene, ikoner, fem temaer og fem språk.
+* Spillmotor i C++ og en simulator som regner likt.
+* Malene Tomt prosjekt, Platformer, Pong og Romskyting.
+* Bilde-, rute- og tilekarteditor, sprite-typer.
+* Maskinvareprofiler med kontroll av pinner, lagring som fil og lenker.
+* Prosjekter i nettleseren, nedlasting og opplasting som fil.
+* Kompilering i nettleseren for ATmega328P, 328PB, 32U4 og 644P, med nøyaktig plassmåler.
+* Opplasting over Web Serial med STK500v1 og AVR109.
+* Nedlasting av sketch for Arduino IDE for alle chiper.
+
+Gjenstår: JavaScript og Python (punkt 15), kode tilbake til blokker, flere spill på én enhet, kompilering i nettleseren for flere chiper, maler for Snake og Breakout.
+
+## 17. Åpne spørsmål
 
 * Hvilken skjerm, buss og pinner har den første enheten (Nano)?
 * Hvilken bootloader har den?

@@ -656,6 +656,11 @@ dialog::backdrop {
   gap: 4px;
   margin-bottom: 10px;
 }
+.field select,
+.field input[type='range'] {
+  width: 100%;
+  min-width: 0;
+}
 .field.check {
   flex-direction: row;
   align-items: center;
@@ -704,6 +709,7 @@ dialog::backdrop {
   margin-top: 12px;
 }
 fieldset {
+  min-width: 0;
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 8px 12px;

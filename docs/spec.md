@@ -32,6 +32,8 @@ Editoren skal virke med alt fra en original Arduboy til hjemmelagde løsninger m
 ### Runde 1
 
 * Blokkeditor med kategorier: Spill, Sprites, Grafikk, Input, Lyd, Logikk, Løkker, Matte, Variabler, Funksjoner, Custom.
+* Enkel spillmotor bak blokkene, som i MakeCode Arcade (se punkt 12).
+* Maler som man kan starte fra: Pong, Space shooter, Platformer, Snake og Breakout (se punkt 13).
 * Ikon på hver blokk, tegnet som enkel strekgrafikk i én farge slik at det følger temaet.
 * Custom-blokk der man skriver C++ direkte.
 * Kodevisning: fane som viser generert C++ fortløpende og markerer koden til valgt blokk.
@@ -56,6 +58,7 @@ Editoren skal virke med alt fra en original Arduboy til hjemmelagde løsninger m
 * Støtte for ekstern flash for mange spill.
 * Deling av spill.
 * Flere chiper, for eksempel LGT8F328P og ATmega2560.
+* Steg for steg-veiledninger som bygger et spill sammen med brukeren, som i MakeCode.
 
 ## 5. Maskinvareprofiler
 
@@ -142,7 +145,59 @@ En profil består av mikrokontroller, skjerm, buss, pinner for knapper, skjerm o
 * Appen kan installeres som PWA og virker uten nett etter første besøk.
 * Valgfritt: GitHub Action som laster opp til webserveren automatisk.
 
-## 12. Åpne spørsmål
+## 12. Spillmotor og blokknivå
+
+Editoren skal være like enkel og forståelig som MakeCode Arcade. Derfor har den en liten spillmotor, og blokkene jobber med spillbegreper i stedet for piksler.
+
+**Prinsipper**
+
+* Man lager spill med hendelser i stedet for å skrive egen hovedløkke: "når spillet starter", "hver frame", "når knapp A trykkes", "når sprite av type Spiller treffer sprite av type Fiende".
+* Motoren tar seg av tegning, bevegelse, kollisjon, poeng, liv og "game over". Man trenger ikke tenke på skjermbuffer eller bildefrekvens.
+* Blokkene har korte, norske tekster og fornuftige standardverdier, slik at en blokk virker med en gang den er dratt inn.
+* Grafikk- og pikselblokker finnes fortsatt under Grafikk for de som vil lenger ned.
+
+**Innhold i motoren**
+
+* Sprites med posisjon, fart, akselerasjon, type (Spiller, Fiende, Skudd, Mat, eller egne typer) og animasjon.
+* Fast maks antall sprites (for eksempel 16), slik at RAM-bruken er kjent på forhånd.
+* Kollisjon mellom sprites, og mellom sprite og skjermkant (stopp, sprett, forsvinn eller gå rundt).
+* "Styr sprite med knappene", med valgfri fart, som i MakeCode.
+* Tyngdekraft og hopp for plattformspill.
+* Tilekart med 8x8 ruter lagret i flash, med tile-editor, kamera som følger en sprite, og kollisjon mot vegger.
+* Poeng, liv, nedtelling og innebygd "game over"-skjerm med rekord i EEPROM.
+* Enkle lydeffekter og melodier.
+* All bevegelse regnes med fastpunkt, aldri flyttall.
+* Bare de delene av motoren som brukes blir med i det kompilerte programmet.
+
+## 13. Maler
+
+**Galleri**
+
+* Ved "Nytt prosjekt" vises et galleri med kort for hver mal: navn, en linje om spillet, og et bilde fra simulatoren.
+* Når en mal åpnes, starter spillet med en gang i simulatoren, slik at man kan prøve før man endrer noe.
+* En mal åpnes alltid som en kopi. Originalen endres aldri.
+* Malene er vanlige prosjektfiler (`.abprosjekt`) i mappen `maler/` på webserveren. Nye maler kan legges til ved å laste opp en fil.
+* Egne prosjekter kan lastes ned og legges i `maler/`, slik at for eksempel en lærer kan lage maler til en klasse.
+
+**Malene i versjon 1.0**
+
+| Mal | Viser hvordan man bruker |
+|---|---|
+| Tomt prosjekt | Bare "når spillet starter" og "hver frame" |
+| Pong | Sprites, fart, sprett mot kanter, kollisjon, poeng, enkel motstander |
+| Space shooter | Styring med knapper, skudd, fiender som dukker opp, liv, game over |
+| Platformer | Tyngdekraft, hopp, tilekart, kamera, mynter |
+| Snake | Rutenett, lister, voksende slange, rekord i EEPROM |
+| Breakout | Flere sprites av samme type, ødelegging, nivåer |
+
+**Krav til malene**
+
+* Hver mal er kort: rundt 10 til 30 blokker.
+* Hver mal har kommentarer på blokkene som forklarer hva de gjør.
+* Hver mal har tre forslag til endringer, vist i et lite panel. For eksempel: "Gjør ballen raskere", "Gi spilleren tre liv", "Tegn ditt eget romskip".
+* Alle maler skal kunne kompileres og kjøre på en Nano med SH1106 over I2C, med god margin på flash og RAM.
+
+## 14. Åpne spørsmål
 
 * Hvilken skjerm, buss og pinner har den første enheten (Nano)?
 * Hvilken bootloader har den?

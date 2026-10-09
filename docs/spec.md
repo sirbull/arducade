@@ -34,6 +34,7 @@ Editoren skal virke med alt fra en original Arduboy til hjemmelagde løsninger m
 * Blokkeditor med kategorier: Spill, Sprites, Grafikk, Input, Lyd, Logikk, Løkker, Matte, Variabler, Funksjoner, Custom.
 * Enkel spillmotor bak blokkene, som i MakeCode Arcade (se punkt 12).
 * Maler som man kan starte fra: Pong, Space shooter, Platformer, Snake og Breakout (se punkt 13).
+* Editoren på flere språk, med engelsk som standard (se punkt 14).
 * Ikon på hver blokk, tegnet som enkel strekgrafikk i én farge slik at det følger temaet.
 * Custom-blokk der man skriver C++ direkte.
 * Kodevisning: fane som viser generert C++ fortløpende og markerer koden til valgt blokk.
@@ -92,11 +93,11 @@ En profil består av mikrokontroller, skjerm, buss, pinner for knapper, skjerm o
 
 **Profiler som mal**
 
-* En profil kan lastes ned som fil (`.abprofil`, JSON) og lastes opp igjen. Da slipper man å stille inn samme oppsett hver gang.
+* En profil kan lastes ned som fil (`.abprofile`, JSON) og lastes opp igjen. Da slipper man å stille inn samme oppsett hver gang.
 * Opplastede profiler legges i et profilbibliotek i nettleseren og vises sammen med de faste valgene, i oppstartsdialogen og ved nytt prosjekt.
 * Profiler valideres med de samme kontrollene som over når de lastes opp.
-* Filer i mappen `profiler/` på webserveren vises også som faste valg. Nye profiler kan dermed legges til ved å laste opp en fil til serveren, uten å endre koden.
-* En lenke kan peke på en profil, for eksempel `?profil=profiler/min-nano.abprofil`.
+* Filer i mappen `profiles/` på webserveren vises også som faste valg. Nye profiler kan dermed legges til ved å laste opp en fil til serveren, uten å endre koden.
+* En lenke kan peke på en profil, for eksempel `?profile=profiles/my-nano.abprofile`.
 
 ## 6. Utseende og temaer
 
@@ -129,16 +130,17 @@ En profil består av mikrokontroller, skjerm, buss, pinner for knapper, skjerm o
 ## 10. Prosjekter og filer
 
 * Prosjekter lagres automatisk i nettleseren (IndexedDB).
-* Et prosjekt kan lastes ned som én fil (`.abprosjekt`, JSON) og lastes opp igjen, også på en annen maskin eller i en annen nettleser.
+* Et prosjekt kan lastes ned som én fil (`.abproject`, JSON) og lastes opp igjen, også på en annen maskin eller i en annen nettleser.
 * Prosjektfilen inneholder blokker, sprites, lyder, innstillinger og en kopi av maskinvareprofilen.
 * Når et prosjekt lastes opp med en profil man ikke har fra før, tilbys det å legge profilen i profilbiblioteket.
 * Filene har et formatnummer, slik at eldre filer kan oppgraderes når formatet endres.
-* Eksempelprosjekter kan legges i mappen `eksempler/` på webserveren.
+* Eksempelprosjekter kan legges i mappen `examples/` på webserveren.
 * Ingen brukerkontoer i versjon 1.0.
 
 ## 11. Teknologi og drift
 
 * Blockly, TypeScript, Vite.
+* All kode er på engelsk: navn på variabler, funksjoner og filer, kommentarer, generert C++ og JavaScript, filformater, mapper og commit-meldinger.
 * Bygges til statiske filer med `npm run build`.
 * Legges på webserveren med SFTP, i roten eller en undermappe. Vite settes opp med relative stier.
 * Krav til serveren: HTTPS (Web Serial krever det), og at `.wasm` sendes som `application/wasm`. En medfølgende `.htaccess` setter filtyper, komprimering og hurtigbuffer, og ved behov headerne COOP og COEP.
@@ -153,12 +155,12 @@ Editoren skal være like enkel og forståelig som MakeCode Arcade. Derfor har de
 
 * Man lager spill med hendelser i stedet for å skrive egen hovedløkke: "når spillet starter", "hver frame", "når knapp A trykkes", "når sprite av type Spiller treffer sprite av type Fiende".
 * Motoren tar seg av tegning, bevegelse, kollisjon, poeng, liv og "game over". Man trenger ikke tenke på skjermbuffer eller bildefrekvens.
-* Blokkene har korte, norske tekster og fornuftige standardverdier, slik at en blokk virker med en gang den er dratt inn.
+* Blokkene har korte tekster på valgt språk og fornuftige standardverdier, slik at en blokk virker med en gang den er dratt inn.
 * Grafikk- og pikselblokker finnes fortsatt under Grafikk for de som vil lenger ned.
 
 **Innhold i motoren**
 
-* Sprites med posisjon, fart, akselerasjon, type (Spiller, Fiende, Skudd, Mat, eller egne typer) og animasjon.
+* Sprites med posisjon, fart, akselerasjon, type (Player, Enemy, Projectile, Food, eller egne typer, vist på valgt språk) og animasjon.
 * Fast maks antall sprites (for eksempel 16), slik at RAM-bruken er kjent på forhånd.
 * Kollisjon mellom sprites, og mellom sprite og skjermkant (stopp, sprett, forsvinn eller gå rundt).
 * "Styr sprite med knappene", med valgfri fart, som i MakeCode.
@@ -176,8 +178,8 @@ Editoren skal være like enkel og forståelig som MakeCode Arcade. Derfor har de
 * Ved "Nytt prosjekt" vises et galleri med kort for hver mal: navn, en linje om spillet, og et bilde fra simulatoren.
 * Når en mal åpnes, starter spillet med en gang i simulatoren, slik at man kan prøve før man endrer noe.
 * En mal åpnes alltid som en kopi. Originalen endres aldri.
-* Malene er vanlige prosjektfiler (`.abprosjekt`) i mappen `maler/` på webserveren. Nye maler kan legges til ved å laste opp en fil.
-* Egne prosjekter kan lastes ned og legges i `maler/`, slik at for eksempel en lærer kan lage maler til en klasse.
+* Malene er vanlige prosjektfiler (`.abproject`) i mappen `templates/` på webserveren. Nye maler kan legges til ved å laste opp en fil.
+* Egne prosjekter kan lastes ned og legges i `templates/`, slik at for eksempel en lærer kan lage maler til en klasse.
 
 **Malene i versjon 1.0**
 
@@ -197,7 +199,40 @@ Editoren skal være like enkel og forståelig som MakeCode Arcade. Derfor har de
 * Hver mal har tre forslag til endringer, vist i et lite panel. For eksempel: "Gjør ballen raskere", "Gi spilleren tre liv", "Tegn ditt eget romskip".
 * Alle maler skal kunne kompileres og kjøre på en Nano med SH1106 over I2C, med god margin på flash og RAM.
 
-## 14. Åpne spørsmål
+## 14. Språk
+
+Editoren kan vises på flere språk, slik som MakeCode Arcade. All kode er likevel alltid på engelsk.
+
+**Valg av språk**
+
+* Engelsk er standard.
+* Språket velges i oppstartsdialogen og under innstillinger, og huskes i nettleseren.
+* Språket kan også settes i lenken, for eksempel `?lang=nb`.
+* Første språk: engelsk, norsk (bokmål), spansk, fransk og tysk.
+
+**Hva som oversettes**
+
+* Alle menyer, knapper, dialoger, feilmeldinger og varsler.
+* Tekstene på blokkene og kategoriene. Blockly har ferdige oversettelser for sine standardblokker på over 100 språk. Våre egne blokker bruker meldingsnøkler (`%{BKY_...}`) med oversettelser per språk.
+* Navn på sprite-typer, knapper og andre valg i nedtrekkslister. Bak hvert valg ligger en engelsk verdi som brukes i koden.
+* Malene: navn, beskrivelse, kommentarer på blokkene og forslag til endringer.
+
+**Hva som ikke oversettes**
+
+* Generert C++ og JavaScript. Navn i koden er alltid engelske, for eksempel `SpriteKind::Player`, uansett hvilket språk editoren vises på.
+* Navn som brukeren selv skriver, for eksempel variabler og sprites. Disse gjøres om til gyldige navn i koden, slik at også `æ`, `ø`, `å` og andre tegn virker.
+* Filformater og navn på mapper.
+
+**Oppbygging**
+
+* Én JSON-fil per språk i `locales/`, for eksempel `locales/en.json` og `locales/nb.json`.
+* Engelsk er referansen. Tekster som mangler i et språk, vises på engelsk.
+* Malene lagrer tekst som nøkler med oversettelser, slik at samme mal vises på alle språk.
+* Et nytt språk legges til ved å legge en ny fil i `locales/`, uten å endre koden.
+* Et lite skript lister opp tekster som mangler i hvert språk.
+* Senere: oversettelse via en tjeneste som Crowdin, slik at andre kan bidra.
+
+## 15. Åpne spørsmål
 
 * Hvilken skjerm, buss og pinner har den første enheten (Nano)?
 * Hvilken bootloader har den?

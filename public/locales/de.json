@@ -251,6 +251,8 @@
     "projects.none": "Noch keine gespeicherten Projekte.",
     "projects.deleteTitle": "Projekt löschen",
     "projects.deleteText": "\"{name}\" löschen? Das kann nicht rückgängig gemacht werden.",
+    "projects.star": "Mit Stern markieren:",
+    "projects.unstar": "Stern entfernen:",
     "tab.blocks": "Blöcke",
     "tab.images": "Sprites",
     "tab.tiles": "Kacheln",

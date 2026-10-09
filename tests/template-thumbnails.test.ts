@@ -34,4 +34,12 @@ describe('template gallery pictures', () => {
     expect(lit(b, 70, 90, 10, 20)).toBe(true);
     expect(lit(b, 26, 34, 0, 26)).toBe(false);
   });
+
+  it('frog crossing shows a filled home and all three lives left', async () => {
+    const b = await screen('frogger');
+    // The home tile in bay column 6 is filled; bay column 2 is still empty.
+    expect(lit(b, 49, 51, 13, 13)).toBe(true);
+    expect(lit(b, 17, 19, 13, 13)).toBe(false);
+    expect(lit(b, 15, 19, 1, 5)).toBe(true);
+  });
 });

@@ -13806,7 +13806,7 @@
                         "block": {
                          "type": "math_number",
                          "fields": {
-                          "NUM": 74
+                          "NUM": 68
                          }
                         }
                        },
@@ -13838,7 +13838,7 @@
                           "block": {
                            "type": "math_number",
                            "fields": {
-                            "NUM": 100
+                            "NUM": 98
                            }
                           }
                          },
@@ -14520,6 +14520,24 @@
     "moves": "Probiert jeden Tausch zweier Nachbarn. Ergibt keiner eine Reihe (und gibt es kein Prisma), ist das Spiel vorbei.",
     "fall": "Jedes zweite Bild fallen Figuren über einem leeren Feld einen Schritt, und oben kommen neue dazu.",
     "draw": "Zeichnet die Figuren, den Rahmen, die Punkte und den Rekord."
+   }
+  },
+  "thumbnail": {
+   "frames": 76,
+   "taps": {
+    "left": [
+     2
+    ],
+    "a": [
+     4
+    ],
+    "right": [
+     6
+    ],
+    "down": [
+     70,
+     73
+    ]
    }
   }
  }

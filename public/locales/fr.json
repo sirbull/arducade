@@ -251,6 +251,8 @@
     "projects.none": "Pas encore de projet enregistré.",
     "projects.deleteTitle": "Supprimer le projet",
     "projects.deleteText": "Supprimer « {name} » ? C'est définitif.",
+    "projects.star": "Mettre en favori",
+    "projects.unstar": "Retirer des favoris",
     "tab.blocks": "Blocs",
     "tab.images": "Sprites",
     "tab.tiles": "Cases",

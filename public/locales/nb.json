@@ -251,6 +251,8 @@
     "projects.none": "Ingen lagrede prosjekter ennå.",
     "projects.deleteTitle": "Slett prosjekt",
     "projects.deleteText": "Slette \"{name}\"? Dette kan ikke angres.",
+    "projects.star": "Stjernemerk",
+    "projects.unstar": "Fjern stjerne fra",
     "tab.blocks": "Blokker",
     "tab.images": "Sprites",
     "tab.tiles": "Ruter",

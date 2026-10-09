@@ -100,6 +100,8 @@ export interface Project {
   template?: TemplateInfo;
   /** Set when the project belongs to a guide level. */
   guide?: GuideState;
+  /** Starred projects are listed first. */
+  starred?: boolean;
 }
 
 export function newId(prefix: string): string {

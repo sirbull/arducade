@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { match3 } from '../src/templates/match3';
 import { templateToProject } from '../src/templates';
 import { compileProject } from './helpers';
+import { thumbnailScreen } from '../src/ui/build';
 import { Engine } from '../src/sim/engine';
 import { div16, mod16 } from '../src/sim/intmath';
 import type { GameHooks } from '../src/gen/js';
@@ -128,5 +129,14 @@ describe('Match three', () => {
     const b = board(engine);
     expect(b.flat().every((k) => k >= 1 && k <= 7)).toBe(true);
     expect(cells().some(([x, y]) => lineAt(b, x, y))).toBe(false);
+  });
+
+  it('shows the game, not the splash screen, as its thumbnail', async () => {
+    vi.useRealTimers();
+    const screen = await thumbnailScreen(templateToProject(match3));
+    const pixel = (x: number, y: number) => (screen[(y >> 3) * 128 + x] >> (y & 7)) & 1;
+    // The top left corner of the board frame, and row 3 of the prism the script makes at square (3,4): 1.1.1.1.1
+    expect(pixel(22, 0)).toBe(1);
+    expect([54, 55, 56].map((x) => pixel(x, 45))).toEqual([1, 0, 1]);
   });
 });

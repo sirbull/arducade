@@ -251,6 +251,8 @@
     "projects.none": "No saved projects yet.",
     "projects.deleteTitle": "Delete project",
     "projects.deleteText": "Delete \"{name}\"? This can not be undone.",
+    "projects.star": "Star",
+    "projects.unstar": "Remove star from",
     "tab.blocks": "Blocks",
     "tab.images": "Sprites",
     "tab.tiles": "Tiles",

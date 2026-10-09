@@ -7,7 +7,7 @@ import { projects as projectStore } from '../project/store';
 import { gameThumbnail } from './build';
 import type { PixelColor } from '../sim/runner';
 import { confirmDialog, openDialog } from './dialogs';
-import { clear, h } from './dom';
+import { clear, h, toast } from './dom';
 
 let cache: Project[] | null = null;
 
@@ -69,7 +69,34 @@ export async function openGallery(onPick: (template: Project) => void, closable 
   if (!templates.length) grid.append(h('p', { class: 'muted' }, t('gallery.none')));
 }
 
-export async function openProjectsDialog(currentId: string, onOpen: (p: Project) => void) {
+const STAR_ICON = (filled: boolean) =>
+  `<svg viewBox="0 0 24 24" fill="${filled ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linejoin="miter" aria-hidden="true"><path d="M12 2.5l2.9 6.2 6.6.7-5 4.5 1.4 6.6L12 17.2l-5.9 3.3 1.4-6.6-5-4.5 6.6-.7z"/></svg>`;
+
+/** Toggles a project's star, which keeps it first in the project lists. */
+export function starButton(p: Project, className: string, onToggle: () => void): HTMLElement {
+  const label = `${t(p.starred ? 'projects.unstar' : 'projects.star')} ${p.name}`;
+  const b = h('button', {
+    class: `${className} project-star`,
+    title: label,
+    'aria-label': label,
+    'aria-pressed': String(!!p.starred),
+    onclick: async () => {
+      p.starred = !p.starred;
+      try {
+        await projectStore.save(p);
+      } catch {
+        p.starred = !p.starred;
+        toast(t('project.saveError'), 'error');
+      }
+      onToggle();
+    },
+  });
+  b.innerHTML = STAR_ICON(!!p.starred);
+  return b;
+}
+
+export async function openProjectsDialog(current: Project, onOpen: (p: Project) => void) {
+  const currentId = current.id;
   const d = openDialog(t('projects.title'), { wide: true });
   const render = async () => {
     clear(d.body);
@@ -88,7 +115,11 @@ export async function openProjectsDialog(currentId: string, onOpen: (p: Project)
             'li',
             { class: p.id === currentId ? 'active' : '' },
             h('button', { class: 'link', onclick: () => (d.close(), onOpen(p)) }, h('strong', {}, p.name), h('span', { class: 'muted project-date' }, ` ${fmt.format(p.modified)}`)),
-            h(
+            h('span', { class: 'project-list-actions' }, starButton(p, 'icon-btn', () => {
+              // The open project is saved from memory, so keep its star in step.
+              if (p.id === currentId) current.starred = p.starred;
+              void render();
+            }), h(
               'button',
               {
                 class: 'icon-btn',
@@ -102,7 +133,7 @@ export async function openProjectsDialog(currentId: string, onOpen: (p: Project)
                 },
               },
               '×',
-            ),
+            )),
           ),
         ),
       ),

@@ -1170,6 +1170,9 @@ button.brand:hover:not(:disabled) { background: none; color: var(--text); }
 }
 .home-project-action svg { width: 18px; height: 18px; }
 .home-project-delete { color: var(--danger); }
+.project-star[aria-pressed='true'] { color: var(--accent); }
+.project-star svg { width: 18px; height: 18px; vertical-align: middle; }
+.project-list-actions { display: flex; align-items: center; }
 .home-project-delete:hover:not(:disabled) {
   background: #c62828;
   border-color: #c62828;

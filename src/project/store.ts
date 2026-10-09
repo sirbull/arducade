@@ -42,7 +42,7 @@ export const projects = {
   remove: (id: string) => tx('projects', 'readwrite', (s) => s.delete(id)),
   async list(): Promise<Project[]> {
     const all = await tx<Project[]>('projects', 'readonly', (s) => s.getAll());
-    return all.sort((a, b) => b.modified - a.modified);
+    return all.sort((a, b) => Number(!!b.starred) - Number(!!a.starred) || b.modified - a.modified);
   },
 };
 

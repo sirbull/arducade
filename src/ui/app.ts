@@ -26,7 +26,7 @@ import { generateSource, parseSource, SourceError, type TextLanguage } from '../
 import { CodeView } from './code-view';
 import { confirmDialog } from './dialogs';
 import { $, clear, h, toast } from './dom';
-import { loadTemplates, openGallery, openProjectsDialog, thumbnail } from './gallery';
+import { loadTemplates, openGallery, openProjectsDialog, starButton, thumbnail } from './gallery';
 import { allProfiles, loadServerProfiles, openProfileDialog, profileFromUrl } from './profile-editor';
 import { openFirstRun, openSettings } from './settings-dialog';
 import { CommentsPanel } from './comments';
@@ -656,11 +656,15 @@ export class App {
         onclick: () => void saveCartridge(project),
       });
       download.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/></svg>';
+      const star = starButton(project, 'home-project-action', () => {
+        if (project.id === this.project.id) this.project.starred = project.starred;
+        void this.showHome(false);
+      });
       const img = h('img', { alt: '', class: 'thumb' });
       void thumbnail(project).then((src) => { if (src) img.src = src; });
       projectGrid.append(h('div', { class: 'home-project-card' },
         h('button', { class: 'card', onclick: () => this.loadProject(project) }, img,
-          h('strong', {}, project.name), h('span', { class: 'muted project-date' }, fmt.format(project.modified))), h('div', { class: 'home-project-actions' }, download, remove)));
+          h('strong', {}, project.name), h('span', { class: 'muted project-date' }, fmt.format(project.modified))), h('div', { class: 'home-project-actions' }, star, download, remove)));
     }
     projectsSection.append(projects.length ? projectGrid : h('p', { class: 'muted' }, t('projects.none')));
     const templateGrid = h('div', { class: 'gallery' });
@@ -759,7 +763,7 @@ export class App {
     $('#btn-home').addEventListener('click', () => this.showHome());
     $('#btn-guides').addEventListener('click', () => void this.showGuides());
     $('#btn-new').addEventListener('click', () => this.newFromGallery());
-    $('#btn-open').addEventListener('click', () => openProjectsDialog(this.project.id, (p) => this.loadProject(p)));
+    $('#btn-open').addEventListener('click', () => openProjectsDialog(this.project, (p) => this.loadProject(p)));
     $('#btn-import').addEventListener('click', () => this.importProject());
     $('#btn-export').addEventListener('click', () => this.exportProject());
     $('#btn-settings').addEventListener('click', () => openSettings(this));

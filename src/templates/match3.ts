@@ -77,6 +77,8 @@ const digit = (rows: string[]) => [...rows, '........'];
 export const match3: TemplateSource = {
   id: 'match3',
   order: 7,
+  // Swap in a five (the seed gives the same board every time) and frame the new prism.
+  thumbnail: { frames: 76, taps: { left: [2], a: [4], right: [6], down: [70, 73] } },
   title: { en: 'Match three', nb: 'Tre på rad', es: 'Tres en raya', fr: 'Trois d’affilée', de: 'Drei gewinnt' },
   description: {
     en: 'Swap figures to make lines of three. Four makes a bomb, five makes a prism. The game ends when no swap makes a line.',
@@ -452,8 +454,8 @@ export const match3: TemplateSource = {
         ]),
         text(0, 56, txt('SCORE')),
         text(36, 56, v('points')),
-        text(74, 56, txt('BEST')),
-        text(100, 56, blk('ab_hiscore')),
+        text(68, 56, txt('BEST')),
+        text(98, 56, blk('ab_hiscore')),
       ],
     }),
   ]),

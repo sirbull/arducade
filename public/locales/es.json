@@ -251,6 +251,8 @@
     "projects.none": "Todavía no hay proyectos guardados.",
     "projects.deleteTitle": "Borrar proyecto",
     "projects.deleteText": "¿Borrar \"{name}\"? No se puede deshacer.",
+    "projects.star": "Destacar",
+    "projects.unstar": "Quitar estrella de",
     "tab.blocks": "Bloques",
     "tab.images": "Sprites",
     "tab.tiles": "Casillas",

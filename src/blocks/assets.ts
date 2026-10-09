@@ -9,6 +9,7 @@ import { pixelAt } from '../project/model';
 let current: Project | null = null;
 let kindLabel: (name: string) => string = (n) => n;
 let noneLabel = '(none)';
+let emptyTileLabel = 'empty';
 
 export function setAssetProject(p: Project | null) {
   current = p;
@@ -19,9 +20,10 @@ export function getAssetProject(): Project | null {
   return current;
 }
 
-export function setAssetLabels(kind: (name: string) => string, none: string) {
+export function setAssetLabels(kind: (name: string) => string, none: string, emptyTile: string) {
   kindLabel = kind;
   noneLabel = none;
+  emptyTileLabel = emptyTile;
 }
 
 const previewCache = new Map<string, string>();
@@ -62,7 +64,7 @@ function imageOptions(): Option[] {
 
 function tileOptions(): Option[] {
   const tiles = current?.tiles ?? [];
-  const opts: Option[] = [[noneLabel, 'empty']];
+  const opts: Option[] = [[emptyTileLabel, 'empty']];
   for (const t of tiles) opts.push([{ src: pixelsToDataUrl(t.pixels, 8, 8, 2), width: 16, height: 16, alt: t.name }, t.id]);
   return opts;
 }

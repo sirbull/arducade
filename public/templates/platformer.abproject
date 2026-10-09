@@ -1,0 +1,1939 @@
+{
+ "format": "ardublocks-project",
+ "version": 1,
+ "id": "template-platformer",
+ "name": "Platformer",
+ "created": 0,
+ "modified": 0,
+ "profile": {
+  "format": "ardublocks-profile",
+  "version": 1,
+  "id": "arduboy",
+  "name": "Arduboy",
+  "builtin": true,
+  "chip": "atmega32u4",
+  "display": {
+   "driver": "ssd1306",
+   "bus": "spi",
+   "i2cAddress": 60,
+   "cs": "D12",
+   "dc": "D4",
+   "rst": "D6",
+   "rotate180": false,
+   "mirror": false,
+   "contrast": 207
+  },
+  "buttons": {
+   "up": "A0",
+   "right": "A1",
+   "left": "A2",
+   "down": "A3",
+   "a": "D7",
+   "b": "D8"
+  },
+  "sound": {
+   "pin1": "D5",
+   "pin2": "D13"
+  }
+ },
+ "blocks": {
+  "blocks": {
+   "languageVersion": 0,
+   "blocks": [
+    {
+     "type": "ab_on_start",
+     "inputs": {
+      "DO": {
+       "block": {
+        "type": "ab_set_tilemap",
+        "fields": {
+         "MAP": "level1"
+        },
+        "next": {
+         "block": {
+          "type": "variables_set",
+          "fields": {
+           "VAR": {
+            "name": "hero"
+           }
+          },
+          "inputs": {
+           "VALUE": {
+            "block": {
+             "type": "ab_sprite_create",
+             "fields": {
+              "IMAGE": "hero",
+              "KIND": "Player"
+             }
+            }
+           }
+          },
+          "next": {
+           "block": {
+            "type": "ab_place_on_tile",
+            "inputs": {
+             "SPRITE": {
+              "block": {
+               "type": "variables_get",
+               "fields": {
+                "VAR": {
+                 "name": "hero"
+                }
+               }
+              }
+             },
+             "COL": {
+              "block": {
+               "type": "math_number",
+               "fields": {
+                "NUM": 2
+               }
+              }
+             },
+             "ROW": {
+              "block": {
+               "type": "math_number",
+               "fields": {
+                "NUM": 5
+               }
+              }
+             }
+            },
+            "next": {
+             "block": {
+              "type": "ab_sprite_set_prop",
+              "fields": {
+               "PROP": "ay"
+              },
+              "inputs": {
+               "SPRITE": {
+                "block": {
+                 "type": "variables_get",
+                 "fields": {
+                  "VAR": {
+                   "name": "hero"
+                  }
+                 }
+                }
+               },
+               "VALUE": {
+                "block": {
+                 "type": "math_number",
+                 "fields": {
+                  "NUM": 400
+                 }
+                }
+               }
+              },
+              "next": {
+               "block": {
+                "type": "ab_move_sprite",
+                "inputs": {
+                 "SPRITE": {
+                  "block": {
+                   "type": "variables_get",
+                   "fields": {
+                    "VAR": {
+                     "name": "hero"
+                    }
+                   }
+                  }
+                 },
+                 "VX": {
+                  "block": {
+                   "type": "math_number",
+                   "fields": {
+                    "NUM": 60
+                   }
+                  }
+                 },
+                 "VY": {
+                  "block": {
+                   "type": "math_number",
+                   "fields": {
+                    "NUM": 0
+                   }
+                  }
+                 }
+                },
+                "next": {
+                 "block": {
+                  "type": "ab_sprite_animate",
+                  "inputs": {
+                   "SPRITE": {
+                    "block": {
+                     "type": "variables_get",
+                     "fields": {
+                      "VAR": {
+                       "name": "hero"
+                      }
+                     }
+                    }
+                   },
+                   "MS": {
+                    "block": {
+                     "type": "math_number",
+                     "fields": {
+                      "NUM": 150
+                     }
+                    }
+                   }
+                  },
+                  "next": {
+                   "block": {
+                    "type": "ab_camera_follow",
+                    "inputs": {
+                     "SPRITE": {
+                      "block": {
+                       "type": "variables_get",
+                       "fields": {
+                        "VAR": {
+                         "name": "hero"
+                        }
+                       }
+                      }
+                     }
+                    },
+                    "next": {
+                     "block": {
+                      "type": "ab_spawn_on_tiles",
+                      "fields": {
+                       "TILE": "enemyMarker",
+                       "IMAGE": "enemy",
+                       "KIND": "Enemy"
+                      },
+                      "icons": {
+                       "comment": {
+                        "text": "@enemies",
+                        "pinned": false,
+                        "height": 80,
+                        "width": 200
+                       }
+                      },
+                      "next": {
+                       "block": {
+                        "type": "ab_for_each_kind",
+                        "fields": {
+                         "VAR": {
+                          "name": "enemy"
+                         },
+                         "KIND": "Enemy"
+                        },
+                        "inputs": {
+                         "DO": {
+                          "block": {
+                           "type": "ab_sprite_set_prop",
+                           "fields": {
+                            "PROP": "vx"
+                           },
+                           "inputs": {
+                            "SPRITE": {
+                             "block": {
+                              "type": "variables_get",
+                              "fields": {
+                               "VAR": {
+                                "name": "enemy"
+                               }
+                              }
+                             }
+                            },
+                            "VALUE": {
+                             "block": {
+                              "type": "math_number",
+                              "fields": {
+                               "NUM": -20
+                              }
+                             }
+                            }
+                           },
+                           "next": {
+                            "block": {
+                             "type": "ab_sprite_set_prop",
+                             "fields": {
+                              "PROP": "ay"
+                             },
+                             "inputs": {
+                              "SPRITE": {
+                               "block": {
+                                "type": "variables_get",
+                                "fields": {
+                                 "VAR": {
+                                  "name": "enemy"
+                                 }
+                                }
+                               }
+                              },
+                              "VALUE": {
+                               "block": {
+                                "type": "math_number",
+                                "fields": {
+                                 "NUM": 400
+                                }
+                               }
+                              }
+                             }
+                            }
+                           }
+                          }
+                         }
+                        },
+                        "next": {
+                         "block": {
+                          "type": "ab_life_set",
+                          "inputs": {
+                           "VALUE": {
+                            "block": {
+                             "type": "math_number",
+                             "fields": {
+                              "NUM": 3
+                             }
+                            }
+                           }
+                          },
+                          "next": {
+                           "block": {
+                            "type": "ab_score_set",
+                            "inputs": {
+                             "VALUE": {
+                              "block": {
+                               "type": "math_number",
+                               "fields": {
+                                "NUM": 0
+                               }
+                              }
+                             }
+                            }
+                           }
+                          }
+                         }
+                        }
+                       }
+                      }
+                     }
+                    }
+                   }
+                  }
+                 }
+                }
+               }
+              }
+             }
+            }
+           }
+          }
+         }
+        }
+       }
+      }
+     },
+     "icons": {
+      "comment": {
+       "text": "@start",
+       "pinned": false,
+       "height": 80,
+       "width": 200
+      }
+     },
+     "x": 20,
+     "y": 20
+    },
+    {
+     "type": "ab_on_button",
+     "fields": {
+      "BUTTON": "a",
+      "EVENT": "pressed"
+     },
+     "inputs": {
+      "DO": {
+       "block": {
+        "type": "controls_if",
+        "inputs": {
+         "IF0": {
+          "block": {
+           "type": "ab_sprite_is_hitting",
+           "fields": {
+            "DIR": "bottom"
+           },
+           "inputs": {
+            "SPRITE": {
+             "block": {
+              "type": "variables_get",
+              "fields": {
+               "VAR": {
+                "name": "hero"
+               }
+              }
+             }
+            }
+           }
+          }
+         },
+         "DO0": {
+          "block": {
+           "type": "ab_sprite_set_prop",
+           "fields": {
+            "PROP": "vy"
+           },
+           "inputs": {
+            "SPRITE": {
+             "block": {
+              "type": "variables_get",
+              "fields": {
+               "VAR": {
+                "name": "hero"
+               }
+              }
+             }
+            },
+            "VALUE": {
+             "block": {
+              "type": "math_number",
+              "fields": {
+               "NUM": -160
+              }
+             }
+            }
+           },
+           "next": {
+            "block": {
+             "type": "ab_play_effect",
+             "fields": {
+              "SFX": "jump"
+             }
+            }
+           }
+          }
+         }
+        },
+        "icons": {
+         "comment": {
+          "text": "@jump",
+          "pinned": false,
+          "height": 80,
+          "width": 200
+         }
+        }
+       }
+      }
+     },
+     "x": 440,
+     "y": 20
+    },
+    {
+     "type": "ab_on_button",
+     "fields": {
+      "BUTTON": "a",
+      "EVENT": "released"
+     },
+     "inputs": {
+      "DO": {
+       "block": {
+        "type": "controls_if",
+        "inputs": {
+         "IF0": {
+          "block": {
+           "type": "logic_compare",
+           "fields": {
+            "OP": "LT"
+           },
+           "inputs": {
+            "A": {
+             "block": {
+              "type": "ab_sprite_get_prop",
+              "fields": {
+               "PROP": "vy"
+              },
+              "inputs": {
+               "SPRITE": {
+                "block": {
+                 "type": "variables_get",
+                 "fields": {
+                  "VAR": {
+                   "name": "hero"
+                  }
+                 }
+                }
+               }
+              }
+             }
+            },
+            "B": {
+             "block": {
+              "type": "math_number",
+              "fields": {
+               "NUM": 0
+              }
+             }
+            }
+           }
+          }
+         },
+         "DO0": {
+          "block": {
+           "type": "ab_sprite_set_prop",
+           "fields": {
+            "PROP": "vy"
+           },
+           "inputs": {
+            "SPRITE": {
+             "block": {
+              "type": "variables_get",
+              "fields": {
+               "VAR": {
+                "name": "hero"
+               }
+              }
+             }
+            },
+            "VALUE": {
+             "block": {
+              "type": "math_arithmetic",
+              "fields": {
+               "OP": "DIVIDE"
+              },
+              "inputs": {
+               "A": {
+                "block": {
+                 "type": "ab_sprite_get_prop",
+                 "fields": {
+                  "PROP": "vy"
+                 },
+                 "inputs": {
+                  "SPRITE": {
+                   "block": {
+                    "type": "variables_get",
+                    "fields": {
+                     "VAR": {
+                      "name": "hero"
+                     }
+                    }
+                   }
+                  }
+                 }
+                }
+               },
+               "B": {
+                "block": {
+                 "type": "math_number",
+                 "fields": {
+                  "NUM": 2
+                 }
+                }
+               }
+              }
+             }
+            }
+           }
+          }
+         }
+        },
+        "icons": {
+         "comment": {
+          "text": "@short",
+          "pinned": false,
+          "height": 80,
+          "width": 200
+         }
+        }
+       }
+      }
+     },
+     "x": 20,
+     "y": 280
+    },
+    {
+     "type": "ab_on_update",
+     "inputs": {
+      "DO": {
+       "block": {
+        "type": "ab_for_each_kind",
+        "fields": {
+         "VAR": {
+          "name": "enemy"
+         },
+         "KIND": "Enemy"
+        },
+        "inputs": {
+         "DO": {
+          "block": {
+           "type": "controls_if",
+           "inputs": {
+            "IF0": {
+             "block": {
+              "type": "ab_sprite_is_hitting",
+              "fields": {
+               "DIR": "left"
+              },
+              "inputs": {
+               "SPRITE": {
+                "block": {
+                 "type": "variables_get",
+                 "fields": {
+                  "VAR": {
+                   "name": "enemy"
+                  }
+                 }
+                }
+               }
+              }
+             }
+            },
+            "DO0": {
+             "block": {
+              "type": "ab_sprite_set_prop",
+              "fields": {
+               "PROP": "vx"
+              },
+              "inputs": {
+               "SPRITE": {
+                "block": {
+                 "type": "variables_get",
+                 "fields": {
+                  "VAR": {
+                   "name": "enemy"
+                  }
+                 }
+                }
+               },
+               "VALUE": {
+                "block": {
+                 "type": "math_number",
+                 "fields": {
+                  "NUM": 20
+                 }
+                }
+               }
+              }
+             }
+            }
+           },
+           "next": {
+            "block": {
+             "type": "controls_if",
+             "inputs": {
+              "IF0": {
+               "block": {
+                "type": "ab_sprite_is_hitting",
+                "fields": {
+                 "DIR": "right"
+                },
+                "inputs": {
+                 "SPRITE": {
+                  "block": {
+                   "type": "variables_get",
+                   "fields": {
+                    "VAR": {
+                     "name": "enemy"
+                    }
+                   }
+                  }
+                 }
+                }
+               }
+              },
+              "DO0": {
+               "block": {
+                "type": "ab_sprite_set_prop",
+                "fields": {
+                 "PROP": "vx"
+                },
+                "inputs": {
+                 "SPRITE": {
+                  "block": {
+                   "type": "variables_get",
+                   "fields": {
+                    "VAR": {
+                     "name": "enemy"
+                    }
+                   }
+                  }
+                 },
+                 "VALUE": {
+                  "block": {
+                   "type": "math_number",
+                   "fields": {
+                    "NUM": -20
+                   }
+                  }
+                 }
+                }
+               }
+              }
+             }
+            }
+           }
+          }
+         }
+        },
+        "icons": {
+         "comment": {
+          "text": "@walk",
+          "pinned": false,
+          "height": 80,
+          "width": 200
+         }
+        },
+        "next": {
+         "block": {
+          "type": "controls_if",
+          "inputs": {
+           "IF0": {
+            "block": {
+             "type": "logic_compare",
+             "fields": {
+              "OP": "GT"
+             },
+             "inputs": {
+              "A": {
+               "block": {
+                "type": "ab_sprite_get_prop",
+                "fields": {
+                 "PROP": "y"
+                },
+                "inputs": {
+                 "SPRITE": {
+                  "block": {
+                   "type": "variables_get",
+                   "fields": {
+                    "VAR": {
+                     "name": "hero"
+                    }
+                   }
+                  }
+                 }
+                }
+               }
+              },
+              "B": {
+               "block": {
+                "type": "math_number",
+                "fields": {
+                 "NUM": 72
+                }
+               }
+              }
+             }
+            }
+           },
+           "DO0": {
+            "block": {
+             "type": "procedures_callnoreturn",
+             "extraState": {
+              "name": "respawn"
+             }
+            }
+           }
+          },
+          "icons": {
+           "comment": {
+            "text": "@fall",
+            "pinned": false,
+            "height": 80,
+            "width": 200
+           }
+          }
+         }
+        }
+       }
+      }
+     },
+     "x": 440,
+     "y": 280
+    },
+    {
+     "type": "ab_on_tile",
+     "fields": {
+      "SPRITE": {
+       "name": "sprite"
+      },
+      "KIND": "Player",
+      "TILE": "coin",
+      "COL": {
+       "name": "col"
+      },
+      "ROW": {
+       "name": "row"
+      }
+     },
+     "inputs": {
+      "DO": {
+       "block": {
+        "type": "ab_set_tile",
+        "fields": {
+         "TILE": "empty"
+        },
+        "inputs": {
+         "COL": {
+          "block": {
+           "type": "variables_get",
+           "fields": {
+            "VAR": {
+             "name": "col"
+            }
+           }
+          }
+         },
+         "ROW": {
+          "block": {
+           "type": "variables_get",
+           "fields": {
+            "VAR": {
+             "name": "row"
+            }
+           }
+          }
+         }
+        },
+        "next": {
+         "block": {
+          "type": "ab_score_change",
+          "inputs": {
+           "VALUE": {
+            "block": {
+             "type": "math_number",
+             "fields": {
+              "NUM": 1
+             }
+            }
+           }
+          },
+          "next": {
+           "block": {
+            "type": "ab_play_effect",
+            "fields": {
+             "SFX": "coin"
+            }
+           }
+          }
+         }
+        }
+       }
+      }
+     },
+     "icons": {
+      "comment": {
+       "text": "@coin",
+       "pinned": false,
+       "height": 80,
+       "width": 200
+      }
+     },
+     "x": 20,
+     "y": 540
+    },
+    {
+     "type": "ab_on_tile",
+     "fields": {
+      "SPRITE": {
+       "name": "sprite"
+      },
+      "KIND": "Player",
+      "TILE": "spike",
+      "COL": {
+       "name": "col"
+      },
+      "ROW": {
+       "name": "row"
+      }
+     },
+     "inputs": {
+      "DO": {
+       "block": {
+        "type": "procedures_callnoreturn",
+        "extraState": {
+         "name": "respawn"
+        }
+       }
+      }
+     },
+     "x": 440,
+     "y": 540
+    },
+    {
+     "type": "ab_on_tile",
+     "fields": {
+      "SPRITE": {
+       "name": "sprite"
+      },
+      "KIND": "Player",
+      "TILE": "flag",
+      "COL": {
+       "name": "col"
+      },
+      "ROW": {
+       "name": "row"
+      }
+     },
+     "inputs": {
+      "DO": {
+       "block": {
+        "type": "ab_game_over",
+        "fields": {
+         "WIN": "win"
+        }
+       }
+      }
+     },
+     "x": 20,
+     "y": 800
+    },
+    {
+     "type": "ab_on_overlap",
+     "fields": {
+      "SPRITE": {
+       "name": "sprite"
+      },
+      "KIND_A": "Player",
+      "OTHER": {
+       "name": "otherSprite"
+      },
+      "KIND_B": "Enemy"
+     },
+     "inputs": {
+      "DO": {
+       "block": {
+        "type": "controls_if",
+        "inputs": {
+         "IF0": {
+          "block": {
+           "type": "logic_operation",
+           "fields": {
+            "OP": "AND"
+           },
+           "inputs": {
+            "A": {
+             "block": {
+              "type": "logic_compare",
+              "fields": {
+               "OP": "GT"
+              },
+              "inputs": {
+               "A": {
+                "block": {
+                 "type": "ab_sprite_get_prop",
+                 "fields": {
+                  "PROP": "vy"
+                 },
+                 "inputs": {
+                  "SPRITE": {
+                   "block": {
+                    "type": "variables_get",
+                    "fields": {
+                     "VAR": {
+                      "name": "sprite"
+                     }
+                    }
+                   }
+                  }
+                 }
+                }
+               },
+               "B": {
+                "block": {
+                 "type": "math_number",
+                 "fields": {
+                  "NUM": 0
+                 }
+                }
+               }
+              }
+             }
+            },
+            "B": {
+             "block": {
+              "type": "logic_compare",
+              "fields": {
+               "OP": "LT"
+              },
+              "inputs": {
+               "A": {
+                "block": {
+                 "type": "ab_sprite_get_prop",
+                 "fields": {
+                  "PROP": "bottom"
+                 },
+                 "inputs": {
+                  "SPRITE": {
+                   "block": {
+                    "type": "variables_get",
+                    "fields": {
+                     "VAR": {
+                      "name": "sprite"
+                     }
+                    }
+                   }
+                  }
+                 }
+                }
+               },
+               "B": {
+                "block": {
+                 "type": "ab_sprite_get_prop",
+                 "fields": {
+                  "PROP": "y"
+                 },
+                 "inputs": {
+                  "SPRITE": {
+                   "block": {
+                    "type": "variables_get",
+                    "fields": {
+                     "VAR": {
+                      "name": "otherSprite"
+                     }
+                    }
+                   }
+                  }
+                 }
+                }
+               }
+              }
+             }
+            }
+           }
+          }
+         },
+         "DO0": {
+          "block": {
+           "type": "ab_sprite_destroy",
+           "inputs": {
+            "SPRITE": {
+             "block": {
+              "type": "variables_get",
+              "fields": {
+               "VAR": {
+                "name": "otherSprite"
+               }
+              }
+             }
+            }
+           },
+           "next": {
+            "block": {
+             "type": "ab_sprite_set_prop",
+             "fields": {
+              "PROP": "vy"
+             },
+             "inputs": {
+              "SPRITE": {
+               "block": {
+                "type": "variables_get",
+                "fields": {
+                 "VAR": {
+                  "name": "sprite"
+                 }
+                }
+               }
+              },
+              "VALUE": {
+               "block": {
+                "type": "math_number",
+                "fields": {
+                 "NUM": -100
+                }
+               }
+              }
+             },
+             "next": {
+              "block": {
+               "type": "ab_score_change",
+               "inputs": {
+                "VALUE": {
+                 "block": {
+                  "type": "math_number",
+                  "fields": {
+                   "NUM": 2
+                  }
+                 }
+                }
+               },
+               "next": {
+                "block": {
+                 "type": "ab_play_effect",
+                 "fields": {
+                  "SFX": "hit"
+                 }
+                }
+               }
+              }
+             }
+            }
+           }
+          }
+         },
+         "ELSE": {
+          "block": {
+           "type": "procedures_callnoreturn",
+           "extraState": {
+            "name": "respawn"
+           }
+          }
+         }
+        },
+        "extraState": {
+         "hasElse": true
+        }
+       }
+      }
+     },
+     "icons": {
+      "comment": {
+       "text": "@stomp",
+       "pinned": false,
+       "height": 80,
+       "width": 200
+      }
+     },
+     "x": 440,
+     "y": 800
+    },
+    {
+     "type": "procedures_defnoreturn",
+     "fields": {
+      "NAME": "respawn"
+     },
+     "icons": {
+      "comment": {
+       "text": "@respawn",
+       "pinned": false,
+       "height": 80,
+       "width": 200
+      }
+     },
+     "inputs": {
+      "STACK": {
+       "block": {
+        "type": "ab_life_change",
+        "inputs": {
+         "VALUE": {
+          "block": {
+           "type": "math_number",
+           "fields": {
+            "NUM": -1
+           }
+          }
+         }
+        },
+        "next": {
+         "block": {
+          "type": "ab_play_effect",
+          "fields": {
+           "SFX": "lose"
+          },
+          "next": {
+           "block": {
+            "type": "ab_place_on_tile",
+            "inputs": {
+             "SPRITE": {
+              "block": {
+               "type": "variables_get",
+               "fields": {
+                "VAR": {
+                 "name": "hero"
+                }
+               }
+              }
+             },
+             "COL": {
+              "block": {
+               "type": "math_number",
+               "fields": {
+                "NUM": 2
+               }
+              }
+             },
+             "ROW": {
+              "block": {
+               "type": "math_number",
+               "fields": {
+                "NUM": 5
+               }
+              }
+             }
+            },
+            "next": {
+             "block": {
+              "type": "ab_sprite_set_prop",
+              "fields": {
+               "PROP": "vy"
+              },
+              "inputs": {
+               "SPRITE": {
+                "block": {
+                 "type": "variables_get",
+                 "fields": {
+                  "VAR": {
+                   "name": "hero"
+                  }
+                 }
+                }
+               },
+               "VALUE": {
+                "block": {
+                 "type": "math_number",
+                 "fields": {
+                  "NUM": 0
+                 }
+                }
+               }
+              }
+             }
+            }
+           }
+          }
+         }
+        }
+       }
+      }
+     },
+     "x": 20,
+     "y": 1060
+    }
+   ]
+  }
+ },
+ "images": [
+  {
+   "id": "hero",
+   "name": "hero",
+   "width": 8,
+   "height": 8,
+   "frames": [
+    [
+     "..111...",
+     "..1.1...",
+     "..111...",
+     ".11111..",
+     "1.111.1.",
+     "..111...",
+     "..1.1...",
+     ".11.11.."
+    ],
+    [
+     "..111...",
+     "..1.1...",
+     "..111...",
+     ".11111..",
+     "1.111.1.",
+     "..111...",
+     "...1....",
+     "..111..."
+    ]
+   ]
+  },
+  {
+   "id": "enemy",
+   "name": "enemy",
+   "width": 8,
+   "height": 8,
+   "frames": [
+    [
+     "........",
+     "..1111..",
+     ".111111.",
+     "11.11.11",
+     "11111111",
+     ".111111.",
+     ".1.11.1.",
+     "1..11..1"
+    ]
+   ]
+  }
+ ],
+ "tiles": [
+  {
+   "id": "ground",
+   "name": "ground",
+   "solid": true,
+   "pixels": [
+    "11111111",
+    "1...1...",
+    "1...1...",
+    "11111111",
+    "..1...1.",
+    "..1...1.",
+    "11111111",
+    "1...1..."
+   ]
+  },
+  {
+   "id": "coin",
+   "name": "coin",
+   "solid": false,
+   "pixels": [
+    "........",
+    "..111...",
+    ".1...1..",
+    ".1.1.1..",
+    ".1.1.1..",
+    ".1...1..",
+    "..111...",
+    "........"
+   ]
+  },
+  {
+   "id": "spike",
+   "name": "spike",
+   "solid": false,
+   "pixels": [
+    "........",
+    "........",
+    "...1....",
+    "...1....",
+    "..111...",
+    "..111...",
+    ".11111..",
+    "11111111"
+   ]
+  },
+  {
+   "id": "flag",
+   "name": "flag",
+   "solid": false,
+   "pixels": [
+    ".11111..",
+    ".1111...",
+    ".111....",
+    ".1......",
+    ".1......",
+    ".1......",
+    ".1......",
+    "111....."
+   ]
+  },
+  {
+   "id": "enemyMarker",
+   "name": "enemy start",
+   "solid": false,
+   "pixels": [
+    "..1111..",
+    ".1....1.",
+    "1.1..1.1",
+    "1......1",
+    "1.1111.1",
+    ".1....1.",
+    "..1111..",
+    "........"
+   ]
+  }
+ ],
+ "tilemaps": [
+  {
+   "id": "level1",
+   "name": "level1",
+   "width": 64,
+   "height": 8,
+   "cells": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    2,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    2,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    2,
+    2,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    2,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    2,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    2,
+    5,
+    0,
+    0,
+    0,
+    0,
+    0,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    5,
+    0,
+    0,
+    0,
+    0,
+    0,
+    3,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    2,
+    0,
+    5,
+    0,
+    0,
+    0,
+    0,
+    0,
+    3,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    0,
+    2,
+    0,
+    5,
+    0,
+    0,
+    4,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  }
+ ],
+ "kinds": [],
+ "template": {
+  "id": "platformer",
+  "title": {
+   "en": "Platformer",
+   "nb": "Plattformspill",
+   "es": "Plataformas",
+   "fr": "Plateformes",
+   "de": "Jump and Run"
+  },
+  "description": {
+   "en": "Run, jump and collect coins. Reach the flag to win.",
+   "nb": "Løp, hopp og samle mynter. Kom deg til flagget for å vinne.",
+   "es": "Corre, salta y recoge monedas. Llega a la bandera para ganar.",
+   "fr": "Cours, saute et ramasse des pièces. Atteins le drapeau pour gagner.",
+   "de": "Lauf, spring und sammle Münzen. Erreiche die Flagge, um zu gewinnen."
+  },
+  "tips": [
+   {
+    "en": "Jump higher: change -160 in \"on button A pressed\".",
+    "nb": "Hopp høyere: endre -160 i \"når knapp A trykkes\".",
+    "es": "Salta más alto: cambia -160 en \"al pulsar A\".",
+    "fr": "Saute plus haut : change -160 dans « quand A est pressé ».",
+    "de": "Spring höher: ändere -160 in \"wenn A gedrückt\"."
+   },
+   {
+    "en": "Draw your own level in the Tile map tab.",
+    "nb": "Tegn ditt eget brett i fanen Tilekart.",
+    "es": "Dibuja tu propio nivel en la pestaña Mapa.",
+    "fr": "Dessine ton propre niveau dans l’onglet Carte.",
+    "de": "Zeichne dein eigenes Level im Tab Karte."
+   },
+   {
+    "en": "Add more enemies: place the enemy tile in the map.",
+    "nb": "Legg til flere fiender: sett fiende-ruten i kartet.",
+    "es": "Añade más enemigos: coloca la casilla de enemigo en el mapa.",
+    "fr": "Ajoute des ennemis : place la case ennemi sur la carte.",
+    "de": "Mehr Gegner: setze das Gegner-Feld in die Karte."
+   }
+  ],
+  "strings": {
+   "en": {
+    "start": "Load the level, create the hero and turn on gravity (ay). The camera follows the hero.",
+    "enemies": "Put an enemy on every enemy tile and make them walk.",
+    "jump": "Jump only when standing on the ground.",
+    "short": "Let go of A early for a short jump.",
+    "walk": "Enemies turn around when they walk into a wall.",
+    "fall": "Falling down a hole costs a life.",
+    "coin": "Take the coin away from the map and get a point.",
+    "stomp": "Jump on an enemy to remove it. Walking into it costs a life.",
+    "respawn": "Lose a life and start again from the beginning of the level."
+   },
+   "nb": {
+    "start": "Last inn brettet, lag helten og slå på tyngdekraft (ay). Kameraet følger helten.",
+    "enemies": "Sett en fiende på hver fiende-rute og få dem til å gå.",
+    "jump": "Hopp bare når helten står på bakken.",
+    "short": "Slipp A tidlig for et kort hopp.",
+    "walk": "Fiender snur når de går inn i en vegg.",
+    "fall": "Å falle ned i et hull koster et liv.",
+    "coin": "Fjern mynten fra kartet og få et poeng.",
+    "stomp": "Hopp på en fiende for å fjerne den. Går du inn i den, mister du et liv.",
+    "respawn": "Mist et liv og start på nytt fra begynnelsen av brettet."
+   },
+   "es": {
+    "start": "Carga el nivel, crea al héroe y activa la gravedad (ay). La cámara sigue al héroe.",
+    "enemies": "Pon un enemigo en cada casilla de enemigo y haz que caminen.",
+    "jump": "Salta solo cuando estés en el suelo.",
+    "short": "Suelta A pronto para un salto corto.",
+    "walk": "Los enemigos se dan la vuelta al chocar con una pared.",
+    "fall": "Caer en un agujero cuesta una vida.",
+    "coin": "Quita la moneda del mapa y gana un punto.",
+    "stomp": "Salta sobre un enemigo para quitarlo. Si chocas con él pierdes una vida.",
+    "respawn": "Pierde una vida y empieza de nuevo desde el principio del nivel."
+   },
+   "fr": {
+    "start": "Charge le niveau, crée le héros et active la gravité (ay). La caméra suit le héros.",
+    "enemies": "Place un ennemi sur chaque case ennemi et fais-les marcher.",
+    "jump": "Saute seulement quand le héros est au sol.",
+    "short": "Lâche A tôt pour un petit saut.",
+    "walk": "Les ennemis font demi-tour quand ils touchent un mur.",
+    "fall": "Tomber dans un trou coûte une vie.",
+    "coin": "Enlève la pièce de la carte et gagne un point.",
+    "stomp": "Saute sur un ennemi pour le retirer. Le toucher coûte une vie.",
+    "respawn": "Perds une vie et recommence au début du niveau."
+   },
+   "de": {
+    "start": "Lade das Level, erstelle den Helden und schalte die Schwerkraft (ay) ein. Die Kamera folgt dem Helden.",
+    "enemies": "Setze einen Gegner auf jedes Gegner-Feld und lass sie laufen.",
+    "jump": "Springe nur, wenn der Held auf dem Boden steht.",
+    "short": "Lass A früh los für einen kurzen Sprung.",
+    "walk": "Gegner drehen um, wenn sie gegen eine Wand laufen.",
+    "fall": "In ein Loch zu fallen kostet ein Leben.",
+    "coin": "Nimm die Münze von der Karte und bekomme einen Punkt.",
+    "stomp": "Spring auf einen Gegner, um ihn zu entfernen. Wenn du hineinläufst, verlierst du ein Leben.",
+    "respawn": "Verliere ein Leben und fang am Anfang des Levels neu an."
+   }
+  }
+ }
+}

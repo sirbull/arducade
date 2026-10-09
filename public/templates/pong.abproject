@@ -1,0 +1,1323 @@
+{
+ "format": "ardublocks-project",
+ "version": 1,
+ "id": "template-pong",
+ "name": "Pong",
+ "created": 0,
+ "modified": 0,
+ "profile": {
+  "format": "ardublocks-profile",
+  "version": 1,
+  "id": "arduboy",
+  "name": "Arduboy",
+  "builtin": true,
+  "chip": "atmega32u4",
+  "display": {
+   "driver": "ssd1306",
+   "bus": "spi",
+   "i2cAddress": 60,
+   "cs": "D12",
+   "dc": "D4",
+   "rst": "D6",
+   "rotate180": false,
+   "mirror": false,
+   "contrast": 207
+  },
+  "buttons": {
+   "up": "A0",
+   "right": "A1",
+   "left": "A2",
+   "down": "A3",
+   "a": "D7",
+   "b": "D8"
+  },
+  "sound": {
+   "pin1": "D5",
+   "pin2": "D13"
+  }
+ },
+ "blocks": {
+  "blocks": {
+   "languageVersion": 0,
+   "blocks": [
+    {
+     "type": "ab_on_start",
+     "inputs": {
+      "DO": {
+       "block": {
+        "type": "variables_set",
+        "fields": {
+         "VAR": {
+          "name": "player"
+         }
+        },
+        "inputs": {
+         "VALUE": {
+          "block": {
+           "type": "ab_sprite_create",
+           "fields": {
+            "IMAGE": "paddle",
+            "KIND": "Player"
+           }
+          }
+         }
+        },
+        "next": {
+         "block": {
+          "type": "ab_sprite_set_position",
+          "inputs": {
+           "SPRITE": {
+            "block": {
+             "type": "variables_get",
+             "fields": {
+              "VAR": {
+               "name": "player"
+              }
+             }
+            }
+           },
+           "X": {
+            "block": {
+             "type": "math_number",
+             "fields": {
+              "NUM": 4
+             }
+            }
+           },
+           "Y": {
+            "block": {
+             "type": "math_number",
+             "fields": {
+              "NUM": 32
+             }
+            }
+           }
+          },
+          "next": {
+           "block": {
+            "type": "ab_move_sprite",
+            "inputs": {
+             "SPRITE": {
+              "block": {
+               "type": "variables_get",
+               "fields": {
+                "VAR": {
+                 "name": "player"
+                }
+               }
+              }
+             },
+             "VX": {
+              "block": {
+               "type": "math_number",
+               "fields": {
+                "NUM": 0
+               }
+              }
+             },
+             "VY": {
+              "block": {
+               "type": "math_number",
+               "fields": {
+                "NUM": 80
+               }
+              }
+             }
+            },
+            "next": {
+             "block": {
+              "type": "ab_sprite_set_flag",
+              "fields": {
+               "FLAG": "stayInScreen",
+               "ON": "on"
+              },
+              "inputs": {
+               "SPRITE": {
+                "block": {
+                 "type": "variables_get",
+                 "fields": {
+                  "VAR": {
+                   "name": "player"
+                  }
+                 }
+                }
+               }
+              },
+              "next": {
+               "block": {
+                "type": "variables_set",
+                "fields": {
+                 "VAR": {
+                  "name": "computer"
+                 }
+                },
+                "inputs": {
+                 "VALUE": {
+                  "block": {
+                   "type": "ab_sprite_create",
+                   "fields": {
+                    "IMAGE": "paddle",
+                    "KIND": "Enemy"
+                   }
+                  }
+                 }
+                },
+                "next": {
+                 "block": {
+                  "type": "ab_sprite_set_position",
+                  "inputs": {
+                   "SPRITE": {
+                    "block": {
+                     "type": "variables_get",
+                     "fields": {
+                      "VAR": {
+                       "name": "computer"
+                      }
+                     }
+                    }
+                   },
+                   "X": {
+                    "block": {
+                     "type": "math_number",
+                     "fields": {
+                      "NUM": 123
+                     }
+                    }
+                   },
+                   "Y": {
+                    "block": {
+                     "type": "math_number",
+                     "fields": {
+                      "NUM": 32
+                     }
+                    }
+                   }
+                  },
+                  "next": {
+                   "block": {
+                    "type": "ab_sprite_set_flag",
+                    "fields": {
+                     "FLAG": "stayInScreen",
+                     "ON": "on"
+                    },
+                    "inputs": {
+                     "SPRITE": {
+                      "block": {
+                       "type": "variables_get",
+                       "fields": {
+                        "VAR": {
+                         "name": "computer"
+                        }
+                       }
+                      }
+                     }
+                    },
+                    "next": {
+                     "block": {
+                      "type": "variables_set",
+                      "fields": {
+                       "VAR": {
+                        "name": "ball"
+                       }
+                      },
+                      "inputs": {
+                       "VALUE": {
+                        "block": {
+                         "type": "ab_sprite_create",
+                         "fields": {
+                          "IMAGE": "ball",
+                          "KIND": "Ball"
+                         }
+                        }
+                       }
+                      },
+                      "next": {
+                       "block": {
+                        "type": "ab_sprite_set_flag",
+                        "fields": {
+                         "FLAG": "bounceOnWall",
+                         "ON": "on"
+                        },
+                        "inputs": {
+                         "SPRITE": {
+                          "block": {
+                           "type": "variables_get",
+                           "fields": {
+                            "VAR": {
+                             "name": "ball"
+                            }
+                           }
+                          }
+                         }
+                        },
+                        "next": {
+                         "block": {
+                          "type": "ab_sprite_set_position",
+                          "inputs": {
+                           "SPRITE": {
+                            "block": {
+                             "type": "variables_get",
+                             "fields": {
+                              "VAR": {
+                               "name": "ball"
+                              }
+                             }
+                            }
+                           },
+                           "X": {
+                            "block": {
+                             "type": "math_number",
+                             "fields": {
+                              "NUM": 64
+                             }
+                            }
+                           },
+                           "Y": {
+                            "block": {
+                             "type": "math_number",
+                             "fields": {
+                              "NUM": 32
+                             }
+                            }
+                           }
+                          },
+                          "next": {
+                           "block": {
+                            "type": "ab_sprite_set_velocity",
+                            "inputs": {
+                             "SPRITE": {
+                              "block": {
+                               "type": "variables_get",
+                               "fields": {
+                                "VAR": {
+                                 "name": "ball"
+                                }
+                               }
+                              }
+                             },
+                             "VX": {
+                              "block": {
+                               "type": "math_number",
+                               "fields": {
+                                "NUM": 50
+                               }
+                              }
+                             },
+                             "VY": {
+                              "block": {
+                               "type": "ab_random",
+                               "inputs": {
+                                "FROM": {
+                                 "block": {
+                                  "type": "math_number",
+                                  "fields": {
+                                   "NUM": -30
+                                  }
+                                 }
+                                },
+                                "TO": {
+                                 "block": {
+                                  "type": "math_number",
+                                  "fields": {
+                                   "NUM": 30
+                                  }
+                                 }
+                                }
+                               }
+                              }
+                             }
+                            },
+                            "next": {
+                             "block": {
+                              "type": "ab_life_set",
+                              "inputs": {
+                               "VALUE": {
+                                "block": {
+                                 "type": "math_number",
+                                 "fields": {
+                                  "NUM": 3
+                                 }
+                                }
+                               }
+                              },
+                              "next": {
+                               "block": {
+                                "type": "ab_score_set",
+                                "inputs": {
+                                 "VALUE": {
+                                  "block": {
+                                   "type": "math_number",
+                                   "fields": {
+                                    "NUM": 0
+                                   }
+                                  }
+                                 }
+                                }
+                               }
+                              }
+                             }
+                            }
+                           }
+                          }
+                         }
+                        }
+                       }
+                      }
+                     }
+                    }
+                   }
+                  }
+                 }
+                }
+               }
+              }
+             }
+            }
+           }
+          }
+         }
+        }
+       }
+      }
+     },
+     "icons": {
+      "comment": {
+       "text": "@start",
+       "pinned": false,
+       "height": 80,
+       "width": 200
+      }
+     },
+     "x": 20,
+     "y": 20
+    },
+    {
+     "type": "ab_on_update",
+     "inputs": {
+      "DO": {
+       "block": {
+        "type": "controls_if",
+        "inputs": {
+         "IF0": {
+          "block": {
+           "type": "logic_compare",
+           "fields": {
+            "OP": "LT"
+           },
+           "inputs": {
+            "A": {
+             "block": {
+              "type": "ab_sprite_get_prop",
+              "fields": {
+               "PROP": "y"
+              },
+              "inputs": {
+               "SPRITE": {
+                "block": {
+                 "type": "variables_get",
+                 "fields": {
+                  "VAR": {
+                   "name": "ball"
+                  }
+                 }
+                }
+               }
+              }
+             }
+            },
+            "B": {
+             "block": {
+              "type": "math_arithmetic",
+              "fields": {
+               "OP": "MINUS"
+              },
+              "inputs": {
+               "A": {
+                "block": {
+                 "type": "ab_sprite_get_prop",
+                 "fields": {
+                  "PROP": "y"
+                 },
+                 "inputs": {
+                  "SPRITE": {
+                   "block": {
+                    "type": "variables_get",
+                    "fields": {
+                     "VAR": {
+                      "name": "computer"
+                     }
+                    }
+                   }
+                  }
+                 }
+                }
+               },
+               "B": {
+                "block": {
+                 "type": "math_number",
+                 "fields": {
+                  "NUM": 2
+                 }
+                }
+               }
+              }
+             }
+            }
+           }
+          }
+         },
+         "DO0": {
+          "block": {
+           "type": "ab_sprite_set_prop",
+           "fields": {
+            "PROP": "vy"
+           },
+           "inputs": {
+            "SPRITE": {
+             "block": {
+              "type": "variables_get",
+              "fields": {
+               "VAR": {
+                "name": "computer"
+               }
+              }
+             }
+            },
+            "VALUE": {
+             "block": {
+              "type": "math_number",
+              "fields": {
+               "NUM": -40
+              }
+             }
+            }
+           }
+          }
+         },
+         "ELSE": {
+          "block": {
+           "type": "controls_if",
+           "inputs": {
+            "IF0": {
+             "block": {
+              "type": "logic_compare",
+              "fields": {
+               "OP": "GT"
+              },
+              "inputs": {
+               "A": {
+                "block": {
+                 "type": "ab_sprite_get_prop",
+                 "fields": {
+                  "PROP": "y"
+                 },
+                 "inputs": {
+                  "SPRITE": {
+                   "block": {
+                    "type": "variables_get",
+                    "fields": {
+                     "VAR": {
+                      "name": "ball"
+                     }
+                    }
+                   }
+                  }
+                 }
+                }
+               },
+               "B": {
+                "block": {
+                 "type": "math_arithmetic",
+                 "fields": {
+                  "OP": "ADD"
+                 },
+                 "inputs": {
+                  "A": {
+                   "block": {
+                    "type": "ab_sprite_get_prop",
+                    "fields": {
+                     "PROP": "y"
+                    },
+                    "inputs": {
+                     "SPRITE": {
+                      "block": {
+                       "type": "variables_get",
+                       "fields": {
+                        "VAR": {
+                         "name": "computer"
+                        }
+                       }
+                      }
+                     }
+                    }
+                   }
+                  },
+                  "B": {
+                   "block": {
+                    "type": "math_number",
+                    "fields": {
+                     "NUM": 2
+                    }
+                   }
+                  }
+                 }
+                }
+               }
+              }
+             }
+            },
+            "DO0": {
+             "block": {
+              "type": "ab_sprite_set_prop",
+              "fields": {
+               "PROP": "vy"
+              },
+              "inputs": {
+               "SPRITE": {
+                "block": {
+                 "type": "variables_get",
+                 "fields": {
+                  "VAR": {
+                   "name": "computer"
+                  }
+                 }
+                }
+               },
+               "VALUE": {
+                "block": {
+                 "type": "math_number",
+                 "fields": {
+                  "NUM": 40
+                 }
+                }
+               }
+              }
+             }
+            },
+            "ELSE": {
+             "block": {
+              "type": "ab_sprite_set_prop",
+              "fields": {
+               "PROP": "vy"
+              },
+              "inputs": {
+               "SPRITE": {
+                "block": {
+                 "type": "variables_get",
+                 "fields": {
+                  "VAR": {
+                   "name": "computer"
+                  }
+                 }
+                }
+               },
+               "VALUE": {
+                "block": {
+                 "type": "math_number",
+                 "fields": {
+                  "NUM": 0
+                 }
+                }
+               }
+              }
+             }
+            }
+           },
+           "extraState": {
+            "hasElse": true
+           }
+          }
+         }
+        },
+        "extraState": {
+         "hasElse": true
+        },
+        "icons": {
+         "comment": {
+          "text": "@ai",
+          "pinned": false,
+          "height": 80,
+          "width": 200
+         }
+        },
+        "next": {
+         "block": {
+          "type": "controls_if",
+          "inputs": {
+           "IF0": {
+            "block": {
+             "type": "ab_sprite_is_hitting",
+             "fields": {
+              "DIR": "left"
+             },
+             "inputs": {
+              "SPRITE": {
+               "block": {
+                "type": "variables_get",
+                "fields": {
+                 "VAR": {
+                  "name": "ball"
+                 }
+                }
+               }
+              }
+             }
+            }
+           },
+           "DO0": {
+            "block": {
+             "type": "ab_life_change",
+             "inputs": {
+              "VALUE": {
+               "block": {
+                "type": "math_number",
+                "fields": {
+                 "NUM": -1
+                }
+               }
+              }
+             },
+             "next": {
+              "block": {
+               "type": "ab_play_effect",
+               "fields": {
+                "SFX": "lose"
+               },
+               "next": {
+                "block": {
+                 "type": "ab_sprite_set_position",
+                 "inputs": {
+                  "SPRITE": {
+                   "block": {
+                    "type": "variables_get",
+                    "fields": {
+                     "VAR": {
+                      "name": "ball"
+                     }
+                    }
+                   }
+                  },
+                  "X": {
+                   "block": {
+                    "type": "math_number",
+                    "fields": {
+                     "NUM": 64
+                    }
+                   }
+                  },
+                  "Y": {
+                   "block": {
+                    "type": "math_number",
+                    "fields": {
+                     "NUM": 32
+                    }
+                   }
+                  }
+                 },
+                 "next": {
+                  "block": {
+                   "type": "ab_sprite_set_velocity",
+                   "inputs": {
+                    "SPRITE": {
+                     "block": {
+                      "type": "variables_get",
+                      "fields": {
+                       "VAR": {
+                        "name": "ball"
+                       }
+                      }
+                     }
+                    },
+                    "VX": {
+                     "block": {
+                      "type": "math_number",
+                      "fields": {
+                       "NUM": 50
+                      }
+                     }
+                    },
+                    "VY": {
+                     "block": {
+                      "type": "ab_random",
+                      "inputs": {
+                       "FROM": {
+                        "block": {
+                         "type": "math_number",
+                         "fields": {
+                          "NUM": -30
+                         }
+                        }
+                       },
+                       "TO": {
+                        "block": {
+                         "type": "math_number",
+                         "fields": {
+                          "NUM": 30
+                         }
+                        }
+                       }
+                      }
+                     }
+                    }
+                   }
+                  }
+                 }
+                }
+               }
+              }
+             }
+            }
+           }
+          },
+          "icons": {
+           "comment": {
+            "text": "@miss",
+            "pinned": false,
+            "height": 80,
+            "width": 200
+           }
+          },
+          "next": {
+           "block": {
+            "type": "controls_if",
+            "inputs": {
+             "IF0": {
+              "block": {
+               "type": "ab_sprite_is_hitting",
+               "fields": {
+                "DIR": "right"
+               },
+               "inputs": {
+                "SPRITE": {
+                 "block": {
+                  "type": "variables_get",
+                  "fields": {
+                   "VAR": {
+                    "name": "ball"
+                   }
+                  }
+                 }
+                }
+               }
+              }
+             },
+             "DO0": {
+              "block": {
+               "type": "ab_score_change",
+               "inputs": {
+                "VALUE": {
+                 "block": {
+                  "type": "math_number",
+                  "fields": {
+                   "NUM": 1
+                  }
+                 }
+                }
+               },
+               "next": {
+                "block": {
+                 "type": "ab_play_effect",
+                 "fields": {
+                  "SFX": "coin"
+                 },
+                 "next": {
+                  "block": {
+                   "type": "ab_sprite_set_position",
+                   "inputs": {
+                    "SPRITE": {
+                     "block": {
+                      "type": "variables_get",
+                      "fields": {
+                       "VAR": {
+                        "name": "ball"
+                       }
+                      }
+                     }
+                    },
+                    "X": {
+                     "block": {
+                      "type": "math_number",
+                      "fields": {
+                       "NUM": 64
+                      }
+                     }
+                    },
+                    "Y": {
+                     "block": {
+                      "type": "math_number",
+                      "fields": {
+                       "NUM": 32
+                      }
+                     }
+                    }
+                   },
+                   "next": {
+                    "block": {
+                     "type": "ab_sprite_set_velocity",
+                     "inputs": {
+                      "SPRITE": {
+                       "block": {
+                        "type": "variables_get",
+                        "fields": {
+                         "VAR": {
+                          "name": "ball"
+                         }
+                        }
+                       }
+                      },
+                      "VX": {
+                       "block": {
+                        "type": "math_number",
+                        "fields": {
+                         "NUM": -50
+                        }
+                       }
+                      },
+                      "VY": {
+                       "block": {
+                        "type": "ab_random",
+                        "inputs": {
+                         "FROM": {
+                          "block": {
+                           "type": "math_number",
+                           "fields": {
+                            "NUM": -30
+                           }
+                          }
+                         },
+                         "TO": {
+                          "block": {
+                           "type": "math_number",
+                           "fields": {
+                            "NUM": 30
+                           }
+                          }
+                         }
+                        }
+                       }
+                      }
+                     }
+                    }
+                   }
+                  }
+                 }
+                }
+               }
+              }
+             }
+            }
+           }
+          }
+         }
+        }
+       }
+      }
+     },
+     "x": 440,
+     "y": 20
+    },
+    {
+     "type": "ab_on_overlap",
+     "fields": {
+      "SPRITE": {
+       "name": "sprite"
+      },
+      "KIND_A": "Ball",
+      "OTHER": {
+       "name": "otherSprite"
+      },
+      "KIND_B": "Player"
+     },
+     "inputs": {
+      "DO": {
+       "block": {
+        "type": "controls_if",
+        "inputs": {
+         "IF0": {
+          "block": {
+           "type": "logic_compare",
+           "fields": {
+            "OP": "LT"
+           },
+           "inputs": {
+            "A": {
+             "block": {
+              "type": "ab_sprite_get_prop",
+              "fields": {
+               "PROP": "vx"
+              },
+              "inputs": {
+               "SPRITE": {
+                "block": {
+                 "type": "variables_get",
+                 "fields": {
+                  "VAR": {
+                   "name": "sprite"
+                  }
+                 }
+                }
+               }
+              }
+             }
+            },
+            "B": {
+             "block": {
+              "type": "math_number",
+              "fields": {
+               "NUM": 0
+              }
+             }
+            }
+           }
+          }
+         },
+         "DO0": {
+          "block": {
+           "type": "ab_sprite_set_prop",
+           "fields": {
+            "PROP": "vx"
+           },
+           "inputs": {
+            "SPRITE": {
+             "block": {
+              "type": "variables_get",
+              "fields": {
+               "VAR": {
+                "name": "sprite"
+               }
+              }
+             }
+            },
+            "VALUE": {
+             "block": {
+              "type": "math_arithmetic",
+              "fields": {
+               "OP": "ADD"
+              },
+              "inputs": {
+               "A": {
+                "block": {
+                 "type": "math_single",
+                 "fields": {
+                  "OP": "ABS"
+                 },
+                 "inputs": {
+                  "NUM": {
+                   "block": {
+                    "type": "ab_sprite_get_prop",
+                    "fields": {
+                     "PROP": "vx"
+                    },
+                    "inputs": {
+                     "SPRITE": {
+                      "block": {
+                       "type": "variables_get",
+                       "fields": {
+                        "VAR": {
+                         "name": "sprite"
+                        }
+                       }
+                      }
+                     }
+                    }
+                   }
+                  }
+                 }
+                }
+               },
+               "B": {
+                "block": {
+                 "type": "math_number",
+                 "fields": {
+                  "NUM": 5
+                 }
+                }
+               }
+              }
+             }
+            }
+           },
+           "next": {
+            "block": {
+             "type": "ab_play_effect",
+             "fields": {
+              "SFX": "hit"
+             }
+            }
+           }
+          }
+         }
+        }
+       }
+      }
+     },
+     "icons": {
+      "comment": {
+       "text": "@hit",
+       "pinned": false,
+       "height": 80,
+       "width": 200
+      }
+     },
+     "x": 20,
+     "y": 280
+    },
+    {
+     "type": "ab_on_overlap",
+     "fields": {
+      "SPRITE": {
+       "name": "sprite"
+      },
+      "KIND_A": "Ball",
+      "OTHER": {
+       "name": "otherSprite"
+      },
+      "KIND_B": "Enemy"
+     },
+     "inputs": {
+      "DO": {
+       "block": {
+        "type": "controls_if",
+        "inputs": {
+         "IF0": {
+          "block": {
+           "type": "logic_compare",
+           "fields": {
+            "OP": "GT"
+           },
+           "inputs": {
+            "A": {
+             "block": {
+              "type": "ab_sprite_get_prop",
+              "fields": {
+               "PROP": "vx"
+              },
+              "inputs": {
+               "SPRITE": {
+                "block": {
+                 "type": "variables_get",
+                 "fields": {
+                  "VAR": {
+                   "name": "sprite"
+                  }
+                 }
+                }
+               }
+              }
+             }
+            },
+            "B": {
+             "block": {
+              "type": "math_number",
+              "fields": {
+               "NUM": 0
+              }
+             }
+            }
+           }
+          }
+         },
+         "DO0": {
+          "block": {
+           "type": "ab_sprite_set_prop",
+           "fields": {
+            "PROP": "vx"
+           },
+           "inputs": {
+            "SPRITE": {
+             "block": {
+              "type": "variables_get",
+              "fields": {
+               "VAR": {
+                "name": "sprite"
+               }
+              }
+             }
+            },
+            "VALUE": {
+             "block": {
+              "type": "math_arithmetic",
+              "fields": {
+               "OP": "MINUS"
+              },
+              "inputs": {
+               "A": {
+                "block": {
+                 "type": "math_number",
+                 "fields": {
+                  "NUM": 0
+                 }
+                }
+               },
+               "B": {
+                "block": {
+                 "type": "math_single",
+                 "fields": {
+                  "OP": "ABS"
+                 },
+                 "inputs": {
+                  "NUM": {
+                   "block": {
+                    "type": "ab_sprite_get_prop",
+                    "fields": {
+                     "PROP": "vx"
+                    },
+                    "inputs": {
+                     "SPRITE": {
+                      "block": {
+                       "type": "variables_get",
+                       "fields": {
+                        "VAR": {
+                         "name": "sprite"
+                        }
+                       }
+                      }
+                     }
+                    }
+                   }
+                  }
+                 }
+                }
+               }
+              }
+             }
+            }
+           },
+           "next": {
+            "block": {
+             "type": "ab_play_effect",
+             "fields": {
+              "SFX": "hit"
+             }
+            }
+           }
+          }
+         }
+        }
+       }
+      }
+     },
+     "x": 440,
+     "y": 280
+    }
+   ]
+  }
+ },
+ "images": [
+  {
+   "id": "paddle",
+   "name": "paddle",
+   "width": 3,
+   "height": 14,
+   "frames": [
+    [
+     "111",
+     "111",
+     "111",
+     "111",
+     "111",
+     "111",
+     "111",
+     "111",
+     "111",
+     "111",
+     "111",
+     "111",
+     "111",
+     "111"
+    ]
+   ]
+  },
+  {
+   "id": "ball",
+   "name": "ball",
+   "width": 4,
+   "height": 4,
+   "frames": [
+    [
+     ".11.",
+     "1111",
+     "1111",
+     ".11."
+    ]
+   ]
+  }
+ ],
+ "tiles": [],
+ "tilemaps": [],
+ "kinds": [
+  "Ball"
+ ],
+ "template": {
+  "id": "pong",
+  "title": {
+   "en": "Pong",
+   "nb": "Pong",
+   "es": "Pong",
+   "fr": "Pong",
+   "de": "Pong"
+  },
+  "description": {
+   "en": "Hit the ball past the computer. Move with up and down.",
+   "nb": "Slå ballen forbi datamaskinen. Flytt med opp og ned.",
+   "es": "Pasa la pelota a la computadora. Muévete con arriba y abajo.",
+   "fr": "Envoie la balle derrière l'ordinateur. Bouge avec haut et bas.",
+   "de": "Schlag den Ball am Computer vorbei. Bewege dich mit hoch und runter."
+  },
+  "tips": [
+   {
+    "en": "Make the ball faster: change 50 in \"on start\".",
+    "nb": "Gjør ballen raskere: endre 50 i \"når spillet starter\".",
+    "es": "Haz la pelota más rápida: cambia 50 en \"al iniciar\".",
+    "fr": "Rends la balle plus rapide : change 50 dans « au démarrage ».",
+    "de": "Mach den Ball schneller: ändere 50 in \"beim Start\"."
+   },
+   {
+    "en": "Give yourself more lives.",
+    "nb": "Gi deg selv flere liv.",
+    "es": "Date más vidas.",
+    "fr": "Donne-toi plus de vies.",
+    "de": "Gib dir mehr Leben."
+   },
+   {
+    "en": "Make the computer better: raise its speed from 40.",
+    "nb": "Gjør datamaskinen flinkere: øk farten fra 40.",
+    "es": "Mejora la computadora: sube su velocidad de 40.",
+    "fr": "Rends l'ordinateur meilleur : augmente sa vitesse de 40.",
+    "de": "Mach den Computer besser: erhöhe sein Tempo von 40."
+   }
+  ],
+  "strings": {
+   "en": {
+    "start": "Create the paddles and the ball. The ball bounces on the edges of the screen.",
+    "ai": "The computer moves its paddle toward the ball.",
+    "miss": "The ball hit your side: you lose a life. The ball hit the other side: you get a point.",
+    "hit": "Send the ball back, a little faster each time."
+   },
+   "nb": {
+    "start": "Lag rekkertene og ballen. Ballen spretter på kantene av skjermen.",
+    "ai": "Datamaskinen flytter rekkerten sin mot ballen.",
+    "miss": "Ballen traff din side: du mister et liv. Ballen traff den andre siden: du får et poeng.",
+    "hit": "Send ballen tilbake, litt raskere hver gang."
+   },
+   "es": {
+    "start": "Crea las paletas y la pelota. La pelota rebota en los bordes de la pantalla.",
+    "ai": "La computadora mueve su paleta hacia la pelota.",
+    "miss": "Si la pelota toca tu lado pierdes una vida. Si toca el otro lado ganas un punto.",
+    "hit": "Devuelve la pelota, un poco más rápido cada vez."
+   },
+   "fr": {
+    "start": "Crée les raquettes et la balle. La balle rebondit sur les bords de l'écran.",
+    "ai": "L'ordinateur déplace sa raquette vers la balle.",
+    "miss": "Si la balle touche ton côté, tu perds une vie. Si elle touche l'autre côté, tu gagnes un point.",
+    "hit": "Renvoie la balle, un peu plus vite à chaque fois."
+   },
+   "de": {
+    "start": "Erstelle die Schläger und den Ball. Der Ball prallt an den Rändern ab.",
+    "ai": "Der Computer bewegt seinen Schläger zum Ball.",
+    "miss": "Trifft der Ball deine Seite, verlierst du ein Leben. Trifft er die andere Seite, bekommst du einen Punkt.",
+    "hit": "Schlag den Ball zurück, jedes Mal etwas schneller."
+   }
+  }
+ }
+}

@@ -9,7 +9,6 @@ import { ICONS, type IconName } from './icons';
 type Arg = Record<string, unknown>;
 
 const num = (name: string): Arg => ({ type: 'input_value', name, check: 'Number' });
-const bool = (name: string): Arg => ({ type: 'input_value', name, check: 'Boolean' });
 const text = (name: string): Arg => ({ type: 'input_value', name, check: ['String', 'Number'] });
 const sprite = (name: string): Arg => ({ type: 'input_value', name, check: 'Sprite' });
 const image = (name = 'IMAGE'): Arg => ({ type: 'field_ab_image', name });

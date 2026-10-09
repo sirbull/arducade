@@ -6,7 +6,7 @@ import 'blockly/blocks';
 import { setAssetLabels, setAssetProject } from '../blocks/assets';
 import { defineBlocks } from '../blocks/defs';
 import { buildToolbox } from '../blocks/toolbox';
-import { getChip, usableFlash } from '../hw/chips';
+import { getChip } from '../hw/chips';
 import { BUILTIN_PROFILES, DEFAULT_PROFILE_ID, type Profile } from '../hw/profile';
 import { currentLanguage, kindName, LANGUAGES, loadLanguage, t, translatePage } from '../i18n/i18n';
 import type { Diagnostic } from '../ir/ir';
@@ -19,7 +19,7 @@ import { ImagesPane, MapPane, TilesPane } from './assets-panes';
 import { buildWorkspace, type BuildResult } from './build';
 import { CodeView } from './code-view';
 import { confirmDialog } from './dialogs';
-import { $, clear, h, select, toast } from './dom';
+import { $, clear, h, toast } from './dom';
 import { openGallery, openProjectsDialog } from './gallery';
 import { allProfiles, loadServerProfiles, openProfileDialog, profileFromUrl } from './profile-editor';
 import { openFirstRun, openSettings } from './settings-dialog';
@@ -63,7 +63,7 @@ export class App {
     translatePage();
     this.fillLanguageSelect();
     defineBlocks();
-    setAssetLabels(kindName, t('ui.none'));
+    setAssetLabels(kindName, t('ui.none'), t('tiles.emptyTile'));
 
     this.codeView = new CodeView($('#code'));
     this.runner = new Runner($('#screen') as HTMLCanvasElement, {
@@ -107,7 +107,7 @@ export class App {
 
   private injectWorkspace() {
     this.ws = Blockly.inject($('#blockly'), {
-      toolbox: buildToolbox() as Blockly.utils.toolbox.ToolboxDefinition,
+      toolbox: buildToolbox() as unknown as Blockly.utils.toolbox.ToolboxDefinition,
       theme: blocklyTheme(this.settings.theme as ThemeId),
       renderer: 'zelos',
       grid: { spacing: 24, length: 2, colour: 'rgba(128,128,128,0.25)', snap: true },
@@ -115,6 +115,7 @@ export class App {
       trashcan: true,
       move: { scrollbars: true, drag: true, wheel: false },
       sounds: false,
+      media: 'blockly-media/',
     });
     this.ws.addChangeListener(Blockly.Events.disableOrphans);
     this.ws.addChangeListener((e) => {
@@ -149,7 +150,7 @@ export class App {
       console.error(err);
       toast(t('project.loadError'), 'error');
     }
-    this.ws.scrollCenter();
+    this.scrollToStart();
     this.loading = false;
     ($('#project-name') as HTMLInputElement).value = p.name;
     this.settings.lastProjectId = p.id;
@@ -159,6 +160,14 @@ export class App {
     this.renderActivePane();
     this.runBuild(true);
     void projectStore.save(this.project).catch(() => {});
+  }
+
+  /** Shows the top left of the blocks. */
+  private scrollToStart() {
+    const box = this.ws.getBlocksBoundingBox();
+    const scale = this.ws.scale;
+    if (box.right > box.left) this.ws.scroll(24 - box.left * scale, 24 - box.top * scale);
+    else this.ws.scrollCenter();
   }
 
   private scheduleBuild() {
@@ -315,7 +324,7 @@ export class App {
     if (langChanged) {
       this.project.blocks = Blockly.serialization.workspaces.save(this.ws);
       await loadLanguage(this.settings.language);
-      setAssetLabels(kindName, t('ui.none'));
+      setAssetLabels(kindName, t('ui.none'), t('tiles.emptyTile'));
       translatePage();
       this.fillLanguageSelect();
       this.reinjectWorkspace();
@@ -456,4 +465,3 @@ export class App {
   }
 }
 
-export { select };

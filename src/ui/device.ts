@@ -1,0 +1,237 @@
+// Device panel: size meter, compiling in the browser, uploading over USB
+// and downloading the Arduino sketch.
+
+import { compileInWorker } from '../compile/client';
+import type { CompileOutput } from '../compile/avrgcc';
+import { getChip, usableFlash, type Chip } from '../hw/chips';
+import { profileToConfigH } from '../hw/profile';
+import { t } from '../i18n/i18n';
+import type { Diagnostic } from '../ir/ir';
+import { CORE_HEADERS } from '../project/sketch';
+import { touch1200, uploadAvr109 } from '../upload/avr109';
+import { parseHex, serialApi, sleep, UploadError, type SerialPortLike } from '../upload/serial';
+import { uploadStk500v1 } from '../upload/stk500v1';
+import type { App } from './app';
+import { openDialog } from './dialogs';
+import { $, clear, h, toast } from './dom';
+
+/** Flash page size used by the bootloader. */
+const PAGE_SIZE: Record<string, number> = { atmega328p: 128, atmega328pb: 128, atmega644p: 256, atmega1284p: 256 };
+
+/** USB product ids of 32U4 bootloaders (Arduino, SparkFun, Adafruit). */
+const BOOTLOADER_PIDS = new Set([0x0036, 0x0037, 0x9205, 0x9203, 0x000c]);
+
+export class DeviceTools {
+  private exact: { code: string; profile: string; out: CompileOutput } | null = null;
+  private busy = false;
+
+  constructor(private app: App) {
+    $('#btn-compile').addEventListener('click', () => void this.compile());
+    $('#btn-upload').addEventListener('click', () => void this.upload());
+    $('#btn-sketch').addEventListener('click', () => this.app.downloadSketch());
+  }
+
+  private chip(): Chip | null {
+    try {
+      return getChip(this.app.project.profile.chip);
+    } catch {
+      return null;
+    }
+  }
+
+  private status(text: string) {
+    $('#device-status').textContent = text;
+  }
+
+  /** Rough size between compiles, from the size of the generated code. */
+  estimate() {
+    const chip = this.chip();
+    const build = this.app.build;
+    if (!chip || !build) return;
+    const key = build.cpp.code + JSON.stringify(this.app.project.profile);
+    if (this.exact && this.exact.code + this.exact.profile === key) {
+      this.meter(this.exact.out.flash, this.exact.out.ram, false);
+      return;
+    }
+    const p = this.app.project;
+    let assets = 0;
+    for (const img of p.images) assets += 4 + img.frames.length * Math.ceil(img.height / 8) * img.width * 2;
+    assets += p.tiles.length * 12;
+    for (const m of p.tilemaps) assets += 2 + m.width * m.height;
+    const statements = build.cpp.code.split('\n').filter((l) => l.trim().endsWith(';')).length;
+    const flash = 9000 + statements * 14 + assets + (chip.id === 'atmega32u4' ? 3500 : 0);
+    const cells = Math.max(8, ...p.tilemaps.map((m) => m.width * m.height));
+    const ram = 1024 + this.app.maxSprites() * 25 + build.program.vars.length * 2 + Math.ceil(cells / 8) + 120 + (chip.id === 'atmega32u4' ? 200 : 0);
+    this.meter(flash, ram, true);
+  }
+
+  private meter(flash: number, ram: number, estimate: boolean) {
+    const chip = this.chip();
+    const el = $('#meter');
+    clear(el);
+    if (!chip) return;
+    const flashMax = usableFlash(chip);
+    // Leave room for the stack.
+    const ramMax = chip.ram;
+    const bar = (label: string, used: number, max: number) => {
+      const pct = Math.min(100, Math.round((used / max) * 100));
+      const level = pct >= 95 ? 'danger' : pct >= 80 ? 'warn' : 'ok';
+      return h(
+        'div',
+        { class: 'bar-row' },
+        h('span', { class: 'bar-label' }, label),
+        h('div', { class: 'bar', role: 'meter', 'aria-valuemin': 0, 'aria-valuemax': max, 'aria-valuenow': used, 'aria-label': label }, h('div', { class: `fill ${level}`, style: `width:${pct}%` })),
+        h('span', { class: 'bar-value' }, `${estimate ? '~' : ''}${(used / 1024).toFixed(1)} / ${(max / 1024).toFixed(1)} KB`),
+      );
+    };
+    el.append(bar(t('device.flash'), flash, flashMax), bar(t('device.ram'), ram, ramMax));
+    el.append(h('p', { class: 'muted small' }, estimate ? t('device.estimate') : t('device.exact')));
+    if (flash > flashMax) el.append(h('p', { class: 'error small' }, t('device.tooBig')));
+    else if (ram > ramMax - 300) el.append(h('p', { class: 'warning small' }, t('device.lowRam')));
+  }
+
+  /** Warnings about the hardware, shown with the other problems. */
+  warnings(): Diagnostic[] {
+    const out: Diagnostic[] = [];
+    const chip = this.chip();
+    if (!chip) return out;
+    const cells = Math.max(0, ...this.app.project.tilemaps.map((m) => m.width * m.height));
+    if (chip.ram <= 2560 && cells / 8 > 256) out.push({ level: 'warning', key: 'diag.bigMap' });
+    return out;
+  }
+
+  private async compileNow(): Promise<CompileOutput | null> {
+    const chip = this.chip();
+    const build = this.app.build;
+    if (!chip || !build) return null;
+    if (build.diagnostics.some((d) => d.level === 'error')) {
+      toast(t('device.fixErrors'), 'error');
+      return null;
+    }
+    if (!chip.browserCompile) {
+      toast(t('device.exportOnly', { chip: chip.name }), 'info');
+      return null;
+    }
+    const profileKey = JSON.stringify(this.app.project.profile);
+    if (this.exact && this.exact.code === build.cpp.code && this.exact.profile === profileKey) return this.exact.out;
+    this.status(t('device.compiling'));
+    const started = performance.now();
+    try {
+      const out = await compileInWorker({ mcu: chip.id, game: build.cpp.code, config: profileToConfigH(this.app.project.profile), headers: CORE_HEADERS });
+      this.exact = { code: build.cpp.code, profile: profileKey, out };
+      this.meter(out.flash, out.ram, false);
+      this.status(t('device.compiled', { seconds: ((performance.now() - started) / 1000).toFixed(1) }));
+      return out;
+    } catch (e) {
+      const log = (e as { log?: string[] }).log ?? [];
+      this.status(t('device.compileFailed'));
+      const d = openDialog(t('device.compileFailed'), { wide: true });
+      d.body.append(h('p', {}, t('device.compileFailedHelp')), h('pre', { class: 'log' }, log.join('\n') || String((e as Error).message)));
+      d.footer.append(h('button', { class: 'primary', onclick: () => d.close() }, t('ui.ok')));
+      return null;
+    }
+  }
+
+  async compile() {
+    if (this.busy) return;
+    this.busy = true;
+    try {
+      await this.compileNow();
+    } finally {
+      this.busy = false;
+    }
+  }
+
+  async upload() {
+    if (this.busy) return;
+    const chip = this.chip();
+    if (!chip) return;
+    const serial = serialApi();
+    if (chip.upload === 'none' || !chip.browserCompile) {
+      toast(t('device.exportOnly', { chip: chip.name }), 'info');
+      return;
+    }
+    if (!serial) {
+      toast(t('upload.noWebSerial'), 'error');
+      return;
+    }
+    this.busy = true;
+    try {
+      // Ask for the port first, while the click still counts as a user action.
+      // A port that was allowed before is used again without asking.
+      let port: SerialPortLike;
+      const granted = await serial.getPorts();
+      try {
+        port = granted.length === 1 ? granted[0] : await serial.requestPort();
+      } catch {
+        this.status('');
+        return;
+      }
+      const out = await this.compileNow();
+      if (!out) return;
+      if (out.flash > usableFlash(chip)) {
+        toast(t('device.tooBig'), 'error');
+        return;
+      }
+      const program = parseHex(out.hex);
+      const progress = (stage: string, f: number) => this.status(t(`upload.${stage}`, { percent: Math.round(f * 100) }));
+      if (chip.upload === 'stk500v1') {
+        await uploadStk500v1(port, program, { bauds: chip.baud ?? [115200, 57600], pageSize: PAGE_SIZE[chip.id] ?? 128, signature: chip.signature, progress });
+      } else if (chip.upload === 'avr109') {
+        const boot = await this.enterBootloader(port);
+        if (!boot) return;
+        await uploadAvr109(boot, program, { signature: chip.signature, progress });
+      } else {
+        toast(t('device.exportOnly', { chip: chip.name }), 'info');
+        return;
+      }
+      toast(t('upload.success'), 'ok');
+    } catch (e) {
+      const err = e instanceof UploadError ? t(e.key, e.params) : `${t('upload.failed')}: ${(e as Error).message}`;
+      this.status(err);
+      toast(err, 'error');
+    } finally {
+      this.busy = false;
+    }
+  }
+
+  /** Restarts a 32U4 board into the bootloader and finds its serial port. */
+  private async enterBootloader(port: SerialPortLike): Promise<SerialPortLike | null> {
+    const serial = serialApi()!;
+    const info = port.getInfo();
+    if (info.usbProductId !== undefined && BOOTLOADER_PIDS.has(info.usbProductId)) return port;
+    const before = new Set(await serial.getPorts());
+    this.status(t('upload.reset'));
+    await touch1200(port);
+    for (let i = 0; i < 30; i++) {
+      await sleep(100);
+      const now = await serial.getPorts();
+      const fresh = now.find((p) => !before.has(p) || (p.getInfo().usbProductId !== undefined && BOOTLOADER_PIDS.has(p.getInfo().usbProductId!)));
+      if (fresh && fresh !== port) return fresh;
+    }
+    // The bootloader port has not been allowed yet: the user must pick it.
+    return new Promise((resolve) => {
+      let chosen: SerialPortLike | null = null;
+      const d = openDialog(t('upload.pickBootloader'), { onClose: () => resolve(chosen) });
+      d.body.append(h('p', {}, t('upload.pickBootloaderHelp')));
+      d.footer.append(
+        h('button', { onclick: () => d.close() }, t('ui.cancel')),
+        h(
+          'button',
+          {
+            class: 'primary',
+            onclick: async () => {
+              try {
+                chosen = await serial.requestPort();
+              } catch {
+                chosen = null;
+              }
+              d.close();
+            },
+          },
+          t('upload.pickPort'),
+        ),
+      );
+    });
+  }
+}

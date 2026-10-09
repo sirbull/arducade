@@ -1,0 +1,705 @@
+{
+ "format": "ardublocks-project",
+ "version": 1,
+ "id": "template-shooter",
+ "name": "Space shooter",
+ "created": 0,
+ "modified": 0,
+ "profile": {
+  "format": "ardublocks-profile",
+  "version": 1,
+  "id": "arduboy",
+  "name": "Arduboy",
+  "builtin": true,
+  "chip": "atmega32u4",
+  "display": {
+   "driver": "ssd1306",
+   "bus": "spi",
+   "i2cAddress": 60,
+   "cs": "D12",
+   "dc": "D4",
+   "rst": "D6",
+   "rotate180": false,
+   "mirror": false,
+   "contrast": 207
+  },
+  "buttons": {
+   "up": "A0",
+   "right": "A1",
+   "left": "A2",
+   "down": "A3",
+   "a": "D7",
+   "b": "D8"
+  },
+  "sound": {
+   "pin1": "D5",
+   "pin2": "D13"
+  }
+ },
+ "blocks": {
+  "blocks": {
+   "languageVersion": 0,
+   "blocks": [
+    {
+     "type": "ab_on_start",
+     "inputs": {
+      "DO": {
+       "block": {
+        "type": "variables_set",
+        "fields": {
+         "VAR": {
+          "name": "ship"
+         }
+        },
+        "inputs": {
+         "VALUE": {
+          "block": {
+           "type": "ab_sprite_create",
+           "fields": {
+            "IMAGE": "ship",
+            "KIND": "Player"
+           }
+          }
+         }
+        },
+        "next": {
+         "block": {
+          "type": "ab_sprite_set_position",
+          "inputs": {
+           "SPRITE": {
+            "block": {
+             "type": "variables_get",
+             "fields": {
+              "VAR": {
+               "name": "ship"
+              }
+             }
+            }
+           },
+           "X": {
+            "block": {
+             "type": "math_number",
+             "fields": {
+              "NUM": 64
+             }
+            }
+           },
+           "Y": {
+            "block": {
+             "type": "math_number",
+             "fields": {
+              "NUM": 58
+             }
+            }
+           }
+          },
+          "next": {
+           "block": {
+            "type": "ab_move_sprite",
+            "inputs": {
+             "SPRITE": {
+              "block": {
+               "type": "variables_get",
+               "fields": {
+                "VAR": {
+                 "name": "ship"
+                }
+               }
+              }
+             },
+             "VX": {
+              "block": {
+               "type": "math_number",
+               "fields": {
+                "NUM": 70
+               }
+              }
+             },
+             "VY": {
+              "block": {
+               "type": "math_number",
+               "fields": {
+                "NUM": 0
+               }
+              }
+             }
+            },
+            "next": {
+             "block": {
+              "type": "ab_sprite_set_flag",
+              "fields": {
+               "FLAG": "stayInScreen",
+               "ON": "on"
+              },
+              "inputs": {
+               "SPRITE": {
+                "block": {
+                 "type": "variables_get",
+                 "fields": {
+                  "VAR": {
+                   "name": "ship"
+                  }
+                 }
+                }
+               }
+              },
+              "next": {
+               "block": {
+                "type": "ab_life_set",
+                "inputs": {
+                 "VALUE": {
+                  "block": {
+                   "type": "math_number",
+                   "fields": {
+                    "NUM": 3
+                   }
+                  }
+                 }
+                },
+                "next": {
+                 "block": {
+                  "type": "ab_score_set",
+                  "inputs": {
+                   "VALUE": {
+                    "block": {
+                     "type": "math_number",
+                     "fields": {
+                      "NUM": 0
+                     }
+                    }
+                   }
+                  }
+                 }
+                }
+               }
+              }
+             }
+            }
+           }
+          }
+         }
+        }
+       }
+      }
+     },
+     "icons": {
+      "comment": {
+       "text": "@start",
+       "pinned": false,
+       "height": 80,
+       "width": 200
+      }
+     },
+     "x": 20,
+     "y": 20
+    },
+    {
+     "type": "ab_on_button",
+     "fields": {
+      "BUTTON": "a",
+      "EVENT": "pressed"
+     },
+     "inputs": {
+      "DO": {
+       "block": {
+        "type": "variables_set",
+        "fields": {
+         "VAR": {
+          "name": "shot"
+         }
+        },
+        "inputs": {
+         "VALUE": {
+          "block": {
+           "type": "ab_sprite_projectile",
+           "fields": {
+            "IMAGE": "bullet"
+           },
+           "inputs": {
+            "FROM": {
+             "block": {
+              "type": "variables_get",
+              "fields": {
+               "VAR": {
+                "name": "ship"
+               }
+              }
+             }
+            },
+            "VX": {
+             "block": {
+              "type": "math_number",
+              "fields": {
+               "NUM": 0
+              }
+             }
+            },
+            "VY": {
+             "block": {
+              "type": "math_number",
+              "fields": {
+               "NUM": -120
+              }
+             }
+            }
+           }
+          }
+         }
+        },
+        "next": {
+         "block": {
+          "type": "ab_play_effect",
+          "fields": {
+           "SFX": "shoot"
+          }
+         }
+        }
+       }
+      }
+     },
+     "icons": {
+      "comment": {
+       "text": "@shoot",
+       "pinned": false,
+       "height": 80,
+       "width": 200
+      }
+     },
+     "x": 440,
+     "y": 20
+    },
+    {
+     "type": "ab_on_every",
+     "fields": {
+      "MS": 800
+     },
+     "inputs": {
+      "DO": {
+       "block": {
+        "type": "variables_set",
+        "fields": {
+         "VAR": {
+          "name": "alien"
+         }
+        },
+        "inputs": {
+         "VALUE": {
+          "block": {
+           "type": "ab_sprite_create",
+           "fields": {
+            "IMAGE": "alien",
+            "KIND": "Enemy"
+           }
+          }
+         }
+        },
+        "next": {
+         "block": {
+          "type": "ab_sprite_set_position",
+          "inputs": {
+           "SPRITE": {
+            "block": {
+             "type": "variables_get",
+             "fields": {
+              "VAR": {
+               "name": "alien"
+              }
+             }
+            }
+           },
+           "X": {
+            "block": {
+             "type": "ab_random",
+             "inputs": {
+              "FROM": {
+               "block": {
+                "type": "math_number",
+                "fields": {
+                 "NUM": 8
+                }
+               }
+              },
+              "TO": {
+               "block": {
+                "type": "math_number",
+                "fields": {
+                 "NUM": 120
+                }
+               }
+              }
+             }
+            }
+           },
+           "Y": {
+            "block": {
+             "type": "math_number",
+             "fields": {
+              "NUM": 0
+             }
+            }
+           }
+          },
+          "next": {
+           "block": {
+            "type": "ab_sprite_set_velocity",
+            "inputs": {
+             "SPRITE": {
+              "block": {
+               "type": "variables_get",
+               "fields": {
+                "VAR": {
+                 "name": "alien"
+                }
+               }
+              }
+             },
+             "VX": {
+              "block": {
+               "type": "math_number",
+               "fields": {
+                "NUM": 0
+               }
+              }
+             },
+             "VY": {
+              "block": {
+               "type": "ab_random",
+               "inputs": {
+                "FROM": {
+                 "block": {
+                  "type": "math_number",
+                  "fields": {
+                   "NUM": 15
+                  }
+                 }
+                },
+                "TO": {
+                 "block": {
+                  "type": "math_number",
+                  "fields": {
+                   "NUM": 35
+                  }
+                 }
+                }
+               }
+              }
+             }
+            },
+            "next": {
+             "block": {
+              "type": "ab_sprite_set_flag",
+              "fields": {
+               "FLAG": "autoDestroy",
+               "ON": "on"
+              },
+              "inputs": {
+               "SPRITE": {
+                "block": {
+                 "type": "variables_get",
+                 "fields": {
+                  "VAR": {
+                   "name": "alien"
+                  }
+                 }
+                }
+               }
+              }
+             }
+            }
+           }
+          }
+         }
+        }
+       }
+      }
+     },
+     "icons": {
+      "comment": {
+       "text": "@spawn",
+       "pinned": false,
+       "height": 80,
+       "width": 200
+      }
+     },
+     "x": 20,
+     "y": 280
+    },
+    {
+     "type": "ab_on_overlap",
+     "fields": {
+      "SPRITE": {
+       "name": "sprite"
+      },
+      "KIND_A": "Projectile",
+      "OTHER": {
+       "name": "otherSprite"
+      },
+      "KIND_B": "Enemy"
+     },
+     "inputs": {
+      "DO": {
+       "block": {
+        "type": "ab_sprite_destroy",
+        "inputs": {
+         "SPRITE": {
+          "block": {
+           "type": "variables_get",
+           "fields": {
+            "VAR": {
+             "name": "sprite"
+            }
+           }
+          }
+         }
+        },
+        "next": {
+         "block": {
+          "type": "ab_sprite_destroy",
+          "inputs": {
+           "SPRITE": {
+            "block": {
+             "type": "variables_get",
+             "fields": {
+              "VAR": {
+               "name": "otherSprite"
+              }
+             }
+            }
+           }
+          },
+          "next": {
+           "block": {
+            "type": "ab_score_change",
+            "inputs": {
+             "VALUE": {
+              "block": {
+               "type": "math_number",
+               "fields": {
+                "NUM": 1
+               }
+              }
+             }
+            },
+            "next": {
+             "block": {
+              "type": "ab_play_effect",
+              "fields": {
+               "SFX": "explosion"
+              }
+             }
+            }
+           }
+          }
+         }
+        }
+       }
+      }
+     },
+     "icons": {
+      "comment": {
+       "text": "@hit",
+       "pinned": false,
+       "height": 80,
+       "width": 200
+      }
+     },
+     "x": 440,
+     "y": 280
+    },
+    {
+     "type": "ab_on_overlap",
+     "fields": {
+      "SPRITE": {
+       "name": "sprite"
+      },
+      "KIND_A": "Player",
+      "OTHER": {
+       "name": "otherSprite"
+      },
+      "KIND_B": "Enemy"
+     },
+     "inputs": {
+      "DO": {
+       "block": {
+        "type": "ab_sprite_destroy",
+        "inputs": {
+         "SPRITE": {
+          "block": {
+           "type": "variables_get",
+           "fields": {
+            "VAR": {
+             "name": "otherSprite"
+            }
+           }
+          }
+         }
+        },
+        "next": {
+         "block": {
+          "type": "ab_life_change",
+          "inputs": {
+           "VALUE": {
+            "block": {
+             "type": "math_number",
+             "fields": {
+              "NUM": -1
+             }
+            }
+           }
+          },
+          "next": {
+           "block": {
+            "type": "ab_play_effect",
+            "fields": {
+             "SFX": "hit"
+            }
+           }
+          }
+         }
+        }
+       }
+      }
+     },
+     "icons": {
+      "comment": {
+       "text": "@crash",
+       "pinned": false,
+       "height": 80,
+       "width": 200
+      }
+     },
+     "x": 20,
+     "y": 540
+    }
+   ]
+  }
+ },
+ "images": [
+  {
+   "id": "ship",
+   "name": "ship",
+   "width": 9,
+   "height": 7,
+   "frames": [
+    [
+     "....1....",
+     "...111...",
+     "...1.1...",
+     "..11111..",
+     ".1111111.",
+     "111.1.111",
+     "1.......1"
+    ]
+   ]
+  },
+  {
+   "id": "alien",
+   "name": "alien",
+   "width": 8,
+   "height": 6,
+   "frames": [
+    [
+     ".1....1.",
+     "..1111..",
+     ".11.1.1.",
+     "11111111",
+     "1.1..1.1",
+     ".1....1."
+    ]
+   ]
+  },
+  {
+   "id": "bullet",
+   "name": "bullet",
+   "width": 1,
+   "height": 3,
+   "frames": [
+    [
+     "1",
+     "1",
+     "1"
+    ]
+   ]
+  }
+ ],
+ "tiles": [],
+ "tilemaps": [],
+ "kinds": [],
+ "template": {
+  "id": "shooter",
+  "title": {
+   "en": "Space shooter",
+   "nb": "Romskyting",
+   "es": "Batalla espacial",
+   "fr": "Tir spatial",
+   "de": "Weltraum-Shooter"
+  },
+  "description": {
+   "en": "Shoot the falling enemies with A. Do not let them hit you.",
+   "nb": "Skyt fiendene som faller med A. Ikke la dem treffe deg.",
+   "es": "Dispara con A a los enemigos que caen. Que no te toquen.",
+   "fr": "Tire sur les ennemis qui tombent avec A. Ne te fais pas toucher.",
+   "de": "Schieß mit A auf die fallenden Gegner. Lass dich nicht treffen."
+  },
+  "tips": [
+   {
+    "en": "Make enemies come more often: change 800.",
+    "nb": "Få fiendene til å komme oftere: endre 800.",
+    "es": "Haz que los enemigos vengan más a menudo: cambia 800.",
+    "fr": "Fais venir les ennemis plus souvent : change 800.",
+    "de": "Lass Gegner öfter kommen: ändere 800."
+   },
+   {
+    "en": "Draw your own space ship in the Images tab.",
+    "nb": "Tegn ditt eget romskip i fanen Bilder.",
+    "es": "Dibuja tu propia nave en la pestaña Imágenes.",
+    "fr": "Dessine ton propre vaisseau dans l’onglet Images.",
+    "de": "Zeichne dein eigenes Raumschiff im Tab Bilder."
+   },
+   {
+    "en": "Shoot two bullets at once.",
+    "nb": "Skyt to skudd samtidig.",
+    "es": "Dispara dos balas a la vez.",
+    "fr": "Tire deux balles à la fois.",
+    "de": "Schieß zwei Kugeln auf einmal."
+   }
+  ],
+  "strings": {
+   "en": {
+    "start": "Create the ship. It moves left and right with the buttons.",
+    "shoot": "Press A to shoot a bullet upward.",
+    "spawn": "A new enemy appears at the top every 800 ms.",
+    "hit": "A bullet hits an enemy: both disappear and you get a point.",
+    "crash": "An enemy hits the ship: you lose a life."
+   },
+   "nb": {
+    "start": "Lag romskipet. Det flytter seg til venstre og høyre med knappene.",
+    "shoot": "Trykk A for å skyte et skudd oppover.",
+    "spawn": "En ny fiende kommer øverst hvert 800. millisekund.",
+    "hit": "Et skudd treffer en fiende: begge forsvinner og du får et poeng.",
+    "crash": "En fiende treffer romskipet: du mister et liv."
+   },
+   "es": {
+    "start": "Crea la nave. Se mueve a izquierda y derecha con los botones.",
+    "shoot": "Pulsa A para disparar hacia arriba.",
+    "spawn": "Aparece un enemigo arriba cada 800 ms.",
+    "hit": "Una bala toca a un enemigo: ambos desaparecen y ganas un punto.",
+    "crash": "Un enemigo choca con la nave: pierdes una vida."
+   },
+   "fr": {
+    "start": "Crée le vaisseau. Il bouge à gauche et à droite avec les boutons.",
+    "shoot": "Appuie sur A pour tirer vers le haut.",
+    "spawn": "Un nouvel ennemi apparaît en haut toutes les 800 ms.",
+    "hit": "Une balle touche un ennemi : les deux disparaissent et tu gagnes un point.",
+    "crash": "Un ennemi touche le vaisseau : tu perds une vie."
+   },
+   "de": {
+    "start": "Erstelle das Raumschiff. Es bewegt sich mit den Tasten nach links und rechts.",
+    "shoot": "Drück A, um nach oben zu schießen.",
+    "spawn": "Alle 800 ms erscheint oben ein neuer Gegner.",
+    "hit": "Eine Kugel trifft einen Gegner: beide verschwinden und du bekommst einen Punkt.",
+    "crash": "Ein Gegner trifft das Raumschiff: du verlierst ein Leben."
+   }
+  }
+ }
+}

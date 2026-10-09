@@ -44,7 +44,7 @@ export class Runner {
   muted = false;
   running = false;
 
-  constructor(private canvas: HTMLCanvasElement, private events: RunnerEvents) {
+  constructor(canvas: HTMLCanvasElement, private events: RunnerEvents) {
     canvas.width = 128;
     canvas.height = 64;
     this.ctx = canvas.getContext('2d')!;
@@ -140,7 +140,7 @@ export class Runner {
   }
 
   /** Starts a game from generated JavaScript. */
-  async start(game: JsResult, storageKey: string) {
+  async start(game: JsResult, storageKey: string, maxSprites = 16) {
     this.stop();
     let hooksFactory: (E: Engine, ...helpers: unknown[]) => GameHooks;
     try {
@@ -162,7 +162,7 @@ export class Runner {
         },
       },
       onSkippedCpp: () => this.events.onSkippedCpp(),
-      maxSprites: 16,
+      maxSprites,
       hiscoreMagic: game.hiscoreKey,
     });
     this.engine = engine;

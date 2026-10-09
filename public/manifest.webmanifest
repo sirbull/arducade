@@ -1,0 +1,10 @@
+{
+  "name": "ArduBlocks",
+  "short_name": "ArduBlocks",
+  "description": "Make games for Arduboy and home made Arduboy devices with blocks.",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#0b0b0c",
+  "theme_color": "#0b0b0c",
+  "icons": [{ "src": "favicon.svg", "sizes": "any", "type": "image/svg+xml" }]
+}

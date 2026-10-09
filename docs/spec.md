@@ -192,6 +192,20 @@ Editoren skal være like enkel og forståelig som MakeCode Arcade. Derfor har de
 | Snake | Rutenett, lister, voksende slange, rekord i EEPROM |
 | Breakout | Flere sprites av samme type, ødelegging, nivåer |
 
+**Platformer**
+
+Platformer er den viktigste malen, fordi mange vil prøve den først. Den vises øverst i galleriet, rett etter Tomt prosjekt, og bygges rett etter Pong.
+
+* Spilleren går med venstre og høyre og hopper med A. Hopphøyden blir litt lavere hvis man slipper A tidlig.
+* Et brett på rundt 64x8 ruter i tilekartet, der kameraet følger spilleren sidelengs.
+* Mynter som gir poeng, fiender som går fram og tilbake, og pigger som tar et liv.
+* Man kan hoppe på fiender for å fjerne dem.
+* Et flagg ved målet som gir "Du vant" og viser poengsummen.
+* Tre liv. Når man mister et liv, starter man fra begynnelsen av brettet.
+* Forslag til endringer: "Hopp høyere", "Tegn ditt eget brett i tile-editoren", "Legg til flere fiender".
+* Brettet lagres i flash, så det bruker nesten ikke RAM. Et brett på 64x8 ruter tar 512 byte flash.
+* En utvidet versjon med flere brett kommer i "examples/".
+
 **Krav til malene**
 
 * Hver mal er kort: rundt 10 til 30 blokker.

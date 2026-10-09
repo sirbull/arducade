@@ -200,6 +200,8 @@
     "AB_PLAY_TONE_TOOLTIP": "Plays a tone. 440 Hz is the note A.",
     "AB_STOP_SOUND": "stop sound",
     "AB_STOP_SOUND_TOOLTIP": "Stops all sound.",
+    "AB_PITCH": "random pitch %1 to %2",
+    "AB_PITCH_TOOLTIP": "Each sound inside gets a random pitch between the two numbers. 100 is the normal pitch, 90 is a little lower and 110 a little higher. Good for jump sounds that are a little different every time.",
     "AB_PLAY_MELODY": "play melody %1 tempo %2 %3",
     "AB_PLAY_MELODY_TOOLTIP": "Plays music in the background. Notes C D E F G A B, R is a rest. Add a number for the octave (C5) and :beats for the length (G:2, E:1/2).",
     "AB_MELODY_ONCE": "once",

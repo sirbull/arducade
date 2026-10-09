@@ -131,7 +131,11 @@ export class Engine {
   private soundSteps: number[] | null = null;
   private soundPos = 0;
   private soundNext = 0;
-  private music: { steps: number[]; pos: number; next: number; tempo: number; loop: boolean } | null = null;
+  private music: { steps: number[]; pos: number; next: number; tempo: number; loop: boolean; pitch: number } | null = null;
+  // Pitch in percent, same as pitchLo and pitchHi in ardublocks.h.
+  private pitchLo = 100;
+  private pitchHi = 100;
+  private soundPitch = 100;
 
   private hooks!: GameHooks;
   private startTime = performance.now();
@@ -375,9 +379,24 @@ export class Engine {
     this.music = null;
   }
 
+  setPitch(lo: number, hi: number) {
+    this.pitchLo = Math.min(Math.max(lo, 10), 1000);
+    this.pitchHi = Math.min(Math.max(hi, 10), 1000);
+  }
+
+  private pickPitch(): number {
+    return this.pitchLo === this.pitchHi ? this.pitchLo : this.random(this.pitchLo, this.pitchHi);
+  }
+
+  private pitched(f: number, pct: number): number {
+    if (!f || pct === 100) return f;
+    return Math.min(Math.floor((f * pct) / 100), 65535) || 1;
+  }
+
   playTone(freq: number, ms: number) {
+    const pct = this.pickPitch();
     this.soundSteps = null;
-    this.opts.tone(freq > 0 ? freq : 0, ms);
+    this.opts.tone(freq > 0 ? this.pitched(freq, pct) : 0, ms);
   }
 
   playEffect(id: number) {
@@ -386,11 +405,12 @@ export class Engine {
     this.soundSteps = SFX_STEPS[name];
     this.soundPos = 0;
     this.soundNext = 0;
+    this.soundPitch = this.pickPitch();
   }
 
   /** Music plays in the background, same as playMelody in ardublocks.h. */
   playMelody(steps: number[], bpm: number, loop: boolean) {
-    this.music = { steps, pos: 0, next: 0, tempo: Math.min(Math.max(bpm, 20), 600), loop };
+    this.music = { steps, pos: 0, next: 0, tempo: Math.min(Math.max(bpm, 20), 600), loop, pitch: this.pickPitch() };
   }
 
   private updateSound() {
@@ -401,7 +421,7 @@ export class Engine {
         this.soundSteps = null;
         this.opts.tone(0);
       } else {
-        this.opts.tone(this.soundSteps[this.soundPos]);
+        this.opts.tone(this.pitched(this.soundSteps[this.soundPos], this.soundPitch));
         this.soundNext = now + this.soundSteps[this.soundPos + 1];
         this.soundPos += 2;
       }
@@ -413,7 +433,7 @@ export class Engine {
         this.music = null;
         return;
       }
-      const f = m.steps[m.pos];
+      const f = this.pitched(m.steps[m.pos], m.pitch);
       const ms = Math.floor((m.steps[m.pos + 1] * 15000) / m.tempo);
       if (!this.soundSteps) this.opts.tone(f, f ? ms - Math.floor(ms / 8) : undefined);
       m.next = now + ms;
@@ -1039,6 +1059,7 @@ export class Engine {
     this.soundOff();
     this.inverted = false;
     this.frameCount = 0;
+    this.pitchLo = this.pitchHi = 100;
     this.hooks.init();
     await this.hooks.start();
   }
@@ -1100,6 +1121,8 @@ export class Engine {
       this.nextFrame += FRAME_MS;
       if (now - this.nextFrame > FRAME_MS * 4) this.nextFrame = now + FRAME_MS;
       this.frameCount++;
+      // A pitch block left early (return or break) only lasts until the next frame.
+      this.pitchLo = this.pitchHi = 100;
       this.loopCount = 0;
 
       this.readButtons();

@@ -170,6 +170,10 @@ export async function compileGame(src: FileSource, input: CompileInput): Promise
       '-fno-enforce-eh-specs',
       '-ffunction-sections',
       '-fdata-sections',
+      // Lets the linker turn calls and jumps into shorter relative ones.
+      '-mrelax',
+      // Shared register save and restore code: smaller, about 1.5 % slower.
+      '-mcall-prologues',
       '-o', '/build/game.s',
     ],
     (fs) => {
@@ -183,7 +187,7 @@ export async function compileGame(src: FileSource, input: CompileInput): Promise
     log,
   );
 
-  const obj = await runTool(src, 'avr-as', [`-mmcu=${input.mcu}`, '-o', '/build/game.o', '/build/game.s'], (fs) => write(fs, '/build/game.s', asm), '/build/game.o', log);
+  const obj = await runTool(src, 'avr-as', ['--mlink-relax', '-mmcu=avr5', '-o', '/build/game.o', '/build/game.s'], (fs) => write(fs, '/build/game.s', asm), '/build/game.o', log);
 
   const files = await Promise.all(
     [m.crt, m.core, m.deviceLib, ...manifest.libs, manifest.ldscript].map((f) => cached(`file:${f}`, () => src.bytes(`sysroot/${f}`)).then((data) => [f, data] as const)),
@@ -195,6 +199,7 @@ export async function compileGame(src: FileSource, input: CompileInput): Promise
       '-m', 'avr5',
       `-Tdata=${m.dataStart}`,
       '--gc-sections',
+      '--relax',
       '-o', '/build/game.elf',
       `/libs/${m.crt}`,
       '/build/game.o',

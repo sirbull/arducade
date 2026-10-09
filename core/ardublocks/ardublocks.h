@@ -136,6 +136,10 @@ static const uint16_t *musicStart, *musicPos; // pairs of frequency and quarter 
 static uint32_t musicNext;
 static uint16_t musicTempo;
 static bool musicLoop;
+// Pitch in percent of the normal pitch. The pitch block sets a range, and each
+// sound started inside it gets a random pitch from that range.
+static int16_t pitchLo = 100, pitchHi = 100;
+static uint16_t soundPitch = 100, musicPitch = 100;
 
 // Math helpers with the same results on every chip and in the simulator.
 
@@ -338,27 +342,88 @@ static const char *tb() { return textBuf; }
 
 // Sound -----------------------------------------------------------------
 
+#if defined(AB_PIN_SOUND1) && defined(__AVR__) && defined(TCCR1B) && defined(OCIE1A)
+// Square wave from a Timer1 interrupt: the same sound as the Arduino tone(),
+// but about 1.2 KB smaller. ms 0 plays until toneStop().
+static volatile uint8_t *tonePort;
+static uint8_t toneMask;
+static volatile uint32_t toneToggles;
+
+ISR(TIMER1_COMPA_vect) {
+  *tonePort ^= toneMask;
+  if (toneToggles && !--toneToggles) {
+    TIMSK1 &= ~_BV(OCIE1A);
+    *tonePort &= ~toneMask;
+  }
+}
+
+static void toneStop() {
+  TIMSK1 &= ~_BV(OCIE1A);
+  *tonePort &= ~toneMask;
+}
+
+static void toneStart(uint16_t freq, uint16_t ms) {
+  // Two toggles per period. Prescaler 8, or 64 for low notes.
+  uint32_t top = F_CPU / 16 / freq;
+  uint8_t cs = _BV(CS11);
+  if (top > 65536) { top /= 8; cs = _BV(CS11) | _BV(CS10); }
+  if (top > 65536) top = 65536;
+  TIMSK1 &= ~_BV(OCIE1A);
+  TCCR1A = 0;
+  TCCR1B = _BV(WGM12) | cs;
+  OCR1A = top - 1;
+  TCNT1 = 0;
+  uint32_t toggles = 2UL * freq * ms / 1000;
+  toneToggles = ms ? (toggles ? toggles : 1) : 0;
+  TIMSK1 |= _BV(OCIE1A);
+}
+
+static void toneBegin() {
+  tonePort = portOutputRegister(digitalPinToPort(AB_PIN_SOUND1));
+  toneMask = digitalPinToBitMask(AB_PIN_SOUND1);
+}
+#elif defined(AB_PIN_SOUND1)
+static void toneStop() { noTone(AB_PIN_SOUND1); }
+static void toneStart(uint16_t freq, uint16_t ms) { tone(AB_PIN_SOUND1, freq, ms); }
+static void toneBegin() {}
+#endif
+
 static void soundOff() {
 #if defined(AB_PIN_SOUND1)
-  noTone(AB_PIN_SOUND1);
+  toneStop();
 #endif
   soundPos = 0;
   musicPos = 0;
 }
 
+static void setPitch(int16_t lo, int16_t hi) {
+  pitchLo = constrain(lo, 10, 1000);
+  pitchHi = constrain(hi, 10, 1000);
+}
+
+static uint16_t pickPitch() { return pitchLo == pitchHi ? pitchLo : random(pitchLo, pitchHi); }
+
+static uint16_t pitched(uint16_t f, uint16_t pct) {
+  if (!f || pct == 100) return f;
+  uint32_t v = (uint32_t)f * pct / 100;
+  return v > 65535 ? 65535 : v ? v : 1;
+}
+
 static void playTone(uint16_t freq, uint16_t ms) {
+  uint16_t pct = pickPitch();
 #if defined(AB_PIN_SOUND1)
   soundPos = 0;
-  if (freq) tone(AB_PIN_SOUND1, freq, ms);
-  else noTone(AB_PIN_SOUND1);
+  if (freq) toneStart(pitched(freq, pct), ms);
+  else toneStop();
 #else
-  (void)freq; (void)ms;
+  (void)freq; (void)ms; (void)pct;
 #endif
 }
 
 static void playSound(const uint16_t *steps) {
   soundPos = steps;
   soundNext = 0;
+  soundPitch = pickPitch();
 }
 
 // Music plays in the background. A sound effect covers it while it plays.
@@ -367,6 +432,7 @@ static void playMelody(const uint16_t *notes, int16_t bpm, bool loop) {
   musicNext = 0;
   musicTempo = constrain(bpm, 20, 600);
   musicLoop = loop;
+  musicPitch = pickPitch();
 }
 
 static void updateSound() {
@@ -377,10 +443,10 @@ static void updateSound() {
     uint16_t ms = pgm_read_word(soundPos + 1);
     if (!ms) {
       soundPos = 0;
-      noTone(AB_PIN_SOUND1);
+      toneStop();
     } else {
-      if (f) tone(AB_PIN_SOUND1, f);
-      else noTone(AB_PIN_SOUND1);
+      if (f) toneStart(pitched(f, soundPitch), 0);
+      else toneStop();
       soundNext = now + ms;
       soundPos += 2;
     }
@@ -393,8 +459,8 @@ static void updateSound() {
     uint16_t ms = (uint32_t)beats * 15000 / musicTempo;
     // Stop a little early so two equal notes do not run together.
     if (!soundPos) {
-      if (f) tone(AB_PIN_SOUND1, f, ms - ms / 8);
-      else noTone(AB_PIN_SOUND1);
+      if (f) toneStart(pitched(f, musicPitch), ms - ms / 8);
+      else toneStop();
     }
     musicNext = now + ms;
     musicPos += 2;
@@ -1035,6 +1101,7 @@ static void restart() {
   soundOff();
   displayInvert(false);
   frameCount = 0;
+  pitchLo = pitchHi = 100;
   ab_init_globals();
   ab_on_start();
 }
@@ -1071,6 +1138,7 @@ static void begin() {
 #endif
 #if defined(AB_PIN_SOUND1)
   pinMode(AB_PIN_SOUND1, OUTPUT);
+  toneBegin();
 #endif
 #if defined(ESP32) || defined(ESP8266) || defined(ARDUINO_ARCH_RP2040)
   EEPROM.begin(512);
@@ -1090,6 +1158,8 @@ static void frame() {
   // Do not try to catch up after a long pause.
   if ((int32_t)(now - nextFrame) > AB_FRAME_MS * 4) nextFrame = now + AB_FRAME_MS;
   frameCount++;
+  // A pitch block left early (return or break) only lasts until the next frame.
+  pitchLo = pitchHi = 100;
 
   readButtons();
   for (uint8_t b = 0; b < BTN_COUNT; b++) {

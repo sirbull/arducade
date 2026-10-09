@@ -78,6 +78,8 @@ describe.skipIf(!haveTools)('WebAssembly compiler', () => {
   }, 120000);
   for (const [profileId, mcu, template] of [
     ['nano-sh1106-i2c', 'atmega328p', 'platformer'],
+    ['nano-sh1106-i2c', 'atmega328pb', 'platformer'],
+    ['nano-sh1106-i2c', 'atmega644p', 'platformer'],
     ['arduboy', 'atmega32u4', 'platformer'],
     ['nano-sh1106-i2c', 'atmega328p', 'maze3d'],
     ['arduboy', 'atmega32u4', 'maze3d'],

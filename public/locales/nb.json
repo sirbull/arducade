@@ -200,6 +200,8 @@
     "AB_PLAY_TONE_TOOLTIP": "Spiller en tone. 440 Hz er tonen A.",
     "AB_STOP_SOUND": "stopp lyd",
     "AB_STOP_SOUND_TOOLTIP": "Stopper all lyd.",
+    "AB_PITCH": "tilfeldig tonehøyde %1 til %2",
+    "AB_PITCH_TOOLTIP": "Hver lyd inni får en tilfeldig tonehøyde mellom de to tallene. 100 er vanlig tonehøyde, 90 er litt lavere og 110 litt høyere. Fint for hoppelyder som skal være litt ulike hver gang.",
     "AB_PLAY_MELODY": "spill melodi %1 tempo %2 %3",
     "AB_PLAY_MELODY_TOOLTIP": "Spiller musikk i bakgrunnen. Noter C D E F G A H, R er pause. Skriv et tall for oktaven (C5) og :slag for lengden (G:2, E:1/2).",
     "AB_MELODY_ONCE": "én gang",

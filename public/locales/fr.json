@@ -200,6 +200,8 @@
     "AB_PLAY_TONE_TOOLTIP": "Joue une note. 440 Hz est le la.",
     "AB_STOP_SOUND": "arrêter le son",
     "AB_STOP_SOUND_TOOLTIP": "Arrête tous les sons.",
+    "AB_PITCH": "hauteur aléatoire de %1 à %2",
+    "AB_PITCH_TOOLTIP": "Chaque son à l'intérieur reçoit une hauteur aléatoire entre les deux nombres. 100 est la hauteur normale, 90 un peu plus grave et 110 un peu plus aigu. Pratique pour des sons de saut un peu différents à chaque fois.",
     "AB_PLAY_MELODY": "jouer la mélodie %1 tempo %2 %3",
     "AB_PLAY_MELODY_TOOLTIP": "Joue de la musique en fond. Notes C D E F G A B (do ré mi fa sol la si), R est un silence. Ajoute un chiffre pour l'octave (C5) et :temps pour la durée (G:2, E:1/2).",
     "AB_MELODY_ONCE": "une fois",

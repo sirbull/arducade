@@ -287,6 +287,11 @@ class Converter {
         return this.api('music.tone', [this.input(b, 'FREQ', { k: 'num', v: 440 }), this.input(b, 'MS', { k: 'num', v: 200 })], id);
       case 'ab_stop_sound':
         return this.api('music.stop', [], id);
+      case 'ab_pitch': {
+        // ponytail: a nested pitch block resets to normal pitch, not to the outer range.
+        const normal: Expr = { k: 'num', v: 100 };
+        return [this.api('music.pitch', [this.input(b, 'FROM', { k: 'num', v: 90 }), this.input(b, 'TO', { k: 'num', v: 110 })], id), ...this.body(b), this.api('music.pitch', [normal, normal], id)];
+      }
       case 'ab_play_melody':
         return this.api('music.melody', [this.en('melody', f('NOTES')), this.input(b, 'TEMPO', { k: 'num', v: 120 }), { k: 'bool', v: f('MODE') === 'loop' }], id);
 

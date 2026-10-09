@@ -200,6 +200,8 @@
     "AB_PLAY_TONE_TOOLTIP": "Toca un tono. 440 Hz es la nota la.",
     "AB_STOP_SOUND": "parar sonido",
     "AB_STOP_SOUND_TOOLTIP": "Para todo el sonido.",
+    "AB_PITCH": "tono aleatorio de %1 a %2",
+    "AB_PITCH_TOOLTIP": "Cada sonido de dentro recibe un tono aleatorio entre los dos números. 100 es el tono normal, 90 un poco más grave y 110 un poco más agudo. Útil para sonidos de salto que suenen un poco distintos cada vez.",
     "AB_PLAY_MELODY": "tocar melodía %1 tempo %2 %3",
     "AB_PLAY_MELODY_TOOLTIP": "Toca música de fondo. Notas C D E F G A B (do re mi fa sol la si), R es un silencio. Añade un número para la octava (C5) y :tiempos para la duración (G:2, E:1/2).",
     "AB_MELODY_ONCE": "una vez",

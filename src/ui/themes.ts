@@ -150,6 +150,8 @@ export function applyPageTheme(id: ThemeId) {
   for (const [k, v] of Object.entries(def.page)) root.style.setProperty(k, v);
   root.dataset.theme = id;
   root.style.colorScheme = def.dark ? 'dark' : 'light';
+  const logo = document.querySelector<HTMLImageElement>('.brand img');
+  if (logo) logo.src = def.dark ? 'logo_dark.svg' : 'logo.svg';
 }
 
 /** Block sizes used by the editor and the guide pictures. */

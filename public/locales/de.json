@@ -200,6 +200,8 @@
     "AB_PLAY_TONE_TOOLTIP": "Spielt einen Ton. 440 Hz ist der Ton A.",
     "AB_STOP_SOUND": "stoppe Klang",
     "AB_STOP_SOUND_TOOLTIP": "Stoppt alle Klänge.",
+    "AB_PITCH": "zufällige Tonhöhe %1 bis %2",
+    "AB_PITCH_TOOLTIP": "Jeder Klang darin bekommt eine zufällige Tonhöhe zwischen den beiden Zahlen. 100 ist die normale Tonhöhe, 90 etwas tiefer und 110 etwas höher. Gut für Sprungklänge, die jedes Mal ein wenig anders klingen.",
     "AB_PLAY_MELODY": "spiele Melodie %1 Tempo %2 %3",
     "AB_PLAY_MELODY_TOOLTIP": "Spielt Musik im Hintergrund. Noten C D E F G A H, R ist eine Pause. Schreibe eine Zahl für die Oktave (C5) und :Schläge für die Länge (G:2, E:1/2).",
     "AB_MELODY_ONCE": "einmal",

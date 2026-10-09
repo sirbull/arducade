@@ -117,6 +117,7 @@ export const API = api({
   'music.effect': { ret: 'void', args: ['sfx'], cpp: 'ab::playEffect($0)', js: 'E.playEffect($0)', name: 'music.play' },
   'music.tone': { ret: 'void', args: ['num', 'num'], cpp: 'ab::playTone($0, $1)', js: 'E.playTone($0, $1)', name: 'music.playTone' },
   'music.melody': { ret: 'void', args: ['melody', 'num', 'bool'], cpp: 'ab::playMelody($0, $1, $2)', js: 'E.playMelody($0, $1, $2)', name: 'music.playMelody' },
+  'music.pitch': { ret: 'void', args: ['num', 'num'], cpp: 'ab::setPitch($0, $1)', js: 'E.setPitch($0, $1)', name: 'music.setPitch' },
   'music.stop': { ret: 'void', args: [], cpp: 'ab::soundOff()', js: 'E.soundOff()', name: 'music.stopAllSounds' },
 
   // Math

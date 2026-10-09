@@ -262,6 +262,7 @@ export const DEFS: Def[] = [
   },
   { type: 'ab_play_tone', ...MUSIC, msg: 'AB_PLAY_TONE', args: [num('FREQ'), num('MS')], statement: true, inline: true },
   { type: 'ab_stop_sound', ...MUSIC, msg: 'AB_STOP_SOUND', statement: true },
+  { type: 'ab_pitch', ...MUSIC, msg: 'AB_PITCH', args: [num('FROM'), num('TO')], statement: true, body: true, inline: true },
   {
     type: 'ab_play_melody',
     ...MUSIC,

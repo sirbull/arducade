@@ -113,6 +113,7 @@ export function buildToolbox(): Json {
         block('ab_play_melody', { TEMPO: n(120) }, { NOTES: 'C D E F G:2 G:2 A A A A G:4 F F F F E:2 E:2 D D D D C:4', MODE: 'loop' }),
         block('ab_play_tone', { FREQ: { shadow: { type: 'ab_note', fields: { NOTE: '440' } } }, MS: n(200) }),
         block('ab_note'),
+        block('ab_pitch', { FROM: n(90), TO: n(110), DO: { block: { type: 'ab_play_effect' } } }),
         block('ab_stop_sound'),
       ]),
       category('LOGIC', 'ab_logic', [

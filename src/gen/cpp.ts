@@ -127,15 +127,24 @@ class CppGen {
   globals() {
     const w = this.w;
     for (const line of levelTransitionCode(this.project, this.names, true)) w.line(line);
-    const vars = [...this.info.vars.entries()];
-    if (vars.length) w.line('// Variables');
-    for (const [name, ty] of vars) w.line(`${CPP_TYPE[ty]} ${this.names.vars.get(name)};`);
-    eventsOf(this.program, 'every').forEach((_, i) => w.line(`uint32_t every_${i};`));
+    // One struct, so a restart clears all variables with one memset instead of
+    // one store per variable. The references compile to plain addresses.
+    const fields = [
+      ...[...this.info.vars.entries()].map(([name, ty]) => [CPP_TYPE[ty], this.names.vars.get(name)]),
+      ...eventsOf(this.program, 'every').map((_, i) => ['uint32_t', `every_${i}`]),
+    ];
+    if (fields.length) {
+      w.line('// Variables');
+      w.line('static struct {');
+      for (const [ty, n] of fields) w.line(`  ${ty} ${n};`);
+      w.line('} ab_vars;');
+      for (const [ty, n] of fields) w.line(`static ${ty} &${n} = ab_vars.${n};`);
+    }
     w.line();
     w.line('void ab_init_globals() {');
     w.indent();
-    for (const [name, ty] of vars) w.line(`${this.names.vars.get(name)} = ${ty === 'sprite' ? 'ab::NONE' : ty === 'bool' ? 'false' : '0'};`);
-    eventsOf(this.program, 'every').forEach((_, i) => w.line(`every_${i} = 0;`));
+    if (fields.length) w.line('memset(&ab_vars, 0, sizeof(ab_vars));');
+    for (const [name, ty] of this.info.vars) if (ty === 'sprite') w.line(`${this.names.vars.get(name)} = ab::NONE;`);
     w.dedent();
     w.line('}');
     w.line();

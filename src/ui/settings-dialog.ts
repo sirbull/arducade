@@ -45,11 +45,19 @@ async function form(draft: Settings): Promise<HTMLElement> {
     },
     t('profile.import'),
   );
+  const themeChoices = h('fieldset', { class: 'theme-choices' }, h('legend', {}, t('settings.theme')));
+  for (const id of THEME_IDS) {
+    themeChoices.append(h('label', { class: 'theme-choice', 'data-palette': id },
+      h('input', { type: 'radio', name: 'theme', value: id, checked: draft.theme === id, onchange: () => { draft.theme = id; } }),
+      h('span', { class: 'theme-swatch', 'aria-hidden': 'true' }),
+      h('span', {}, t(`theme.${id}`)),
+    ));
+  }
   return h(
     'div',
     { class: 'settings-form' },
     h('label', { class: 'field' }, t('settings.language'), select(LANGUAGES.map((l) => ({ value: l.code, label: l.name })), draft.language, (v) => (draft.language = v))),
-    h('label', { class: 'field' }, t('settings.theme'), select(THEME_IDS.map((id) => ({ value: id, label: t(`theme.${id}`) })), draft.theme, (v) => (draft.theme = v))),
+    themeChoices,
     h('label', { class: 'field' }, t('settings.pixel'), select(PIXEL_COLORS.map((c) => ({ value: c, label: t(`pixel.${c}Color`) })), draft.pixelColor, (v) => (draft.pixelColor = v))),
     h('label', { class: 'field' }, t('settings.profile'), profileSelect),
     h('div', { class: 'row' }, importBtn, h('span', { class: 'muted small' }, t('settings.profileHelp'))),
@@ -59,6 +67,7 @@ async function form(draft: Settings): Promise<HTMLElement> {
 export async function openSettings(host: SettingsHost) {
   const draft: Settings = { ...host.settings };
   const d = openDialog(t('settings.title'));
+  d.el.classList.add('settings-dialog');
   d.body.append(await form(draft));
   d.footer.append(
     h('button', { onclick: () => d.close() }, t('ui.cancel')),
@@ -70,6 +79,7 @@ export async function openFirstRun(host: SettingsHost): Promise<void> {
   return new Promise((resolve) => {
     const draft: Settings = { ...host.settings };
     const d = openDialog(t('firstRun.title'), { closable: false, onClose: () => resolve() });
+    d.el.classList.add('settings-dialog');
     d.body.append(h('p', {}, t('firstRun.text')));
     void form(draft).then((f) => d.body.append(f));
     d.footer.append(

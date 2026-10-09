@@ -2,6 +2,7 @@
 // upgrade later. Bump PROJECT_VERSION and add an upgrade step in
 // upgradeProject when the format changes.
 
+import type { GuideState } from '../guides/guide';
 import { BUILTIN_PROFILES, DEFAULT_PROFILE_ID, parseProfile, type Profile } from '../hw/profile';
 
 export const PROJECT_VERSION = 1;
@@ -31,11 +32,22 @@ export interface TileAsset {
   solid: boolean;
 }
 
+export interface LevelLink {
+  id: string;
+  col: number;
+  row: number;
+  target: string;
+  spawnCol: number;
+  spawnRow: number;
+}
+
 export interface TilemapAsset {
   id: string;
   name: string;
   width: number;
   height: number;
+  /** Portals triggered when a Player sprite enters the source tile. */
+  links?: LevelLink[];
   /** Tile number per cell, row by row. 0 is empty, 1 is the first tile. */
   cells: number[];
 }
@@ -69,9 +81,13 @@ export interface Project {
   images: ImageAsset[];
   tiles: TileAsset[];
   tilemaps: TilemapAsset[];
+  /** Optional map loaded after the on-start blocks. */
+  startLevelId?: string;
   /** Sprite kinds added by the user, after the built in kinds. */
   kinds: string[];
   template?: TemplateInfo;
+  /** Set when the project belongs to a guide level. */
+  guide?: GuideState;
 }
 
 export function newId(prefix: string): string {

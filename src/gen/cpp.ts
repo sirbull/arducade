@@ -6,9 +6,10 @@ import { BUILTIN_KINDS } from '../engine/enums';
 import { checkProgram, typeOf, type TypeInfo } from '../ir/check';
 import type { Diagnostic, Expr, Program, Stmt, Ty } from '../ir/ir';
 import { encodeImage, encodeTilemap, type Project } from '../project/model';
-import { enumNumber, eventsOf, hash16, Names } from './common';
+import { enumNumber, eventsOf, hash16, melodies, Names } from './common';
 import { stringLiteral, wrap16 } from './names';
 import { Writer } from './writer';
+import { levelTransitionCode } from './levels';
 
 export interface CppResult {
   code: string;
@@ -34,9 +35,11 @@ class CppGen {
   diagnostics: Diagnostic[] = [];
   locals?: Map<string, Ty>;
   private tmp = 0;
+  private melodies: ReturnType<typeof melodies>;
 
   constructor(private program: Program, private project: Project) {
     this.names = new Names(project);
+    this.melodies = melodies(program);
   }
 
   run(): CppResult {
@@ -47,7 +50,7 @@ class CppGen {
     const w = this.w;
 
     w.line(`// ${this.project.name.replace(/[\r\n]/g, ' ')}`);
-    w.line('// Made with ArduBlocks. This file is generated from the blocks.');
+    w.line('// Made with ArduCade. This file is generated from the blocks.');
     w.line();
     w.line('#include "ab_config.h"');
     if (eventsOf(p, 'overlap').length) w.line('#define AB_HAS_OVERLAP 1');
@@ -103,7 +106,7 @@ class CppGen {
       });
       const list = ['0', ...pr.tiles.map((_, i) => `tile_${i + 1}`)].join(', ');
       w.line(`static const uint8_t *const tileImages[] PROGMEM = {${list}};`);
-      w.line(`#define TILE_SOLID 0x${solid.toString(16)}`);
+      w.line(`#define TILE_SOLID 0x${(solid >>> 0).toString(16)}UL`);
       for (const m of pr.tilemaps) {
         w.line(`static const uint8_t ${this.names.tilemap(m.id)}[] PROGMEM = {`);
         for (const l of bytes(encodeTilemap(m))) w.line('  ' + l);
@@ -111,10 +114,16 @@ class CppGen {
       }
       w.line();
     }
+    if (this.melodies.size) {
+      w.line('// Melodies: frequency and length in quarter beats');
+      for (const m of this.melodies.values()) w.line(`static const uint16_t ${m.name}[] PROGMEM = {${[...m.steps, 0, 0].join(', ')}};`);
+      w.line();
+    }
   }
 
   globals() {
     const w = this.w;
+    for (const line of levelTransitionCode(this.project, this.names, true)) w.line(line);
     const vars = [...this.info.vars.entries()];
     if (vars.length) w.line('// Variables');
     for (const [name, ty] of vars) w.line(`${CPP_TYPE[ty]} ${this.names.vars.get(name)};`);
@@ -178,8 +187,15 @@ class CppGen {
       const every = k === 'update' ? eventsOf(p, 'every') : [];
       every.forEach((e, i) => handler(`on_every_${i}`, e.id, e.body));
       w.line(`void ${hook}() {`);
+      const portals = levelTransitionCode(this.project, this.names, true).length > 0;
+      if (k === 'start' && portals) w.line('  levelPortalLocked = false;');
       evs.forEach((_, i) => w.line(`  on_${k}_${i}();`));
+      if (k === 'start') {
+        const startMap = this.project.tilemaps.find((map) => map.id === this.project.startLevelId);
+        if (startMap) w.line(`  ab::setMap(${this.names.tilemap(startMap.id)}, tileImages, TILE_SOLID);`);
+      }
       every.forEach((e, i) => w.line(`  if (ab::every(every_${i}, ${Math.max(1, Math.round(e.ms))})) on_every_${i}();`));
+      if (k === 'update' && portals) w.line('  updateLevelPortals();');
       w.line('}');
       w.line();
     };
@@ -369,9 +385,12 @@ class CppGen {
           case '*':
             return `(int16_t)(${a} ${e.op} ${b})`;
           case '/':
-            return `ab::div(${a}, ${b})`;
-          case '%':
-            return `ab::mod(${a}, ${b})`;
+          case '%': {
+            // A constant divisor needs no check for 0, and lets the compiler use shifts.
+            const d = e.b.k === 'num' ? wrap16(e.b.v) : 0;
+            if (d !== 0 && d !== -1) return `(int16_t)(${a} ${e.op} ${b})`;
+            return `ab::${e.op === '/' ? 'div' : 'mod'}(${a}, ${b})`;
+          }
           default:
             return `(${a} ${e.op} ${b})`;
         }
@@ -409,6 +428,11 @@ class CppGen {
           return '0';
         }
         return n;
+      }
+      case 'melody': {
+        const m = this.melodies.get(e.v)!;
+        if (m.bad.length) this.diagnostics.push({ level: 'warning', key: 'diag.badNote', params: { notes: m.bad.join(' ') }, id: e.id });
+        return m.name;
       }
       case 'tilemap': {
         const n = this.names.tilemap(e.v);

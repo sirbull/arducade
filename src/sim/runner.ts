@@ -1,6 +1,7 @@
 // Runs a generated game in the browser: screen, keyboard, sound and the
 // frame loop around the simulator engine.
 
+import { FONT_5X7 } from '../shared/font';
 import { BUTTON_IDS } from '../engine/enums';
 import type { GameHooks, JsResult } from '../gen/js';
 import { div16, mod16 } from './intmath';
@@ -13,6 +14,38 @@ const PIXEL_RGB: Record<PixelColor, [number, number, number]> = {
   blue: [90, 190, 255],
   yellow: [255, 214, 70],
 };
+
+/** A code-native pixel splash, in the same page format as the Arduboy screen. */
+export function splashScreen(): Uint8Array {
+  const buffer = new Uint8Array(1024);
+  const dot = (x: number, y: number) => { if (x >= 0 && x < 128 && y >= 0 && y < 64) buffer[(y >> 3) * 128 + x] |= 1 << (y & 7); };
+  const text = (label: string, y: number, scale = 1) => {
+    const left = Math.floor((128 - (label.length * 6 - 1) * scale) / 2);
+    [...label].forEach((letter, i) => {
+      for (let x = 0; x < 5; x++) for (let row = 0; row < 7; row++) {
+        if (FONT_5X7[(letter.charCodeAt(0) - 32) * 5 + x] & (1 << row)) {
+          for (let dx = 0; dx < scale; dx++) for (let dy = 0; dy < scale; dy++) dot(left + (i * 6 + x) * scale + dx, y + row * scale + dy);
+        }
+      }
+    });
+  };
+  // Circuit border, stars and a stepped skyline around the wordmark.
+  for (let x = 8; x < 120; x++) { dot(x, 3); dot(x, 60); }
+  for (let y = 8; y < 56; y++) { dot(3, y); dot(124, y); }
+  // Keep the lower stars below the subtitle, with two clear pixel rows
+  // between their tips and both the text and the bottom border.
+  for (const [x, y] of [[16, 13], [110, 14], [24, 56], [104, 56]]) {
+    dot(x, y); dot(x - 1, y); dot(x + 1, y); dot(x, y - 1); dot(x, y + 1);
+  }
+  for (let i = 0; i < 5; i++) {
+    const x = 46 + i * 8, top = 17 - (i % 3) * 3;
+    for (let y = top; y < 20; y++) { dot(x, y); dot(x + 5, y); }
+    for (let dx = 0; dx < 6; dx++) { dot(x + dx, top); dot(x + dx, 19); }
+  }
+  text('ArduCade', 25, 2);
+  text('MAKE. PLAY. REPEAT.', 46);
+  return buffer;
+}
 
 /** Keyboard keys for each button, in BUTTON_IDS order. */
 const KEYS: string[][] = [
@@ -27,11 +60,14 @@ const KEYS: string[][] = [
 export interface RunnerEvents {
   onError(key: string, detail?: string): void;
   onSkippedCpp(): void;
+  onInput?(buttons: number): void;
+  onState?(): void;
 }
 
 export class Runner {
   private engine: Engine | null = null;
   private raf = 0;
+  private heldKeys = new Set<string>();
   private keys = 0;
   private touch = 0;
   private audio: AudioContext | null = null;
@@ -40,9 +76,25 @@ export class Runner {
   private toneTimer = 0;
   private image: ImageData;
   private ctx: CanvasRenderingContext2D;
-  pixelColor: PixelColor = 'white';
+  private color: PixelColor = 'white';
+  private lastBuffer = new Uint8Array(1024);
+  private lastInverted = false;
+  private splash = splashScreen();
+
+  get pixelColor(): PixelColor { return this.color; }
+  set pixelColor(value: PixelColor) {
+    this.color = value in PIXEL_RGB ? value : 'white';
+    this.show(this.lastBuffer, this.lastInverted);
+  }
+
+  cyclePixelColor(): PixelColor {
+    const colors: PixelColor[] = ['white', 'blue', 'yellow'];
+    this.pixelColor = colors[(colors.indexOf(this.color) + 1) % colors.length];
+    return this.color;
+  }
   muted = false;
   running = false;
+  paused = false;
 
   constructor(canvas: HTMLCanvasElement, private events: RunnerEvents) {
     canvas.width = 128;
@@ -56,6 +108,7 @@ export class Runner {
   keyDown(e: KeyboardEvent): boolean {
     const b = KEYS.findIndex((k) => k.includes(e.code));
     if (b < 0) return false;
+    this.heldKeys.add(e.code);
     this.keys |= 1 << b;
     this.syncInput();
     return true;
@@ -64,7 +117,8 @@ export class Runner {
   keyUp(e: KeyboardEvent): boolean {
     const b = KEYS.findIndex((k) => k.includes(e.code));
     if (b < 0) return false;
-    this.keys &= ~(1 << b);
+    this.heldKeys.delete(e.code);
+    if (!KEYS[b].some((key) => this.heldKeys.has(key))) this.keys &= ~(1 << b);
     this.syncInput();
     return true;
   }
@@ -79,12 +133,15 @@ export class Runner {
   }
 
   releaseAll() {
+    this.heldKeys.clear();
     this.keys = this.touch = 0;
+    this.engine?.releaseInput();
     this.syncInput();
   }
 
   private syncInput() {
     if (this.engine) this.engine.input = this.keys | this.touch;
+    this.events.onInput?.(this.keys | this.touch);
   }
 
   resumeAudio() {
@@ -118,6 +175,11 @@ export class Runner {
   }
 
   private show(buffer: Uint8Array, inverted: boolean) {
+    this.lastBuffer.set(buffer);
+    this.lastInverted = inverted;
+    // Only replace a visually blank frame; keep the game's buffer untouched.
+    const blank = buffer.every(byte => byte === (inverted ? 255 : 0));
+    if (blank) { buffer = this.splash; inverted = false; }
     const [r, g, b] = PIXEL_RGB[this.pixelColor];
     const d = this.image.data;
     for (let y = 0; y < 64; y++) {
@@ -135,8 +197,7 @@ export class Runner {
   }
 
   clearScreen() {
-    this.ctx.fillStyle = '#000';
-    this.ctx.fillRect(0, 0, 128, 64);
+    this.show(new Uint8Array(1024), false);
   }
 
   /** Starts a game from generated JavaScript. */
@@ -169,15 +230,19 @@ export class Runner {
     this.syncInput();
     const hooks = hooksFactory(engine, (v: number) => (v << 16) >> 16, div16, mod16, engine.loopGuard);
     this.running = true;
+    this.events.onState?.();
     try {
       await engine.begin(hooks);
     } catch (err) {
-      this.fail(err);
+      if (this.engine === engine) this.fail(err);
       return;
     }
+    if (this.engine !== engine || engine.isStopped) return;
     const tick = () => {
       if (this.engine !== engine || engine.isStopped) return;
-      engine.frame().catch((err) => this.fail(err));
+      if (!this.paused) engine.frame().catch((err) => {
+        if (this.engine === engine) this.fail(err);
+      });
       this.raf = requestAnimationFrame(tick);
     };
     this.raf = requestAnimationFrame(tick);
@@ -190,12 +255,30 @@ export class Runner {
     else this.events.onError('sim.runtimeError', err instanceof Error ? err.message : String(err));
   }
 
+  setMuted(muted: boolean) {
+    this.muted = muted;
+    if (muted) this.tone(0);
+    else this.resumeAudio();
+    this.events.onState?.();
+  }
+
+  togglePause() {
+    if (!this.engine) return;
+    this.paused = !this.paused;
+    this.engine.setPaused(this.paused);
+    if (this.paused) { this.tone(0); this.releaseAll(); }
+    this.events.onState?.();
+  }
+
   stop() {
     cancelAnimationFrame(this.raf);
     if (this.engine) this.engine.stop();
     this.engine = null;
     this.running = false;
+    this.paused = false;
+    this.releaseAll();
     this.tone(0);
+    this.events.onState?.();
   }
 }
 

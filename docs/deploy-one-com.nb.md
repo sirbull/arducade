@@ -1,6 +1,6 @@
-# Publisere ArduBlocks på one.com
+# Publisere ArduCade på one.com
 
-ArduBlocks er bare statiske filer. Det trengs ingen database, ingen PHP og
+ArduCade er bare statiske filer. Det trengs ingen database, ingen PHP og
 ingen backend. Du bygger nettsiden én gang og laster opp filene.
 
 ## 1. Bygg nettsiden

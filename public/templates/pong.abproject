@@ -252,103 +252,631 @@
                         },
                         "next": {
                          "block": {
-                          "type": "ab_sprite_set_position",
+                          "type": "variables_set",
+                          "fields": {
+                           "VAR": {
+                            "name": "ballSpeed"
+                           }
+                          },
                           "inputs": {
-                           "SPRITE": {
-                            "block": {
-                             "type": "variables_get",
-                             "fields": {
-                              "VAR": {
-                               "name": "ball"
-                              }
-                             }
-                            }
-                           },
-                           "X": {
+                           "VALUE": {
                             "block": {
                              "type": "math_number",
                              "fields": {
-                              "NUM": 64
-                             }
-                            }
-                           },
-                           "Y": {
-                            "block": {
-                             "type": "math_number",
-                             "fields": {
-                              "NUM": 32
+                              "NUM": 50
                              }
                             }
                            }
                           },
                           "next": {
                            "block": {
-                            "type": "ab_sprite_set_velocity",
+                            "type": "variables_set",
+                            "fields": {
+                             "VAR": {
+                              "name": "directionX"
+                             }
+                            },
                             "inputs": {
-                             "SPRITE": {
-                              "block": {
-                               "type": "variables_get",
-                               "fields": {
-                                "VAR": {
-                                 "name": "ball"
-                                }
-                               }
-                              }
-                             },
-                             "VX": {
+                             "VALUE": {
                               "block": {
                                "type": "math_number",
                                "fields": {
-                                "NUM": 50
-                               }
-                              }
-                             },
-                             "VY": {
-                              "block": {
-                               "type": "ab_random",
-                               "inputs": {
-                                "FROM": {
-                                 "block": {
-                                  "type": "math_number",
-                                  "fields": {
-                                   "NUM": -30
-                                  }
-                                 }
-                                },
-                                "TO": {
-                                 "block": {
-                                  "type": "math_number",
-                                  "fields": {
-                                   "NUM": 30
-                                  }
-                                 }
-                                }
+                                "NUM": 12
                                }
                               }
                              }
                             },
                             "next": {
                              "block": {
-                              "type": "ab_life_set",
+                              "type": "variables_set",
+                              "fields": {
+                               "VAR": {
+                                "name": "directionY"
+                               }
+                              },
                               "inputs": {
                                "VALUE": {
                                 "block": {
                                  "type": "math_number",
                                  "fields": {
-                                  "NUM": 3
+                                  "NUM": 5
                                  }
                                 }
                                }
                               },
                               "next": {
                                "block": {
-                                "type": "ab_score_set",
+                                "type": "variables_set",
+                                "fields": {
+                                 "VAR": {
+                                  "name": "directionDivisor"
+                                 }
+                                },
                                 "inputs": {
                                  "VALUE": {
                                   "block": {
                                    "type": "math_number",
                                    "fields": {
-                                    "NUM": 0
+                                    "NUM": 13
+                                   }
+                                  }
+                                 }
+                                },
+                                "next": {
+                                 "block": {
+                                  "type": "controls_if",
+                                  "inputs": {
+                                   "IF0": {
+                                    "block": {
+                                     "type": "logic_compare",
+                                     "fields": {
+                                      "OP": "EQ"
+                                     },
+                                     "inputs": {
+                                      "A": {
+                                       "block": {
+                                        "type": "ab_random",
+                                        "inputs": {
+                                         "FROM": {
+                                          "block": {
+                                           "type": "math_number",
+                                           "fields": {
+                                            "NUM": 0
+                                           }
+                                          }
+                                         },
+                                         "TO": {
+                                          "block": {
+                                           "type": "math_number",
+                                           "fields": {
+                                            "NUM": 1
+                                           }
+                                          }
+                                         }
+                                        }
+                                       }
+                                      },
+                                      "B": {
+                                       "block": {
+                                        "type": "math_number",
+                                        "fields": {
+                                         "NUM": 0
+                                        }
+                                       }
+                                      }
+                                     }
+                                    }
+                                   },
+                                   "DO0": {
+                                    "block": {
+                                     "type": "variables_set",
+                                     "fields": {
+                                      "VAR": {
+                                       "name": "directionY"
+                                      }
+                                     },
+                                     "inputs": {
+                                      "VALUE": {
+                                       "block": {
+                                        "type": "math_number",
+                                        "fields": {
+                                         "NUM": -5
+                                        }
+                                       }
+                                      }
+                                     }
+                                    }
+                                   }
+                                  },
+                                  "next": {
+                                   "block": {
+                                    "type": "ab_sprite_set_position",
+                                    "inputs": {
+                                     "SPRITE": {
+                                      "block": {
+                                       "type": "variables_get",
+                                       "fields": {
+                                        "VAR": {
+                                         "name": "ball"
+                                        }
+                                       }
+                                      }
+                                     },
+                                     "X": {
+                                      "block": {
+                                       "type": "math_number",
+                                       "fields": {
+                                        "NUM": 64
+                                       }
+                                      }
+                                     },
+                                     "Y": {
+                                      "block": {
+                                       "type": "math_number",
+                                       "fields": {
+                                        "NUM": 32
+                                       }
+                                      }
+                                     }
+                                    },
+                                    "next": {
+                                     "block": {
+                                      "type": "ab_sprite_set_prop",
+                                      "fields": {
+                                       "PROP": "vx"
+                                      },
+                                      "inputs": {
+                                       "SPRITE": {
+                                        "block": {
+                                         "type": "variables_get",
+                                         "fields": {
+                                          "VAR": {
+                                           "name": "ball"
+                                          }
+                                         }
+                                        }
+                                       },
+                                       "VALUE": {
+                                        "block": {
+                                         "type": "math_arithmetic",
+                                         "fields": {
+                                          "OP": "MULTIPLY"
+                                         },
+                                         "inputs": {
+                                          "A": {
+                                           "block": {
+                                            "type": "math_arithmetic",
+                                            "fields": {
+                                             "OP": "DIVIDE"
+                                            },
+                                            "inputs": {
+                                             "A": {
+                                              "block": {
+                                               "type": "math_arithmetic",
+                                               "fields": {
+                                                "OP": "ADD"
+                                               },
+                                               "inputs": {
+                                                "A": {
+                                                 "block": {
+                                                  "type": "math_arithmetic",
+                                                  "fields": {
+                                                   "OP": "MULTIPLY"
+                                                  },
+                                                  "inputs": {
+                                                   "A": {
+                                                    "block": {
+                                                     "type": "variables_get",
+                                                     "fields": {
+                                                      "VAR": {
+                                                       "name": "ballSpeed"
+                                                      }
+                                                     }
+                                                    }
+                                                   },
+                                                   "B": {
+                                                    "block": {
+                                                     "type": "math_single",
+                                                     "fields": {
+                                                      "OP": "ABS"
+                                                     },
+                                                     "inputs": {
+                                                      "NUM": {
+                                                       "block": {
+                                                        "type": "variables_get",
+                                                        "fields": {
+                                                         "VAR": {
+                                                          "name": "directionX"
+                                                         }
+                                                        }
+                                                       }
+                                                      }
+                                                     }
+                                                    }
+                                                   }
+                                                  }
+                                                 }
+                                                },
+                                                "B": {
+                                                 "block": {
+                                                  "type": "math_arithmetic",
+                                                  "fields": {
+                                                   "OP": "DIVIDE"
+                                                  },
+                                                  "inputs": {
+                                                   "A": {
+                                                    "block": {
+                                                     "type": "variables_get",
+                                                     "fields": {
+                                                      "VAR": {
+                                                       "name": "directionDivisor"
+                                                      }
+                                                     }
+                                                    }
+                                                   },
+                                                   "B": {
+                                                    "block": {
+                                                     "type": "math_number",
+                                                     "fields": {
+                                                      "NUM": 2
+                                                     }
+                                                    }
+                                                   }
+                                                  }
+                                                 }
+                                                }
+                                               }
+                                              }
+                                             },
+                                             "B": {
+                                              "block": {
+                                               "type": "variables_get",
+                                               "fields": {
+                                                "VAR": {
+                                                 "name": "directionDivisor"
+                                                }
+                                               }
+                                              }
+                                             }
+                                            }
+                                           }
+                                          },
+                                          "B": {
+                                           "block": {
+                                            "type": "math_number",
+                                            "fields": {
+                                             "NUM": 1
+                                            }
+                                           }
+                                          }
+                                         }
+                                        }
+                                       }
+                                      },
+                                      "next": {
+                                       "block": {
+                                        "type": "controls_if",
+                                        "inputs": {
+                                         "IF0": {
+                                          "block": {
+                                           "type": "logic_compare",
+                                           "fields": {
+                                            "OP": "LT"
+                                           },
+                                           "inputs": {
+                                            "A": {
+                                             "block": {
+                                              "type": "variables_get",
+                                              "fields": {
+                                               "VAR": {
+                                                "name": "directionY"
+                                               }
+                                              }
+                                             }
+                                            },
+                                            "B": {
+                                             "block": {
+                                              "type": "math_number",
+                                              "fields": {
+                                               "NUM": 0
+                                              }
+                                             }
+                                            }
+                                           }
+                                          }
+                                         },
+                                         "DO0": {
+                                          "block": {
+                                           "type": "ab_sprite_set_prop",
+                                           "fields": {
+                                            "PROP": "vy"
+                                           },
+                                           "inputs": {
+                                            "SPRITE": {
+                                             "block": {
+                                              "type": "variables_get",
+                                              "fields": {
+                                               "VAR": {
+                                                "name": "ball"
+                                               }
+                                              }
+                                             }
+                                            },
+                                            "VALUE": {
+                                             "block": {
+                                              "type": "math_arithmetic",
+                                              "fields": {
+                                               "OP": "MINUS"
+                                              },
+                                              "inputs": {
+                                               "A": {
+                                                "block": {
+                                                 "type": "math_number",
+                                                 "fields": {
+                                                  "NUM": 0
+                                                 }
+                                                }
+                                               },
+                                               "B": {
+                                                "block": {
+                                                 "type": "math_arithmetic",
+                                                 "fields": {
+                                                  "OP": "DIVIDE"
+                                                 },
+                                                 "inputs": {
+                                                  "A": {
+                                                   "block": {
+                                                    "type": "math_arithmetic",
+                                                    "fields": {
+                                                     "OP": "ADD"
+                                                    },
+                                                    "inputs": {
+                                                     "A": {
+                                                      "block": {
+                                                       "type": "math_arithmetic",
+                                                       "fields": {
+                                                        "OP": "MULTIPLY"
+                                                       },
+                                                       "inputs": {
+                                                        "A": {
+                                                         "block": {
+                                                          "type": "variables_get",
+                                                          "fields": {
+                                                           "VAR": {
+                                                            "name": "ballSpeed"
+                                                           }
+                                                          }
+                                                         }
+                                                        },
+                                                        "B": {
+                                                         "block": {
+                                                          "type": "math_single",
+                                                          "fields": {
+                                                           "OP": "ABS"
+                                                          },
+                                                          "inputs": {
+                                                           "NUM": {
+                                                            "block": {
+                                                             "type": "variables_get",
+                                                             "fields": {
+                                                              "VAR": {
+                                                               "name": "directionY"
+                                                              }
+                                                             }
+                                                            }
+                                                           }
+                                                          }
+                                                         }
+                                                        }
+                                                       }
+                                                      }
+                                                     },
+                                                     "B": {
+                                                      "block": {
+                                                       "type": "math_arithmetic",
+                                                       "fields": {
+                                                        "OP": "DIVIDE"
+                                                       },
+                                                       "inputs": {
+                                                        "A": {
+                                                         "block": {
+                                                          "type": "variables_get",
+                                                          "fields": {
+                                                           "VAR": {
+                                                            "name": "directionDivisor"
+                                                           }
+                                                          }
+                                                         }
+                                                        },
+                                                        "B": {
+                                                         "block": {
+                                                          "type": "math_number",
+                                                          "fields": {
+                                                           "NUM": 2
+                                                          }
+                                                         }
+                                                        }
+                                                       }
+                                                      }
+                                                     }
+                                                    }
+                                                   }
+                                                  },
+                                                  "B": {
+                                                   "block": {
+                                                    "type": "variables_get",
+                                                    "fields": {
+                                                     "VAR": {
+                                                      "name": "directionDivisor"
+                                                     }
+                                                    }
+                                                   }
+                                                  }
+                                                 }
+                                                }
+                                               }
+                                              }
+                                             }
+                                            }
+                                           }
+                                          }
+                                         },
+                                         "ELSE": {
+                                          "block": {
+                                           "type": "ab_sprite_set_prop",
+                                           "fields": {
+                                            "PROP": "vy"
+                                           },
+                                           "inputs": {
+                                            "SPRITE": {
+                                             "block": {
+                                              "type": "variables_get",
+                                              "fields": {
+                                               "VAR": {
+                                                "name": "ball"
+                                               }
+                                              }
+                                             }
+                                            },
+                                            "VALUE": {
+                                             "block": {
+                                              "type": "math_arithmetic",
+                                              "fields": {
+                                               "OP": "DIVIDE"
+                                              },
+                                              "inputs": {
+                                               "A": {
+                                                "block": {
+                                                 "type": "math_arithmetic",
+                                                 "fields": {
+                                                  "OP": "ADD"
+                                                 },
+                                                 "inputs": {
+                                                  "A": {
+                                                   "block": {
+                                                    "type": "math_arithmetic",
+                                                    "fields": {
+                                                     "OP": "MULTIPLY"
+                                                    },
+                                                    "inputs": {
+                                                     "A": {
+                                                      "block": {
+                                                       "type": "variables_get",
+                                                       "fields": {
+                                                        "VAR": {
+                                                         "name": "ballSpeed"
+                                                        }
+                                                       }
+                                                      }
+                                                     },
+                                                     "B": {
+                                                      "block": {
+                                                       "type": "math_single",
+                                                       "fields": {
+                                                        "OP": "ABS"
+                                                       },
+                                                       "inputs": {
+                                                        "NUM": {
+                                                         "block": {
+                                                          "type": "variables_get",
+                                                          "fields": {
+                                                           "VAR": {
+                                                            "name": "directionY"
+                                                           }
+                                                          }
+                                                         }
+                                                        }
+                                                       }
+                                                      }
+                                                     }
+                                                    }
+                                                   }
+                                                  },
+                                                  "B": {
+                                                   "block": {
+                                                    "type": "math_arithmetic",
+                                                    "fields": {
+                                                     "OP": "DIVIDE"
+                                                    },
+                                                    "inputs": {
+                                                     "A": {
+                                                      "block": {
+                                                       "type": "variables_get",
+                                                       "fields": {
+                                                        "VAR": {
+                                                         "name": "directionDivisor"
+                                                        }
+                                                       }
+                                                      }
+                                                     },
+                                                     "B": {
+                                                      "block": {
+                                                       "type": "math_number",
+                                                       "fields": {
+                                                        "NUM": 2
+                                                       }
+                                                      }
+                                                     }
+                                                    }
+                                                   }
+                                                  }
+                                                 }
+                                                }
+                                               },
+                                               "B": {
+                                                "block": {
+                                                 "type": "variables_get",
+                                                 "fields": {
+                                                  "VAR": {
+                                                   "name": "directionDivisor"
+                                                  }
+                                                 }
+                                                }
+                                               }
+                                              }
+                                             }
+                                            }
+                                           }
+                                          }
+                                         }
+                                        },
+                                        "extraState": {
+                                         "hasElse": true
+                                        },
+                                        "next": {
+                                         "block": {
+                                          "type": "ab_life_set",
+                                          "inputs": {
+                                           "VALUE": {
+                                            "block": {
+                                             "type": "math_number",
+                                             "fields": {
+                                              "NUM": 3
+                                             }
+                                            }
+                                           }
+                                          },
+                                          "next": {
+                                           "block": {
+                                            "type": "ab_score_set",
+                                            "inputs": {
+                                             "VALUE": {
+                                              "block": {
+                                               "type": "math_number",
+                                               "fields": {
+                                                "NUM": 0
+                                               }
+                                              }
+                                             }
+                                            }
+                                           }
+                                          }
+                                         }
+                                        }
+                                       }
+                                      }
+                                     }
+                                    }
                                    }
                                   }
                                  }
@@ -685,74 +1213,602 @@
                },
                "next": {
                 "block": {
-                 "type": "ab_sprite_set_position",
+                 "type": "variables_set",
+                 "fields": {
+                  "VAR": {
+                   "name": "ballSpeed"
+                  }
+                 },
                  "inputs": {
-                  "SPRITE": {
-                   "block": {
-                    "type": "variables_get",
-                    "fields": {
-                     "VAR": {
-                      "name": "ball"
-                     }
-                    }
-                   }
-                  },
-                  "X": {
+                  "VALUE": {
                    "block": {
                     "type": "math_number",
                     "fields": {
-                     "NUM": 64
-                    }
-                   }
-                  },
-                  "Y": {
-                   "block": {
-                    "type": "math_number",
-                    "fields": {
-                     "NUM": 32
+                     "NUM": 50
                     }
                    }
                   }
                  },
                  "next": {
                   "block": {
-                   "type": "ab_sprite_set_velocity",
+                   "type": "variables_set",
+                   "fields": {
+                    "VAR": {
+                     "name": "directionX"
+                    }
+                   },
                    "inputs": {
-                    "SPRITE": {
-                     "block": {
-                      "type": "variables_get",
-                      "fields": {
-                       "VAR": {
-                        "name": "ball"
-                       }
-                      }
-                     }
-                    },
-                    "VX": {
+                    "VALUE": {
                      "block": {
                       "type": "math_number",
                       "fields": {
-                       "NUM": 50
+                       "NUM": 12
                       }
                      }
-                    },
-                    "VY": {
-                     "block": {
-                      "type": "ab_random",
-                      "inputs": {
-                       "FROM": {
-                        "block": {
-                         "type": "math_number",
-                         "fields": {
-                          "NUM": -30
+                    }
+                   },
+                   "next": {
+                    "block": {
+                     "type": "variables_set",
+                     "fields": {
+                      "VAR": {
+                       "name": "directionY"
+                      }
+                     },
+                     "inputs": {
+                      "VALUE": {
+                       "block": {
+                        "type": "math_number",
+                        "fields": {
+                         "NUM": 5
+                        }
+                       }
+                      }
+                     },
+                     "next": {
+                      "block": {
+                       "type": "variables_set",
+                       "fields": {
+                        "VAR": {
+                         "name": "directionDivisor"
+                        }
+                       },
+                       "inputs": {
+                        "VALUE": {
+                         "block": {
+                          "type": "math_number",
+                          "fields": {
+                           "NUM": 13
+                          }
                          }
                         }
                        },
-                       "TO": {
+                       "next": {
                         "block": {
-                         "type": "math_number",
-                         "fields": {
-                          "NUM": 30
+                         "type": "controls_if",
+                         "inputs": {
+                          "IF0": {
+                           "block": {
+                            "type": "logic_compare",
+                            "fields": {
+                             "OP": "EQ"
+                            },
+                            "inputs": {
+                             "A": {
+                              "block": {
+                               "type": "ab_random",
+                               "inputs": {
+                                "FROM": {
+                                 "block": {
+                                  "type": "math_number",
+                                  "fields": {
+                                   "NUM": 0
+                                  }
+                                 }
+                                },
+                                "TO": {
+                                 "block": {
+                                  "type": "math_number",
+                                  "fields": {
+                                   "NUM": 1
+                                  }
+                                 }
+                                }
+                               }
+                              }
+                             },
+                             "B": {
+                              "block": {
+                               "type": "math_number",
+                               "fields": {
+                                "NUM": 0
+                               }
+                              }
+                             }
+                            }
+                           }
+                          },
+                          "DO0": {
+                           "block": {
+                            "type": "variables_set",
+                            "fields": {
+                             "VAR": {
+                              "name": "directionY"
+                             }
+                            },
+                            "inputs": {
+                             "VALUE": {
+                              "block": {
+                               "type": "math_number",
+                               "fields": {
+                                "NUM": -5
+                               }
+                              }
+                             }
+                            }
+                           }
+                          }
+                         },
+                         "next": {
+                          "block": {
+                           "type": "ab_sprite_set_position",
+                           "inputs": {
+                            "SPRITE": {
+                             "block": {
+                              "type": "variables_get",
+                              "fields": {
+                               "VAR": {
+                                "name": "ball"
+                               }
+                              }
+                             }
+                            },
+                            "X": {
+                             "block": {
+                              "type": "math_number",
+                              "fields": {
+                               "NUM": 64
+                              }
+                             }
+                            },
+                            "Y": {
+                             "block": {
+                              "type": "math_number",
+                              "fields": {
+                               "NUM": 32
+                              }
+                             }
+                            }
+                           },
+                           "next": {
+                            "block": {
+                             "type": "ab_sprite_set_prop",
+                             "fields": {
+                              "PROP": "vx"
+                             },
+                             "inputs": {
+                              "SPRITE": {
+                               "block": {
+                                "type": "variables_get",
+                                "fields": {
+                                 "VAR": {
+                                  "name": "ball"
+                                 }
+                                }
+                               }
+                              },
+                              "VALUE": {
+                               "block": {
+                                "type": "math_arithmetic",
+                                "fields": {
+                                 "OP": "MULTIPLY"
+                                },
+                                "inputs": {
+                                 "A": {
+                                  "block": {
+                                   "type": "math_arithmetic",
+                                   "fields": {
+                                    "OP": "DIVIDE"
+                                   },
+                                   "inputs": {
+                                    "A": {
+                                     "block": {
+                                      "type": "math_arithmetic",
+                                      "fields": {
+                                       "OP": "ADD"
+                                      },
+                                      "inputs": {
+                                       "A": {
+                                        "block": {
+                                         "type": "math_arithmetic",
+                                         "fields": {
+                                          "OP": "MULTIPLY"
+                                         },
+                                         "inputs": {
+                                          "A": {
+                                           "block": {
+                                            "type": "variables_get",
+                                            "fields": {
+                                             "VAR": {
+                                              "name": "ballSpeed"
+                                             }
+                                            }
+                                           }
+                                          },
+                                          "B": {
+                                           "block": {
+                                            "type": "math_single",
+                                            "fields": {
+                                             "OP": "ABS"
+                                            },
+                                            "inputs": {
+                                             "NUM": {
+                                              "block": {
+                                               "type": "variables_get",
+                                               "fields": {
+                                                "VAR": {
+                                                 "name": "directionX"
+                                                }
+                                               }
+                                              }
+                                             }
+                                            }
+                                           }
+                                          }
+                                         }
+                                        }
+                                       },
+                                       "B": {
+                                        "block": {
+                                         "type": "math_arithmetic",
+                                         "fields": {
+                                          "OP": "DIVIDE"
+                                         },
+                                         "inputs": {
+                                          "A": {
+                                           "block": {
+                                            "type": "variables_get",
+                                            "fields": {
+                                             "VAR": {
+                                              "name": "directionDivisor"
+                                             }
+                                            }
+                                           }
+                                          },
+                                          "B": {
+                                           "block": {
+                                            "type": "math_number",
+                                            "fields": {
+                                             "NUM": 2
+                                            }
+                                           }
+                                          }
+                                         }
+                                        }
+                                       }
+                                      }
+                                     }
+                                    },
+                                    "B": {
+                                     "block": {
+                                      "type": "variables_get",
+                                      "fields": {
+                                       "VAR": {
+                                        "name": "directionDivisor"
+                                       }
+                                      }
+                                     }
+                                    }
+                                   }
+                                  }
+                                 },
+                                 "B": {
+                                  "block": {
+                                   "type": "math_number",
+                                   "fields": {
+                                    "NUM": 1
+                                   }
+                                  }
+                                 }
+                                }
+                               }
+                              }
+                             },
+                             "next": {
+                              "block": {
+                               "type": "controls_if",
+                               "inputs": {
+                                "IF0": {
+                                 "block": {
+                                  "type": "logic_compare",
+                                  "fields": {
+                                   "OP": "LT"
+                                  },
+                                  "inputs": {
+                                   "A": {
+                                    "block": {
+                                     "type": "variables_get",
+                                     "fields": {
+                                      "VAR": {
+                                       "name": "directionY"
+                                      }
+                                     }
+                                    }
+                                   },
+                                   "B": {
+                                    "block": {
+                                     "type": "math_number",
+                                     "fields": {
+                                      "NUM": 0
+                                     }
+                                    }
+                                   }
+                                  }
+                                 }
+                                },
+                                "DO0": {
+                                 "block": {
+                                  "type": "ab_sprite_set_prop",
+                                  "fields": {
+                                   "PROP": "vy"
+                                  },
+                                  "inputs": {
+                                   "SPRITE": {
+                                    "block": {
+                                     "type": "variables_get",
+                                     "fields": {
+                                      "VAR": {
+                                       "name": "ball"
+                                      }
+                                     }
+                                    }
+                                   },
+                                   "VALUE": {
+                                    "block": {
+                                     "type": "math_arithmetic",
+                                     "fields": {
+                                      "OP": "MINUS"
+                                     },
+                                     "inputs": {
+                                      "A": {
+                                       "block": {
+                                        "type": "math_number",
+                                        "fields": {
+                                         "NUM": 0
+                                        }
+                                       }
+                                      },
+                                      "B": {
+                                       "block": {
+                                        "type": "math_arithmetic",
+                                        "fields": {
+                                         "OP": "DIVIDE"
+                                        },
+                                        "inputs": {
+                                         "A": {
+                                          "block": {
+                                           "type": "math_arithmetic",
+                                           "fields": {
+                                            "OP": "ADD"
+                                           },
+                                           "inputs": {
+                                            "A": {
+                                             "block": {
+                                              "type": "math_arithmetic",
+                                              "fields": {
+                                               "OP": "MULTIPLY"
+                                              },
+                                              "inputs": {
+                                               "A": {
+                                                "block": {
+                                                 "type": "variables_get",
+                                                 "fields": {
+                                                  "VAR": {
+                                                   "name": "ballSpeed"
+                                                  }
+                                                 }
+                                                }
+                                               },
+                                               "B": {
+                                                "block": {
+                                                 "type": "math_single",
+                                                 "fields": {
+                                                  "OP": "ABS"
+                                                 },
+                                                 "inputs": {
+                                                  "NUM": {
+                                                   "block": {
+                                                    "type": "variables_get",
+                                                    "fields": {
+                                                     "VAR": {
+                                                      "name": "directionY"
+                                                     }
+                                                    }
+                                                   }
+                                                  }
+                                                 }
+                                                }
+                                               }
+                                              }
+                                             }
+                                            },
+                                            "B": {
+                                             "block": {
+                                              "type": "math_arithmetic",
+                                              "fields": {
+                                               "OP": "DIVIDE"
+                                              },
+                                              "inputs": {
+                                               "A": {
+                                                "block": {
+                                                 "type": "variables_get",
+                                                 "fields": {
+                                                  "VAR": {
+                                                   "name": "directionDivisor"
+                                                  }
+                                                 }
+                                                }
+                                               },
+                                               "B": {
+                                                "block": {
+                                                 "type": "math_number",
+                                                 "fields": {
+                                                  "NUM": 2
+                                                 }
+                                                }
+                                               }
+                                              }
+                                             }
+                                            }
+                                           }
+                                          }
+                                         },
+                                         "B": {
+                                          "block": {
+                                           "type": "variables_get",
+                                           "fields": {
+                                            "VAR": {
+                                             "name": "directionDivisor"
+                                            }
+                                           }
+                                          }
+                                         }
+                                        }
+                                       }
+                                      }
+                                     }
+                                    }
+                                   }
+                                  }
+                                 }
+                                },
+                                "ELSE": {
+                                 "block": {
+                                  "type": "ab_sprite_set_prop",
+                                  "fields": {
+                                   "PROP": "vy"
+                                  },
+                                  "inputs": {
+                                   "SPRITE": {
+                                    "block": {
+                                     "type": "variables_get",
+                                     "fields": {
+                                      "VAR": {
+                                       "name": "ball"
+                                      }
+                                     }
+                                    }
+                                   },
+                                   "VALUE": {
+                                    "block": {
+                                     "type": "math_arithmetic",
+                                     "fields": {
+                                      "OP": "DIVIDE"
+                                     },
+                                     "inputs": {
+                                      "A": {
+                                       "block": {
+                                        "type": "math_arithmetic",
+                                        "fields": {
+                                         "OP": "ADD"
+                                        },
+                                        "inputs": {
+                                         "A": {
+                                          "block": {
+                                           "type": "math_arithmetic",
+                                           "fields": {
+                                            "OP": "MULTIPLY"
+                                           },
+                                           "inputs": {
+                                            "A": {
+                                             "block": {
+                                              "type": "variables_get",
+                                              "fields": {
+                                               "VAR": {
+                                                "name": "ballSpeed"
+                                               }
+                                              }
+                                             }
+                                            },
+                                            "B": {
+                                             "block": {
+                                              "type": "math_single",
+                                              "fields": {
+                                               "OP": "ABS"
+                                              },
+                                              "inputs": {
+                                               "NUM": {
+                                                "block": {
+                                                 "type": "variables_get",
+                                                 "fields": {
+                                                  "VAR": {
+                                                   "name": "directionY"
+                                                  }
+                                                 }
+                                                }
+                                               }
+                                              }
+                                             }
+                                            }
+                                           }
+                                          }
+                                         },
+                                         "B": {
+                                          "block": {
+                                           "type": "math_arithmetic",
+                                           "fields": {
+                                            "OP": "DIVIDE"
+                                           },
+                                           "inputs": {
+                                            "A": {
+                                             "block": {
+                                              "type": "variables_get",
+                                              "fields": {
+                                               "VAR": {
+                                                "name": "directionDivisor"
+                                               }
+                                              }
+                                             }
+                                            },
+                                            "B": {
+                                             "block": {
+                                              "type": "math_number",
+                                              "fields": {
+                                               "NUM": 2
+                                              }
+                                             }
+                                            }
+                                           }
+                                          }
+                                         }
+                                        }
+                                       }
+                                      },
+                                      "B": {
+                                       "block": {
+                                        "type": "variables_get",
+                                        "fields": {
+                                         "VAR": {
+                                          "name": "directionDivisor"
+                                         }
+                                        }
+                                       }
+                                      }
+                                     }
+                                    }
+                                   }
+                                  }
+                                 }
+                                }
+                               },
+                               "extraState": {
+                                "hasElse": true
+                               }
+                              }
+                             }
+                            }
+                           }
+                          }
                          }
                         }
                        }
@@ -822,74 +1878,602 @@
                  },
                  "next": {
                   "block": {
-                   "type": "ab_sprite_set_position",
+                   "type": "variables_set",
+                   "fields": {
+                    "VAR": {
+                     "name": "ballSpeed"
+                    }
+                   },
                    "inputs": {
-                    "SPRITE": {
-                     "block": {
-                      "type": "variables_get",
-                      "fields": {
-                       "VAR": {
-                        "name": "ball"
-                       }
-                      }
-                     }
-                    },
-                    "X": {
+                    "VALUE": {
                      "block": {
                       "type": "math_number",
                       "fields": {
-                       "NUM": 64
-                      }
-                     }
-                    },
-                    "Y": {
-                     "block": {
-                      "type": "math_number",
-                      "fields": {
-                       "NUM": 32
+                       "NUM": 50
                       }
                      }
                     }
                    },
                    "next": {
                     "block": {
-                     "type": "ab_sprite_set_velocity",
+                     "type": "variables_set",
+                     "fields": {
+                      "VAR": {
+                       "name": "directionX"
+                      }
+                     },
                      "inputs": {
-                      "SPRITE": {
-                       "block": {
-                        "type": "variables_get",
-                        "fields": {
-                         "VAR": {
-                          "name": "ball"
-                         }
-                        }
-                       }
-                      },
-                      "VX": {
+                      "VALUE": {
                        "block": {
                         "type": "math_number",
                         "fields": {
-                         "NUM": -50
+                         "NUM": 12
                         }
                        }
-                      },
-                      "VY": {
-                       "block": {
-                        "type": "ab_random",
-                        "inputs": {
-                         "FROM": {
-                          "block": {
-                           "type": "math_number",
-                           "fields": {
-                            "NUM": -30
+                      }
+                     },
+                     "next": {
+                      "block": {
+                       "type": "variables_set",
+                       "fields": {
+                        "VAR": {
+                         "name": "directionY"
+                        }
+                       },
+                       "inputs": {
+                        "VALUE": {
+                         "block": {
+                          "type": "math_number",
+                          "fields": {
+                           "NUM": 5
+                          }
+                         }
+                        }
+                       },
+                       "next": {
+                        "block": {
+                         "type": "variables_set",
+                         "fields": {
+                          "VAR": {
+                           "name": "directionDivisor"
+                          }
+                         },
+                         "inputs": {
+                          "VALUE": {
+                           "block": {
+                            "type": "math_number",
+                            "fields": {
+                             "NUM": 13
+                            }
                            }
                           }
                          },
-                         "TO": {
+                         "next": {
                           "block": {
-                           "type": "math_number",
-                           "fields": {
-                            "NUM": 30
+                           "type": "controls_if",
+                           "inputs": {
+                            "IF0": {
+                             "block": {
+                              "type": "logic_compare",
+                              "fields": {
+                               "OP": "EQ"
+                              },
+                              "inputs": {
+                               "A": {
+                                "block": {
+                                 "type": "ab_random",
+                                 "inputs": {
+                                  "FROM": {
+                                   "block": {
+                                    "type": "math_number",
+                                    "fields": {
+                                     "NUM": 0
+                                    }
+                                   }
+                                  },
+                                  "TO": {
+                                   "block": {
+                                    "type": "math_number",
+                                    "fields": {
+                                     "NUM": 1
+                                    }
+                                   }
+                                  }
+                                 }
+                                }
+                               },
+                               "B": {
+                                "block": {
+                                 "type": "math_number",
+                                 "fields": {
+                                  "NUM": 0
+                                 }
+                                }
+                               }
+                              }
+                             }
+                            },
+                            "DO0": {
+                             "block": {
+                              "type": "variables_set",
+                              "fields": {
+                               "VAR": {
+                                "name": "directionY"
+                               }
+                              },
+                              "inputs": {
+                               "VALUE": {
+                                "block": {
+                                 "type": "math_number",
+                                 "fields": {
+                                  "NUM": -5
+                                 }
+                                }
+                               }
+                              }
+                             }
+                            }
+                           },
+                           "next": {
+                            "block": {
+                             "type": "ab_sprite_set_position",
+                             "inputs": {
+                              "SPRITE": {
+                               "block": {
+                                "type": "variables_get",
+                                "fields": {
+                                 "VAR": {
+                                  "name": "ball"
+                                 }
+                                }
+                               }
+                              },
+                              "X": {
+                               "block": {
+                                "type": "math_number",
+                                "fields": {
+                                 "NUM": 64
+                                }
+                               }
+                              },
+                              "Y": {
+                               "block": {
+                                "type": "math_number",
+                                "fields": {
+                                 "NUM": 32
+                                }
+                               }
+                              }
+                             },
+                             "next": {
+                              "block": {
+                               "type": "ab_sprite_set_prop",
+                               "fields": {
+                                "PROP": "vx"
+                               },
+                               "inputs": {
+                                "SPRITE": {
+                                 "block": {
+                                  "type": "variables_get",
+                                  "fields": {
+                                   "VAR": {
+                                    "name": "ball"
+                                   }
+                                  }
+                                 }
+                                },
+                                "VALUE": {
+                                 "block": {
+                                  "type": "math_arithmetic",
+                                  "fields": {
+                                   "OP": "MULTIPLY"
+                                  },
+                                  "inputs": {
+                                   "A": {
+                                    "block": {
+                                     "type": "math_arithmetic",
+                                     "fields": {
+                                      "OP": "DIVIDE"
+                                     },
+                                     "inputs": {
+                                      "A": {
+                                       "block": {
+                                        "type": "math_arithmetic",
+                                        "fields": {
+                                         "OP": "ADD"
+                                        },
+                                        "inputs": {
+                                         "A": {
+                                          "block": {
+                                           "type": "math_arithmetic",
+                                           "fields": {
+                                            "OP": "MULTIPLY"
+                                           },
+                                           "inputs": {
+                                            "A": {
+                                             "block": {
+                                              "type": "variables_get",
+                                              "fields": {
+                                               "VAR": {
+                                                "name": "ballSpeed"
+                                               }
+                                              }
+                                             }
+                                            },
+                                            "B": {
+                                             "block": {
+                                              "type": "math_single",
+                                              "fields": {
+                                               "OP": "ABS"
+                                              },
+                                              "inputs": {
+                                               "NUM": {
+                                                "block": {
+                                                 "type": "variables_get",
+                                                 "fields": {
+                                                  "VAR": {
+                                                   "name": "directionX"
+                                                  }
+                                                 }
+                                                }
+                                               }
+                                              }
+                                             }
+                                            }
+                                           }
+                                          }
+                                         },
+                                         "B": {
+                                          "block": {
+                                           "type": "math_arithmetic",
+                                           "fields": {
+                                            "OP": "DIVIDE"
+                                           },
+                                           "inputs": {
+                                            "A": {
+                                             "block": {
+                                              "type": "variables_get",
+                                              "fields": {
+                                               "VAR": {
+                                                "name": "directionDivisor"
+                                               }
+                                              }
+                                             }
+                                            },
+                                            "B": {
+                                             "block": {
+                                              "type": "math_number",
+                                              "fields": {
+                                               "NUM": 2
+                                              }
+                                             }
+                                            }
+                                           }
+                                          }
+                                         }
+                                        }
+                                       }
+                                      },
+                                      "B": {
+                                       "block": {
+                                        "type": "variables_get",
+                                        "fields": {
+                                         "VAR": {
+                                          "name": "directionDivisor"
+                                         }
+                                        }
+                                       }
+                                      }
+                                     }
+                                    }
+                                   },
+                                   "B": {
+                                    "block": {
+                                     "type": "math_number",
+                                     "fields": {
+                                      "NUM": -1
+                                     }
+                                    }
+                                   }
+                                  }
+                                 }
+                                }
+                               },
+                               "next": {
+                                "block": {
+                                 "type": "controls_if",
+                                 "inputs": {
+                                  "IF0": {
+                                   "block": {
+                                    "type": "logic_compare",
+                                    "fields": {
+                                     "OP": "LT"
+                                    },
+                                    "inputs": {
+                                     "A": {
+                                      "block": {
+                                       "type": "variables_get",
+                                       "fields": {
+                                        "VAR": {
+                                         "name": "directionY"
+                                        }
+                                       }
+                                      }
+                                     },
+                                     "B": {
+                                      "block": {
+                                       "type": "math_number",
+                                       "fields": {
+                                        "NUM": 0
+                                       }
+                                      }
+                                     }
+                                    }
+                                   }
+                                  },
+                                  "DO0": {
+                                   "block": {
+                                    "type": "ab_sprite_set_prop",
+                                    "fields": {
+                                     "PROP": "vy"
+                                    },
+                                    "inputs": {
+                                     "SPRITE": {
+                                      "block": {
+                                       "type": "variables_get",
+                                       "fields": {
+                                        "VAR": {
+                                         "name": "ball"
+                                        }
+                                       }
+                                      }
+                                     },
+                                     "VALUE": {
+                                      "block": {
+                                       "type": "math_arithmetic",
+                                       "fields": {
+                                        "OP": "MINUS"
+                                       },
+                                       "inputs": {
+                                        "A": {
+                                         "block": {
+                                          "type": "math_number",
+                                          "fields": {
+                                           "NUM": 0
+                                          }
+                                         }
+                                        },
+                                        "B": {
+                                         "block": {
+                                          "type": "math_arithmetic",
+                                          "fields": {
+                                           "OP": "DIVIDE"
+                                          },
+                                          "inputs": {
+                                           "A": {
+                                            "block": {
+                                             "type": "math_arithmetic",
+                                             "fields": {
+                                              "OP": "ADD"
+                                             },
+                                             "inputs": {
+                                              "A": {
+                                               "block": {
+                                                "type": "math_arithmetic",
+                                                "fields": {
+                                                 "OP": "MULTIPLY"
+                                                },
+                                                "inputs": {
+                                                 "A": {
+                                                  "block": {
+                                                   "type": "variables_get",
+                                                   "fields": {
+                                                    "VAR": {
+                                                     "name": "ballSpeed"
+                                                    }
+                                                   }
+                                                  }
+                                                 },
+                                                 "B": {
+                                                  "block": {
+                                                   "type": "math_single",
+                                                   "fields": {
+                                                    "OP": "ABS"
+                                                   },
+                                                   "inputs": {
+                                                    "NUM": {
+                                                     "block": {
+                                                      "type": "variables_get",
+                                                      "fields": {
+                                                       "VAR": {
+                                                        "name": "directionY"
+                                                       }
+                                                      }
+                                                     }
+                                                    }
+                                                   }
+                                                  }
+                                                 }
+                                                }
+                                               }
+                                              },
+                                              "B": {
+                                               "block": {
+                                                "type": "math_arithmetic",
+                                                "fields": {
+                                                 "OP": "DIVIDE"
+                                                },
+                                                "inputs": {
+                                                 "A": {
+                                                  "block": {
+                                                   "type": "variables_get",
+                                                   "fields": {
+                                                    "VAR": {
+                                                     "name": "directionDivisor"
+                                                    }
+                                                   }
+                                                  }
+                                                 },
+                                                 "B": {
+                                                  "block": {
+                                                   "type": "math_number",
+                                                   "fields": {
+                                                    "NUM": 2
+                                                   }
+                                                  }
+                                                 }
+                                                }
+                                               }
+                                              }
+                                             }
+                                            }
+                                           },
+                                           "B": {
+                                            "block": {
+                                             "type": "variables_get",
+                                             "fields": {
+                                              "VAR": {
+                                               "name": "directionDivisor"
+                                              }
+                                             }
+                                            }
+                                           }
+                                          }
+                                         }
+                                        }
+                                       }
+                                      }
+                                     }
+                                    }
+                                   }
+                                  },
+                                  "ELSE": {
+                                   "block": {
+                                    "type": "ab_sprite_set_prop",
+                                    "fields": {
+                                     "PROP": "vy"
+                                    },
+                                    "inputs": {
+                                     "SPRITE": {
+                                      "block": {
+                                       "type": "variables_get",
+                                       "fields": {
+                                        "VAR": {
+                                         "name": "ball"
+                                        }
+                                       }
+                                      }
+                                     },
+                                     "VALUE": {
+                                      "block": {
+                                       "type": "math_arithmetic",
+                                       "fields": {
+                                        "OP": "DIVIDE"
+                                       },
+                                       "inputs": {
+                                        "A": {
+                                         "block": {
+                                          "type": "math_arithmetic",
+                                          "fields": {
+                                           "OP": "ADD"
+                                          },
+                                          "inputs": {
+                                           "A": {
+                                            "block": {
+                                             "type": "math_arithmetic",
+                                             "fields": {
+                                              "OP": "MULTIPLY"
+                                             },
+                                             "inputs": {
+                                              "A": {
+                                               "block": {
+                                                "type": "variables_get",
+                                                "fields": {
+                                                 "VAR": {
+                                                  "name": "ballSpeed"
+                                                 }
+                                                }
+                                               }
+                                              },
+                                              "B": {
+                                               "block": {
+                                                "type": "math_single",
+                                                "fields": {
+                                                 "OP": "ABS"
+                                                },
+                                                "inputs": {
+                                                 "NUM": {
+                                                  "block": {
+                                                   "type": "variables_get",
+                                                   "fields": {
+                                                    "VAR": {
+                                                     "name": "directionY"
+                                                    }
+                                                   }
+                                                  }
+                                                 }
+                                                }
+                                               }
+                                              }
+                                             }
+                                            }
+                                           },
+                                           "B": {
+                                            "block": {
+                                             "type": "math_arithmetic",
+                                             "fields": {
+                                              "OP": "DIVIDE"
+                                             },
+                                             "inputs": {
+                                              "A": {
+                                               "block": {
+                                                "type": "variables_get",
+                                                "fields": {
+                                                 "VAR": {
+                                                  "name": "directionDivisor"
+                                                 }
+                                                }
+                                               }
+                                              },
+                                              "B": {
+                                               "block": {
+                                                "type": "math_number",
+                                                "fields": {
+                                                 "NUM": 2
+                                                }
+                                               }
+                                              }
+                                             }
+                                            }
+                                           }
+                                          }
+                                         }
+                                        },
+                                        "B": {
+                                         "block": {
+                                          "type": "variables_get",
+                                          "fields": {
+                                           "VAR": {
+                                            "name": "directionDivisor"
+                                           }
+                                          }
+                                         }
+                                        }
+                                       }
+                                      }
+                                     }
+                                    }
+                                   }
+                                  }
+                                 },
+                                 "extraState": {
+                                  "hasElse": true
+                                 }
+                                }
+                               }
+                              }
+                             }
+                            }
                            }
                           }
                          }
@@ -973,48 +2557,255 @@
          },
          "DO0": {
           "block": {
-           "type": "ab_sprite_set_prop",
-           "fields": {
-            "PROP": "vx"
-           },
+           "type": "controls_if",
            "inputs": {
-            "SPRITE": {
+            "IF0": {
              "block": {
-              "type": "variables_get",
+              "type": "logic_compare",
               "fields": {
-               "VAR": {
-                "name": "sprite"
-               }
-              }
-             }
-            },
-            "VALUE": {
-             "block": {
-              "type": "math_arithmetic",
-              "fields": {
-               "OP": "ADD"
+               "OP": "LT"
               },
               "inputs": {
                "A": {
                 "block": {
-                 "type": "math_single",
+                 "type": "variables_get",
                  "fields": {
-                  "OP": "ABS"
+                  "VAR": {
+                   "name": "ballSpeed"
+                  }
+                 }
+                }
+               },
+               "B": {
+                "block": {
+                 "type": "math_number",
+                 "fields": {
+                  "NUM": 180
+                 }
+                }
+               }
+              }
+             }
+            },
+            "DO0": {
+             "block": {
+              "type": "variables_set",
+              "fields": {
+               "VAR": {
+                "name": "ballSpeed"
+               }
+              },
+              "inputs": {
+               "VALUE": {
+                "block": {
+                 "type": "math_arithmetic",
+                 "fields": {
+                  "OP": "ADD"
                  },
                  "inputs": {
-                  "NUM": {
+                  "A": {
                    "block": {
-                    "type": "ab_sprite_get_prop",
+                    "type": "variables_get",
                     "fields": {
-                     "PROP": "vx"
+                     "VAR": {
+                      "name": "ballSpeed"
+                     }
+                    }
+                   }
+                  },
+                  "B": {
+                   "block": {
+                    "type": "math_number",
+                    "fields": {
+                     "NUM": 1
+                    }
+                   }
+                  }
+                 }
+                }
+               }
+              }
+             }
+            }
+           },
+           "next": {
+            "block": {
+             "type": "controls_if",
+             "inputs": {
+              "IF0": {
+               "block": {
+                "type": "logic_compare",
+                "fields": {
+                 "OP": "LT"
+                },
+                "inputs": {
+                 "A": {
+                  "block": {
+                   "type": "ab_sprite_get_prop",
+                   "fields": {
+                    "PROP": "vy"
+                   },
+                   "inputs": {
+                    "SPRITE": {
+                     "block": {
+                      "type": "variables_get",
+                      "fields": {
+                       "VAR": {
+                        "name": "sprite"
+                       }
+                      }
+                     }
+                    }
+                   }
+                  }
+                 },
+                 "B": {
+                  "block": {
+                   "type": "math_number",
+                   "fields": {
+                    "NUM": 0
+                   }
+                  }
+                 }
+                }
+               }
+              },
+              "DO0": {
+               "block": {
+                "type": "variables_set",
+                "fields": {
+                 "VAR": {
+                  "name": "directionY"
+                 }
+                },
+                "inputs": {
+                 "VALUE": {
+                  "block": {
+                   "type": "math_arithmetic",
+                   "fields": {
+                    "OP": "MINUS"
+                   },
+                   "inputs": {
+                    "A": {
+                     "block": {
+                      "type": "math_number",
+                      "fields": {
+                       "NUM": 0
+                      }
+                     }
                     },
-                    "inputs": {
-                     "SPRITE": {
-                      "block": {
-                       "type": "variables_get",
-                       "fields": {
-                        "VAR": {
-                         "name": "sprite"
+                    "B": {
+                     "block": {
+                      "type": "math_single",
+                      "fields": {
+                       "OP": "ABS"
+                      },
+                      "inputs": {
+                       "NUM": {
+                        "block": {
+                         "type": "variables_get",
+                         "fields": {
+                          "VAR": {
+                           "name": "directionY"
+                          }
+                         }
+                        }
+                       }
+                      }
+                     }
+                    }
+                   }
+                  }
+                 }
+                }
+               }
+              },
+              "ELSE": {
+               "block": {
+                "type": "variables_set",
+                "fields": {
+                 "VAR": {
+                  "name": "directionY"
+                 }
+                },
+                "inputs": {
+                 "VALUE": {
+                  "block": {
+                   "type": "math_single",
+                   "fields": {
+                    "OP": "ABS"
+                   },
+                   "inputs": {
+                    "NUM": {
+                     "block": {
+                      "type": "variables_get",
+                      "fields": {
+                       "VAR": {
+                        "name": "directionY"
+                       }
+                      }
+                     }
+                    }
+                   }
+                  }
+                 }
+                }
+               }
+              }
+             },
+             "extraState": {
+              "hasElse": true
+             },
+             "next": {
+              "block": {
+               "type": "variables_set",
+               "fields": {
+                "VAR": {
+                 "name": "hitOffset"
+                }
+               },
+               "inputs": {
+                "VALUE": {
+                 "block": {
+                  "type": "math_arithmetic",
+                  "fields": {
+                   "OP": "MINUS"
+                  },
+                  "inputs": {
+                   "A": {
+                    "block": {
+                     "type": "ab_sprite_get_prop",
+                     "fields": {
+                      "PROP": "y"
+                     },
+                     "inputs": {
+                      "SPRITE": {
+                       "block": {
+                        "type": "variables_get",
+                        "fields": {
+                         "VAR": {
+                          "name": "sprite"
+                         }
+                        }
+                       }
+                      }
+                     }
+                    }
+                   },
+                   "B": {
+                    "block": {
+                     "type": "ab_sprite_get_prop",
+                     "fields": {
+                      "PROP": "y"
+                     },
+                     "inputs": {
+                      "SPRITE": {
+                       "block": {
+                        "type": "variables_get",
+                        "fields": {
+                         "VAR": {
+                          "name": "otherSprite"
+                         }
                         }
                        }
                       }
@@ -1025,23 +2816,890 @@
                  }
                 }
                },
-               "B": {
+               "next": {
                 "block": {
-                 "type": "math_number",
-                 "fields": {
-                  "NUM": 5
+                 "type": "controls_if",
+                 "inputs": {
+                  "IF0": {
+                   "block": {
+                    "type": "logic_compare",
+                    "fields": {
+                     "OP": "LT"
+                    },
+                    "inputs": {
+                     "A": {
+                      "block": {
+                       "type": "variables_get",
+                       "fields": {
+                        "VAR": {
+                         "name": "hitOffset"
+                        }
+                       }
+                      }
+                     },
+                     "B": {
+                      "block": {
+                       "type": "math_number",
+                       "fields": {
+                        "NUM": -4
+                       }
+                      }
+                     }
+                    }
+                   }
+                  },
+                  "DO0": {
+                   "block": {
+                    "type": "variables_set",
+                    "fields": {
+                     "VAR": {
+                      "name": "directionX"
+                     }
+                    },
+                    "inputs": {
+                     "VALUE": {
+                      "block": {
+                       "type": "math_number",
+                       "fields": {
+                        "NUM": 4
+                       }
+                      }
+                     }
+                    },
+                    "next": {
+                     "block": {
+                      "type": "variables_set",
+                      "fields": {
+                       "VAR": {
+                        "name": "directionY"
+                       }
+                      },
+                      "inputs": {
+                       "VALUE": {
+                        "block": {
+                         "type": "math_number",
+                         "fields": {
+                          "NUM": -3
+                         }
+                        }
+                       }
+                      },
+                      "next": {
+                       "block": {
+                        "type": "variables_set",
+                        "fields": {
+                         "VAR": {
+                          "name": "directionDivisor"
+                         }
+                        },
+                        "inputs": {
+                         "VALUE": {
+                          "block": {
+                           "type": "math_number",
+                           "fields": {
+                            "NUM": 5
+                           }
+                          }
+                         }
+                        }
+                       }
+                      }
+                     }
+                    }
+                   }
+                  },
+                  "ELSE": {
+                   "block": {
+                    "type": "controls_if",
+                    "inputs": {
+                     "IF0": {
+                      "block": {
+                       "type": "logic_compare",
+                       "fields": {
+                        "OP": "LT"
+                       },
+                       "inputs": {
+                        "A": {
+                         "block": {
+                          "type": "variables_get",
+                          "fields": {
+                           "VAR": {
+                            "name": "hitOffset"
+                           }
+                          }
+                         }
+                        },
+                        "B": {
+                         "block": {
+                          "type": "math_number",
+                          "fields": {
+                           "NUM": -1
+                          }
+                         }
+                        }
+                       }
+                      }
+                     },
+                     "DO0": {
+                      "block": {
+                       "type": "variables_set",
+                       "fields": {
+                        "VAR": {
+                         "name": "directionX"
+                        }
+                       },
+                       "inputs": {
+                        "VALUE": {
+                         "block": {
+                          "type": "math_number",
+                          "fields": {
+                           "NUM": 12
+                          }
+                         }
+                        }
+                       },
+                       "next": {
+                        "block": {
+                         "type": "variables_set",
+                         "fields": {
+                          "VAR": {
+                           "name": "directionY"
+                          }
+                         },
+                         "inputs": {
+                          "VALUE": {
+                           "block": {
+                            "type": "math_number",
+                            "fields": {
+                             "NUM": -5
+                            }
+                           }
+                          }
+                         },
+                         "next": {
+                          "block": {
+                           "type": "variables_set",
+                           "fields": {
+                            "VAR": {
+                             "name": "directionDivisor"
+                            }
+                           },
+                           "inputs": {
+                            "VALUE": {
+                             "block": {
+                              "type": "math_number",
+                              "fields": {
+                               "NUM": 13
+                              }
+                             }
+                            }
+                           }
+                          }
+                         }
+                        }
+                       }
+                      }
+                     },
+                     "ELSE": {
+                      "block": {
+                       "type": "controls_if",
+                       "inputs": {
+                        "IF0": {
+                         "block": {
+                          "type": "logic_compare",
+                          "fields": {
+                           "OP": "GTE"
+                          },
+                          "inputs": {
+                           "A": {
+                            "block": {
+                             "type": "variables_get",
+                             "fields": {
+                              "VAR": {
+                               "name": "hitOffset"
+                              }
+                             }
+                            }
+                           },
+                           "B": {
+                            "block": {
+                             "type": "math_number",
+                             "fields": {
+                              "NUM": 5
+                             }
+                            }
+                           }
+                          }
+                         }
+                        },
+                        "DO0": {
+                         "block": {
+                          "type": "variables_set",
+                          "fields": {
+                           "VAR": {
+                            "name": "directionX"
+                           }
+                          },
+                          "inputs": {
+                           "VALUE": {
+                            "block": {
+                             "type": "math_number",
+                             "fields": {
+                              "NUM": 4
+                             }
+                            }
+                           }
+                          },
+                          "next": {
+                           "block": {
+                            "type": "variables_set",
+                            "fields": {
+                             "VAR": {
+                              "name": "directionY"
+                             }
+                            },
+                            "inputs": {
+                             "VALUE": {
+                              "block": {
+                               "type": "math_number",
+                               "fields": {
+                                "NUM": 3
+                               }
+                              }
+                             }
+                            },
+                            "next": {
+                             "block": {
+                              "type": "variables_set",
+                              "fields": {
+                               "VAR": {
+                                "name": "directionDivisor"
+                               }
+                              },
+                              "inputs": {
+                               "VALUE": {
+                                "block": {
+                                 "type": "math_number",
+                                 "fields": {
+                                  "NUM": 5
+                                 }
+                                }
+                               }
+                              }
+                             }
+                            }
+                           }
+                          }
+                         }
+                        },
+                        "ELSE": {
+                         "block": {
+                          "type": "controls_if",
+                          "inputs": {
+                           "IF0": {
+                            "block": {
+                             "type": "logic_compare",
+                             "fields": {
+                              "OP": "GTE"
+                             },
+                             "inputs": {
+                              "A": {
+                               "block": {
+                                "type": "variables_get",
+                                "fields": {
+                                 "VAR": {
+                                  "name": "hitOffset"
+                                 }
+                                }
+                               }
+                              },
+                              "B": {
+                               "block": {
+                                "type": "math_number",
+                                "fields": {
+                                 "NUM": 2
+                                }
+                               }
+                              }
+                             }
+                            }
+                           },
+                           "DO0": {
+                            "block": {
+                             "type": "variables_set",
+                             "fields": {
+                              "VAR": {
+                               "name": "directionX"
+                              }
+                             },
+                             "inputs": {
+                              "VALUE": {
+                               "block": {
+                                "type": "math_number",
+                                "fields": {
+                                 "NUM": 12
+                                }
+                               }
+                              }
+                             },
+                             "next": {
+                              "block": {
+                               "type": "variables_set",
+                               "fields": {
+                                "VAR": {
+                                 "name": "directionY"
+                                }
+                               },
+                               "inputs": {
+                                "VALUE": {
+                                 "block": {
+                                  "type": "math_number",
+                                  "fields": {
+                                   "NUM": 5
+                                  }
+                                 }
+                                }
+                               },
+                               "next": {
+                                "block": {
+                                 "type": "variables_set",
+                                 "fields": {
+                                  "VAR": {
+                                   "name": "directionDivisor"
+                                  }
+                                 },
+                                 "inputs": {
+                                  "VALUE": {
+                                   "block": {
+                                    "type": "math_number",
+                                    "fields": {
+                                     "NUM": 13
+                                    }
+                                   }
+                                  }
+                                 }
+                                }
+                               }
+                              }
+                             }
+                            }
+                           }
+                          }
+                         }
+                        }
+                       },
+                       "extraState": {
+                        "hasElse": true
+                       }
+                      }
+                     }
+                    },
+                    "extraState": {
+                     "hasElse": true
+                    }
+                   }
+                  }
+                 },
+                 "extraState": {
+                  "hasElse": true
+                 },
+                 "next": {
+                  "block": {
+                   "type": "ab_sprite_set_prop",
+                   "fields": {
+                    "PROP": "vx"
+                   },
+                   "inputs": {
+                    "SPRITE": {
+                     "block": {
+                      "type": "variables_get",
+                      "fields": {
+                       "VAR": {
+                        "name": "sprite"
+                       }
+                      }
+                     }
+                    },
+                    "VALUE": {
+                     "block": {
+                      "type": "math_arithmetic",
+                      "fields": {
+                       "OP": "MULTIPLY"
+                      },
+                      "inputs": {
+                       "A": {
+                        "block": {
+                         "type": "math_arithmetic",
+                         "fields": {
+                          "OP": "DIVIDE"
+                         },
+                         "inputs": {
+                          "A": {
+                           "block": {
+                            "type": "math_arithmetic",
+                            "fields": {
+                             "OP": "ADD"
+                            },
+                            "inputs": {
+                             "A": {
+                              "block": {
+                               "type": "math_arithmetic",
+                               "fields": {
+                                "OP": "MULTIPLY"
+                               },
+                               "inputs": {
+                                "A": {
+                                 "block": {
+                                  "type": "variables_get",
+                                  "fields": {
+                                   "VAR": {
+                                    "name": "ballSpeed"
+                                   }
+                                  }
+                                 }
+                                },
+                                "B": {
+                                 "block": {
+                                  "type": "math_single",
+                                  "fields": {
+                                   "OP": "ABS"
+                                  },
+                                  "inputs": {
+                                   "NUM": {
+                                    "block": {
+                                     "type": "variables_get",
+                                     "fields": {
+                                      "VAR": {
+                                       "name": "directionX"
+                                      }
+                                     }
+                                    }
+                                   }
+                                  }
+                                 }
+                                }
+                               }
+                              }
+                             },
+                             "B": {
+                              "block": {
+                               "type": "math_arithmetic",
+                               "fields": {
+                                "OP": "DIVIDE"
+                               },
+                               "inputs": {
+                                "A": {
+                                 "block": {
+                                  "type": "variables_get",
+                                  "fields": {
+                                   "VAR": {
+                                    "name": "directionDivisor"
+                                   }
+                                  }
+                                 }
+                                },
+                                "B": {
+                                 "block": {
+                                  "type": "math_number",
+                                  "fields": {
+                                   "NUM": 2
+                                  }
+                                 }
+                                }
+                               }
+                              }
+                             }
+                            }
+                           }
+                          },
+                          "B": {
+                           "block": {
+                            "type": "variables_get",
+                            "fields": {
+                             "VAR": {
+                              "name": "directionDivisor"
+                             }
+                            }
+                           }
+                          }
+                         }
+                        }
+                       },
+                       "B": {
+                        "block": {
+                         "type": "math_number",
+                         "fields": {
+                          "NUM": 1
+                         }
+                        }
+                       }
+                      }
+                     }
+                    }
+                   },
+                   "next": {
+                    "block": {
+                     "type": "controls_if",
+                     "inputs": {
+                      "IF0": {
+                       "block": {
+                        "type": "logic_compare",
+                        "fields": {
+                         "OP": "LT"
+                        },
+                        "inputs": {
+                         "A": {
+                          "block": {
+                           "type": "variables_get",
+                           "fields": {
+                            "VAR": {
+                             "name": "directionY"
+                            }
+                           }
+                          }
+                         },
+                         "B": {
+                          "block": {
+                           "type": "math_number",
+                           "fields": {
+                            "NUM": 0
+                           }
+                          }
+                         }
+                        }
+                       }
+                      },
+                      "DO0": {
+                       "block": {
+                        "type": "ab_sprite_set_prop",
+                        "fields": {
+                         "PROP": "vy"
+                        },
+                        "inputs": {
+                         "SPRITE": {
+                          "block": {
+                           "type": "variables_get",
+                           "fields": {
+                            "VAR": {
+                             "name": "sprite"
+                            }
+                           }
+                          }
+                         },
+                         "VALUE": {
+                          "block": {
+                           "type": "math_arithmetic",
+                           "fields": {
+                            "OP": "MINUS"
+                           },
+                           "inputs": {
+                            "A": {
+                             "block": {
+                              "type": "math_number",
+                              "fields": {
+                               "NUM": 0
+                              }
+                             }
+                            },
+                            "B": {
+                             "block": {
+                              "type": "math_arithmetic",
+                              "fields": {
+                               "OP": "DIVIDE"
+                              },
+                              "inputs": {
+                               "A": {
+                                "block": {
+                                 "type": "math_arithmetic",
+                                 "fields": {
+                                  "OP": "ADD"
+                                 },
+                                 "inputs": {
+                                  "A": {
+                                   "block": {
+                                    "type": "math_arithmetic",
+                                    "fields": {
+                                     "OP": "MULTIPLY"
+                                    },
+                                    "inputs": {
+                                     "A": {
+                                      "block": {
+                                       "type": "variables_get",
+                                       "fields": {
+                                        "VAR": {
+                                         "name": "ballSpeed"
+                                        }
+                                       }
+                                      }
+                                     },
+                                     "B": {
+                                      "block": {
+                                       "type": "math_single",
+                                       "fields": {
+                                        "OP": "ABS"
+                                       },
+                                       "inputs": {
+                                        "NUM": {
+                                         "block": {
+                                          "type": "variables_get",
+                                          "fields": {
+                                           "VAR": {
+                                            "name": "directionY"
+                                           }
+                                          }
+                                         }
+                                        }
+                                       }
+                                      }
+                                     }
+                                    }
+                                   }
+                                  },
+                                  "B": {
+                                   "block": {
+                                    "type": "math_arithmetic",
+                                    "fields": {
+                                     "OP": "DIVIDE"
+                                    },
+                                    "inputs": {
+                                     "A": {
+                                      "block": {
+                                       "type": "variables_get",
+                                       "fields": {
+                                        "VAR": {
+                                         "name": "directionDivisor"
+                                        }
+                                       }
+                                      }
+                                     },
+                                     "B": {
+                                      "block": {
+                                       "type": "math_number",
+                                       "fields": {
+                                        "NUM": 2
+                                       }
+                                      }
+                                     }
+                                    }
+                                   }
+                                  }
+                                 }
+                                }
+                               },
+                               "B": {
+                                "block": {
+                                 "type": "variables_get",
+                                 "fields": {
+                                  "VAR": {
+                                   "name": "directionDivisor"
+                                  }
+                                 }
+                                }
+                               }
+                              }
+                             }
+                            }
+                           }
+                          }
+                         }
+                        }
+                       }
+                      },
+                      "ELSE": {
+                       "block": {
+                        "type": "ab_sprite_set_prop",
+                        "fields": {
+                         "PROP": "vy"
+                        },
+                        "inputs": {
+                         "SPRITE": {
+                          "block": {
+                           "type": "variables_get",
+                           "fields": {
+                            "VAR": {
+                             "name": "sprite"
+                            }
+                           }
+                          }
+                         },
+                         "VALUE": {
+                          "block": {
+                           "type": "math_arithmetic",
+                           "fields": {
+                            "OP": "DIVIDE"
+                           },
+                           "inputs": {
+                            "A": {
+                             "block": {
+                              "type": "math_arithmetic",
+                              "fields": {
+                               "OP": "ADD"
+                              },
+                              "inputs": {
+                               "A": {
+                                "block": {
+                                 "type": "math_arithmetic",
+                                 "fields": {
+                                  "OP": "MULTIPLY"
+                                 },
+                                 "inputs": {
+                                  "A": {
+                                   "block": {
+                                    "type": "variables_get",
+                                    "fields": {
+                                     "VAR": {
+                                      "name": "ballSpeed"
+                                     }
+                                    }
+                                   }
+                                  },
+                                  "B": {
+                                   "block": {
+                                    "type": "math_single",
+                                    "fields": {
+                                     "OP": "ABS"
+                                    },
+                                    "inputs": {
+                                     "NUM": {
+                                      "block": {
+                                       "type": "variables_get",
+                                       "fields": {
+                                        "VAR": {
+                                         "name": "directionY"
+                                        }
+                                       }
+                                      }
+                                     }
+                                    }
+                                   }
+                                  }
+                                 }
+                                }
+                               },
+                               "B": {
+                                "block": {
+                                 "type": "math_arithmetic",
+                                 "fields": {
+                                  "OP": "DIVIDE"
+                                 },
+                                 "inputs": {
+                                  "A": {
+                                   "block": {
+                                    "type": "variables_get",
+                                    "fields": {
+                                     "VAR": {
+                                      "name": "directionDivisor"
+                                     }
+                                    }
+                                   }
+                                  },
+                                  "B": {
+                                   "block": {
+                                    "type": "math_number",
+                                    "fields": {
+                                     "NUM": 2
+                                    }
+                                   }
+                                  }
+                                 }
+                                }
+                               }
+                              }
+                             }
+                            },
+                            "B": {
+                             "block": {
+                              "type": "variables_get",
+                              "fields": {
+                               "VAR": {
+                                "name": "directionDivisor"
+                               }
+                              }
+                             }
+                            }
+                           }
+                          }
+                         }
+                        }
+                       }
+                      }
+                     },
+                     "extraState": {
+                      "hasElse": true
+                     },
+                     "next": {
+                      "block": {
+                       "type": "ab_sprite_set_prop",
+                       "fields": {
+                        "PROP": "x"
+                       },
+                       "inputs": {
+                        "SPRITE": {
+                         "block": {
+                          "type": "variables_get",
+                          "fields": {
+                           "VAR": {
+                            "name": "sprite"
+                           }
+                          }
+                         }
+                        },
+                        "VALUE": {
+                         "block": {
+                          "type": "math_arithmetic",
+                          "fields": {
+                           "OP": "ADD"
+                          },
+                          "inputs": {
+                           "A": {
+                            "block": {
+                             "type": "ab_sprite_get_prop",
+                             "fields": {
+                              "PROP": "x"
+                             },
+                             "inputs": {
+                              "SPRITE": {
+                               "block": {
+                                "type": "variables_get",
+                                "fields": {
+                                 "VAR": {
+                                  "name": "otherSprite"
+                                 }
+                                }
+                               }
+                              }
+                             }
+                            }
+                           },
+                           "B": {
+                            "block": {
+                             "type": "math_number",
+                             "fields": {
+                              "NUM": 4
+                             }
+                            }
+                           }
+                          }
+                         }
+                        }
+                       },
+                       "next": {
+                        "block": {
+                         "type": "ab_play_effect",
+                         "fields": {
+                          "SFX": "hit"
+                         }
+                        }
+                       }
+                      }
+                     }
+                    }
+                   }
+                  }
                  }
                 }
                }
               }
-             }
-            }
-           },
-           "next": {
-            "block": {
-             "type": "ab_play_effect",
-             "fields": {
-              "SFX": "hit"
              }
             }
            }
@@ -1119,60 +3777,67 @@
          },
          "DO0": {
           "block": {
-           "type": "ab_sprite_set_prop",
-           "fields": {
-            "PROP": "vx"
-           },
+           "type": "controls_if",
            "inputs": {
-            "SPRITE": {
+            "IF0": {
              "block": {
-              "type": "variables_get",
+              "type": "logic_compare",
               "fields": {
-               "VAR": {
-                "name": "sprite"
-               }
-              }
-             }
-            },
-            "VALUE": {
-             "block": {
-              "type": "math_arithmetic",
-              "fields": {
-               "OP": "MINUS"
+               "OP": "LT"
               },
               "inputs": {
                "A": {
                 "block": {
-                 "type": "math_number",
+                 "type": "variables_get",
                  "fields": {
-                  "NUM": 0
+                  "VAR": {
+                   "name": "ballSpeed"
+                  }
                  }
                 }
                },
                "B": {
                 "block": {
-                 "type": "math_single",
+                 "type": "math_number",
                  "fields": {
-                  "OP": "ABS"
+                  "NUM": 180
+                 }
+                }
+               }
+              }
+             }
+            },
+            "DO0": {
+             "block": {
+              "type": "variables_set",
+              "fields": {
+               "VAR": {
+                "name": "ballSpeed"
+               }
+              },
+              "inputs": {
+               "VALUE": {
+                "block": {
+                 "type": "math_arithmetic",
+                 "fields": {
+                  "OP": "ADD"
                  },
                  "inputs": {
-                  "NUM": {
+                  "A": {
                    "block": {
-                    "type": "ab_sprite_get_prop",
+                    "type": "variables_get",
                     "fields": {
-                     "PROP": "vx"
-                    },
-                    "inputs": {
-                     "SPRITE": {
-                      "block": {
-                       "type": "variables_get",
-                       "fields": {
-                        "VAR": {
-                         "name": "sprite"
-                        }
-                       }
-                      }
+                     "VAR": {
+                      "name": "ballSpeed"
                      }
+                    }
+                   }
+                  },
+                  "B": {
+                   "block": {
+                    "type": "math_number",
+                    "fields": {
+                     "NUM": 1
                     }
                    }
                   }
@@ -1185,9 +3850,1076 @@
            },
            "next": {
             "block": {
-             "type": "ab_play_effect",
-             "fields": {
-              "SFX": "hit"
+             "type": "controls_if",
+             "inputs": {
+              "IF0": {
+               "block": {
+                "type": "logic_compare",
+                "fields": {
+                 "OP": "LT"
+                },
+                "inputs": {
+                 "A": {
+                  "block": {
+                   "type": "ab_sprite_get_prop",
+                   "fields": {
+                    "PROP": "vy"
+                   },
+                   "inputs": {
+                    "SPRITE": {
+                     "block": {
+                      "type": "variables_get",
+                      "fields": {
+                       "VAR": {
+                        "name": "sprite"
+                       }
+                      }
+                     }
+                    }
+                   }
+                  }
+                 },
+                 "B": {
+                  "block": {
+                   "type": "math_number",
+                   "fields": {
+                    "NUM": 0
+                   }
+                  }
+                 }
+                }
+               }
+              },
+              "DO0": {
+               "block": {
+                "type": "variables_set",
+                "fields": {
+                 "VAR": {
+                  "name": "directionY"
+                 }
+                },
+                "inputs": {
+                 "VALUE": {
+                  "block": {
+                   "type": "math_arithmetic",
+                   "fields": {
+                    "OP": "MINUS"
+                   },
+                   "inputs": {
+                    "A": {
+                     "block": {
+                      "type": "math_number",
+                      "fields": {
+                       "NUM": 0
+                      }
+                     }
+                    },
+                    "B": {
+                     "block": {
+                      "type": "math_single",
+                      "fields": {
+                       "OP": "ABS"
+                      },
+                      "inputs": {
+                       "NUM": {
+                        "block": {
+                         "type": "variables_get",
+                         "fields": {
+                          "VAR": {
+                           "name": "directionY"
+                          }
+                         }
+                        }
+                       }
+                      }
+                     }
+                    }
+                   }
+                  }
+                 }
+                }
+               }
+              },
+              "ELSE": {
+               "block": {
+                "type": "variables_set",
+                "fields": {
+                 "VAR": {
+                  "name": "directionY"
+                 }
+                },
+                "inputs": {
+                 "VALUE": {
+                  "block": {
+                   "type": "math_single",
+                   "fields": {
+                    "OP": "ABS"
+                   },
+                   "inputs": {
+                    "NUM": {
+                     "block": {
+                      "type": "variables_get",
+                      "fields": {
+                       "VAR": {
+                        "name": "directionY"
+                       }
+                      }
+                     }
+                    }
+                   }
+                  }
+                 }
+                }
+               }
+              }
+             },
+             "extraState": {
+              "hasElse": true
+             },
+             "next": {
+              "block": {
+               "type": "variables_set",
+               "fields": {
+                "VAR": {
+                 "name": "hitOffset"
+                }
+               },
+               "inputs": {
+                "VALUE": {
+                 "block": {
+                  "type": "math_arithmetic",
+                  "fields": {
+                   "OP": "MINUS"
+                  },
+                  "inputs": {
+                   "A": {
+                    "block": {
+                     "type": "ab_sprite_get_prop",
+                     "fields": {
+                      "PROP": "y"
+                     },
+                     "inputs": {
+                      "SPRITE": {
+                       "block": {
+                        "type": "variables_get",
+                        "fields": {
+                         "VAR": {
+                          "name": "sprite"
+                         }
+                        }
+                       }
+                      }
+                     }
+                    }
+                   },
+                   "B": {
+                    "block": {
+                     "type": "ab_sprite_get_prop",
+                     "fields": {
+                      "PROP": "y"
+                     },
+                     "inputs": {
+                      "SPRITE": {
+                       "block": {
+                        "type": "variables_get",
+                        "fields": {
+                         "VAR": {
+                          "name": "otherSprite"
+                         }
+                        }
+                       }
+                      }
+                     }
+                    }
+                   }
+                  }
+                 }
+                }
+               },
+               "next": {
+                "block": {
+                 "type": "controls_if",
+                 "inputs": {
+                  "IF0": {
+                   "block": {
+                    "type": "logic_compare",
+                    "fields": {
+                     "OP": "LT"
+                    },
+                    "inputs": {
+                     "A": {
+                      "block": {
+                       "type": "variables_get",
+                       "fields": {
+                        "VAR": {
+                         "name": "hitOffset"
+                        }
+                       }
+                      }
+                     },
+                     "B": {
+                      "block": {
+                       "type": "math_number",
+                       "fields": {
+                        "NUM": -4
+                       }
+                      }
+                     }
+                    }
+                   }
+                  },
+                  "DO0": {
+                   "block": {
+                    "type": "variables_set",
+                    "fields": {
+                     "VAR": {
+                      "name": "directionX"
+                     }
+                    },
+                    "inputs": {
+                     "VALUE": {
+                      "block": {
+                       "type": "math_number",
+                       "fields": {
+                        "NUM": 4
+                       }
+                      }
+                     }
+                    },
+                    "next": {
+                     "block": {
+                      "type": "variables_set",
+                      "fields": {
+                       "VAR": {
+                        "name": "directionY"
+                       }
+                      },
+                      "inputs": {
+                       "VALUE": {
+                        "block": {
+                         "type": "math_number",
+                         "fields": {
+                          "NUM": -3
+                         }
+                        }
+                       }
+                      },
+                      "next": {
+                       "block": {
+                        "type": "variables_set",
+                        "fields": {
+                         "VAR": {
+                          "name": "directionDivisor"
+                         }
+                        },
+                        "inputs": {
+                         "VALUE": {
+                          "block": {
+                           "type": "math_number",
+                           "fields": {
+                            "NUM": 5
+                           }
+                          }
+                         }
+                        }
+                       }
+                      }
+                     }
+                    }
+                   }
+                  },
+                  "ELSE": {
+                   "block": {
+                    "type": "controls_if",
+                    "inputs": {
+                     "IF0": {
+                      "block": {
+                       "type": "logic_compare",
+                       "fields": {
+                        "OP": "LT"
+                       },
+                       "inputs": {
+                        "A": {
+                         "block": {
+                          "type": "variables_get",
+                          "fields": {
+                           "VAR": {
+                            "name": "hitOffset"
+                           }
+                          }
+                         }
+                        },
+                        "B": {
+                         "block": {
+                          "type": "math_number",
+                          "fields": {
+                           "NUM": -1
+                          }
+                         }
+                        }
+                       }
+                      }
+                     },
+                     "DO0": {
+                      "block": {
+                       "type": "variables_set",
+                       "fields": {
+                        "VAR": {
+                         "name": "directionX"
+                        }
+                       },
+                       "inputs": {
+                        "VALUE": {
+                         "block": {
+                          "type": "math_number",
+                          "fields": {
+                           "NUM": 12
+                          }
+                         }
+                        }
+                       },
+                       "next": {
+                        "block": {
+                         "type": "variables_set",
+                         "fields": {
+                          "VAR": {
+                           "name": "directionY"
+                          }
+                         },
+                         "inputs": {
+                          "VALUE": {
+                           "block": {
+                            "type": "math_number",
+                            "fields": {
+                             "NUM": -5
+                            }
+                           }
+                          }
+                         },
+                         "next": {
+                          "block": {
+                           "type": "variables_set",
+                           "fields": {
+                            "VAR": {
+                             "name": "directionDivisor"
+                            }
+                           },
+                           "inputs": {
+                            "VALUE": {
+                             "block": {
+                              "type": "math_number",
+                              "fields": {
+                               "NUM": 13
+                              }
+                             }
+                            }
+                           }
+                          }
+                         }
+                        }
+                       }
+                      }
+                     },
+                     "ELSE": {
+                      "block": {
+                       "type": "controls_if",
+                       "inputs": {
+                        "IF0": {
+                         "block": {
+                          "type": "logic_compare",
+                          "fields": {
+                           "OP": "GTE"
+                          },
+                          "inputs": {
+                           "A": {
+                            "block": {
+                             "type": "variables_get",
+                             "fields": {
+                              "VAR": {
+                               "name": "hitOffset"
+                              }
+                             }
+                            }
+                           },
+                           "B": {
+                            "block": {
+                             "type": "math_number",
+                             "fields": {
+                              "NUM": 5
+                             }
+                            }
+                           }
+                          }
+                         }
+                        },
+                        "DO0": {
+                         "block": {
+                          "type": "variables_set",
+                          "fields": {
+                           "VAR": {
+                            "name": "directionX"
+                           }
+                          },
+                          "inputs": {
+                           "VALUE": {
+                            "block": {
+                             "type": "math_number",
+                             "fields": {
+                              "NUM": 4
+                             }
+                            }
+                           }
+                          },
+                          "next": {
+                           "block": {
+                            "type": "variables_set",
+                            "fields": {
+                             "VAR": {
+                              "name": "directionY"
+                             }
+                            },
+                            "inputs": {
+                             "VALUE": {
+                              "block": {
+                               "type": "math_number",
+                               "fields": {
+                                "NUM": 3
+                               }
+                              }
+                             }
+                            },
+                            "next": {
+                             "block": {
+                              "type": "variables_set",
+                              "fields": {
+                               "VAR": {
+                                "name": "directionDivisor"
+                               }
+                              },
+                              "inputs": {
+                               "VALUE": {
+                                "block": {
+                                 "type": "math_number",
+                                 "fields": {
+                                  "NUM": 5
+                                 }
+                                }
+                               }
+                              }
+                             }
+                            }
+                           }
+                          }
+                         }
+                        },
+                        "ELSE": {
+                         "block": {
+                          "type": "controls_if",
+                          "inputs": {
+                           "IF0": {
+                            "block": {
+                             "type": "logic_compare",
+                             "fields": {
+                              "OP": "GTE"
+                             },
+                             "inputs": {
+                              "A": {
+                               "block": {
+                                "type": "variables_get",
+                                "fields": {
+                                 "VAR": {
+                                  "name": "hitOffset"
+                                 }
+                                }
+                               }
+                              },
+                              "B": {
+                               "block": {
+                                "type": "math_number",
+                                "fields": {
+                                 "NUM": 2
+                                }
+                               }
+                              }
+                             }
+                            }
+                           },
+                           "DO0": {
+                            "block": {
+                             "type": "variables_set",
+                             "fields": {
+                              "VAR": {
+                               "name": "directionX"
+                              }
+                             },
+                             "inputs": {
+                              "VALUE": {
+                               "block": {
+                                "type": "math_number",
+                                "fields": {
+                                 "NUM": 12
+                                }
+                               }
+                              }
+                             },
+                             "next": {
+                              "block": {
+                               "type": "variables_set",
+                               "fields": {
+                                "VAR": {
+                                 "name": "directionY"
+                                }
+                               },
+                               "inputs": {
+                                "VALUE": {
+                                 "block": {
+                                  "type": "math_number",
+                                  "fields": {
+                                   "NUM": 5
+                                  }
+                                 }
+                                }
+                               },
+                               "next": {
+                                "block": {
+                                 "type": "variables_set",
+                                 "fields": {
+                                  "VAR": {
+                                   "name": "directionDivisor"
+                                  }
+                                 },
+                                 "inputs": {
+                                  "VALUE": {
+                                   "block": {
+                                    "type": "math_number",
+                                    "fields": {
+                                     "NUM": 13
+                                    }
+                                   }
+                                  }
+                                 }
+                                }
+                               }
+                              }
+                             }
+                            }
+                           }
+                          }
+                         }
+                        }
+                       },
+                       "extraState": {
+                        "hasElse": true
+                       }
+                      }
+                     }
+                    },
+                    "extraState": {
+                     "hasElse": true
+                    }
+                   }
+                  }
+                 },
+                 "extraState": {
+                  "hasElse": true
+                 },
+                 "next": {
+                  "block": {
+                   "type": "ab_sprite_set_prop",
+                   "fields": {
+                    "PROP": "vx"
+                   },
+                   "inputs": {
+                    "SPRITE": {
+                     "block": {
+                      "type": "variables_get",
+                      "fields": {
+                       "VAR": {
+                        "name": "sprite"
+                       }
+                      }
+                     }
+                    },
+                    "VALUE": {
+                     "block": {
+                      "type": "math_arithmetic",
+                      "fields": {
+                       "OP": "MULTIPLY"
+                      },
+                      "inputs": {
+                       "A": {
+                        "block": {
+                         "type": "math_arithmetic",
+                         "fields": {
+                          "OP": "DIVIDE"
+                         },
+                         "inputs": {
+                          "A": {
+                           "block": {
+                            "type": "math_arithmetic",
+                            "fields": {
+                             "OP": "ADD"
+                            },
+                            "inputs": {
+                             "A": {
+                              "block": {
+                               "type": "math_arithmetic",
+                               "fields": {
+                                "OP": "MULTIPLY"
+                               },
+                               "inputs": {
+                                "A": {
+                                 "block": {
+                                  "type": "variables_get",
+                                  "fields": {
+                                   "VAR": {
+                                    "name": "ballSpeed"
+                                   }
+                                  }
+                                 }
+                                },
+                                "B": {
+                                 "block": {
+                                  "type": "math_single",
+                                  "fields": {
+                                   "OP": "ABS"
+                                  },
+                                  "inputs": {
+                                   "NUM": {
+                                    "block": {
+                                     "type": "variables_get",
+                                     "fields": {
+                                      "VAR": {
+                                       "name": "directionX"
+                                      }
+                                     }
+                                    }
+                                   }
+                                  }
+                                 }
+                                }
+                               }
+                              }
+                             },
+                             "B": {
+                              "block": {
+                               "type": "math_arithmetic",
+                               "fields": {
+                                "OP": "DIVIDE"
+                               },
+                               "inputs": {
+                                "A": {
+                                 "block": {
+                                  "type": "variables_get",
+                                  "fields": {
+                                   "VAR": {
+                                    "name": "directionDivisor"
+                                   }
+                                  }
+                                 }
+                                },
+                                "B": {
+                                 "block": {
+                                  "type": "math_number",
+                                  "fields": {
+                                   "NUM": 2
+                                  }
+                                 }
+                                }
+                               }
+                              }
+                             }
+                            }
+                           }
+                          },
+                          "B": {
+                           "block": {
+                            "type": "variables_get",
+                            "fields": {
+                             "VAR": {
+                              "name": "directionDivisor"
+                             }
+                            }
+                           }
+                          }
+                         }
+                        }
+                       },
+                       "B": {
+                        "block": {
+                         "type": "math_number",
+                         "fields": {
+                          "NUM": -1
+                         }
+                        }
+                       }
+                      }
+                     }
+                    }
+                   },
+                   "next": {
+                    "block": {
+                     "type": "controls_if",
+                     "inputs": {
+                      "IF0": {
+                       "block": {
+                        "type": "logic_compare",
+                        "fields": {
+                         "OP": "LT"
+                        },
+                        "inputs": {
+                         "A": {
+                          "block": {
+                           "type": "variables_get",
+                           "fields": {
+                            "VAR": {
+                             "name": "directionY"
+                            }
+                           }
+                          }
+                         },
+                         "B": {
+                          "block": {
+                           "type": "math_number",
+                           "fields": {
+                            "NUM": 0
+                           }
+                          }
+                         }
+                        }
+                       }
+                      },
+                      "DO0": {
+                       "block": {
+                        "type": "ab_sprite_set_prop",
+                        "fields": {
+                         "PROP": "vy"
+                        },
+                        "inputs": {
+                         "SPRITE": {
+                          "block": {
+                           "type": "variables_get",
+                           "fields": {
+                            "VAR": {
+                             "name": "sprite"
+                            }
+                           }
+                          }
+                         },
+                         "VALUE": {
+                          "block": {
+                           "type": "math_arithmetic",
+                           "fields": {
+                            "OP": "MINUS"
+                           },
+                           "inputs": {
+                            "A": {
+                             "block": {
+                              "type": "math_number",
+                              "fields": {
+                               "NUM": 0
+                              }
+                             }
+                            },
+                            "B": {
+                             "block": {
+                              "type": "math_arithmetic",
+                              "fields": {
+                               "OP": "DIVIDE"
+                              },
+                              "inputs": {
+                               "A": {
+                                "block": {
+                                 "type": "math_arithmetic",
+                                 "fields": {
+                                  "OP": "ADD"
+                                 },
+                                 "inputs": {
+                                  "A": {
+                                   "block": {
+                                    "type": "math_arithmetic",
+                                    "fields": {
+                                     "OP": "MULTIPLY"
+                                    },
+                                    "inputs": {
+                                     "A": {
+                                      "block": {
+                                       "type": "variables_get",
+                                       "fields": {
+                                        "VAR": {
+                                         "name": "ballSpeed"
+                                        }
+                                       }
+                                      }
+                                     },
+                                     "B": {
+                                      "block": {
+                                       "type": "math_single",
+                                       "fields": {
+                                        "OP": "ABS"
+                                       },
+                                       "inputs": {
+                                        "NUM": {
+                                         "block": {
+                                          "type": "variables_get",
+                                          "fields": {
+                                           "VAR": {
+                                            "name": "directionY"
+                                           }
+                                          }
+                                         }
+                                        }
+                                       }
+                                      }
+                                     }
+                                    }
+                                   }
+                                  },
+                                  "B": {
+                                   "block": {
+                                    "type": "math_arithmetic",
+                                    "fields": {
+                                     "OP": "DIVIDE"
+                                    },
+                                    "inputs": {
+                                     "A": {
+                                      "block": {
+                                       "type": "variables_get",
+                                       "fields": {
+                                        "VAR": {
+                                         "name": "directionDivisor"
+                                        }
+                                       }
+                                      }
+                                     },
+                                     "B": {
+                                      "block": {
+                                       "type": "math_number",
+                                       "fields": {
+                                        "NUM": 2
+                                       }
+                                      }
+                                     }
+                                    }
+                                   }
+                                  }
+                                 }
+                                }
+                               },
+                               "B": {
+                                "block": {
+                                 "type": "variables_get",
+                                 "fields": {
+                                  "VAR": {
+                                   "name": "directionDivisor"
+                                  }
+                                 }
+                                }
+                               }
+                              }
+                             }
+                            }
+                           }
+                          }
+                         }
+                        }
+                       }
+                      },
+                      "ELSE": {
+                       "block": {
+                        "type": "ab_sprite_set_prop",
+                        "fields": {
+                         "PROP": "vy"
+                        },
+                        "inputs": {
+                         "SPRITE": {
+                          "block": {
+                           "type": "variables_get",
+                           "fields": {
+                            "VAR": {
+                             "name": "sprite"
+                            }
+                           }
+                          }
+                         },
+                         "VALUE": {
+                          "block": {
+                           "type": "math_arithmetic",
+                           "fields": {
+                            "OP": "DIVIDE"
+                           },
+                           "inputs": {
+                            "A": {
+                             "block": {
+                              "type": "math_arithmetic",
+                              "fields": {
+                               "OP": "ADD"
+                              },
+                              "inputs": {
+                               "A": {
+                                "block": {
+                                 "type": "math_arithmetic",
+                                 "fields": {
+                                  "OP": "MULTIPLY"
+                                 },
+                                 "inputs": {
+                                  "A": {
+                                   "block": {
+                                    "type": "variables_get",
+                                    "fields": {
+                                     "VAR": {
+                                      "name": "ballSpeed"
+                                     }
+                                    }
+                                   }
+                                  },
+                                  "B": {
+                                   "block": {
+                                    "type": "math_single",
+                                    "fields": {
+                                     "OP": "ABS"
+                                    },
+                                    "inputs": {
+                                     "NUM": {
+                                      "block": {
+                                       "type": "variables_get",
+                                       "fields": {
+                                        "VAR": {
+                                         "name": "directionY"
+                                        }
+                                       }
+                                      }
+                                     }
+                                    }
+                                   }
+                                  }
+                                 }
+                                }
+                               },
+                               "B": {
+                                "block": {
+                                 "type": "math_arithmetic",
+                                 "fields": {
+                                  "OP": "DIVIDE"
+                                 },
+                                 "inputs": {
+                                  "A": {
+                                   "block": {
+                                    "type": "variables_get",
+                                    "fields": {
+                                     "VAR": {
+                                      "name": "directionDivisor"
+                                     }
+                                    }
+                                   }
+                                  },
+                                  "B": {
+                                   "block": {
+                                    "type": "math_number",
+                                    "fields": {
+                                     "NUM": 2
+                                    }
+                                   }
+                                  }
+                                 }
+                                }
+                               }
+                              }
+                             }
+                            },
+                            "B": {
+                             "block": {
+                              "type": "variables_get",
+                              "fields": {
+                               "VAR": {
+                                "name": "directionDivisor"
+                               }
+                              }
+                             }
+                            }
+                           }
+                          }
+                         }
+                        }
+                       }
+                      }
+                     },
+                     "extraState": {
+                      "hasElse": true
+                     },
+                     "next": {
+                      "block": {
+                       "type": "ab_sprite_set_prop",
+                       "fields": {
+                        "PROP": "x"
+                       },
+                       "inputs": {
+                        "SPRITE": {
+                         "block": {
+                          "type": "variables_get",
+                          "fields": {
+                           "VAR": {
+                            "name": "sprite"
+                           }
+                          }
+                         }
+                        },
+                        "VALUE": {
+                         "block": {
+                          "type": "math_arithmetic",
+                          "fields": {
+                           "OP": "ADD"
+                          },
+                          "inputs": {
+                           "A": {
+                            "block": {
+                             "type": "ab_sprite_get_prop",
+                             "fields": {
+                              "PROP": "x"
+                             },
+                             "inputs": {
+                              "SPRITE": {
+                               "block": {
+                                "type": "variables_get",
+                                "fields": {
+                                 "VAR": {
+                                  "name": "otherSprite"
+                                 }
+                                }
+                               }
+                              }
+                             }
+                            }
+                           },
+                           "B": {
+                            "block": {
+                             "type": "math_number",
+                             "fields": {
+                              "NUM": -4
+                             }
+                            }
+                           }
+                          }
+                         }
+                        }
+                       },
+                       "next": {
+                        "block": {
+                         "type": "ab_play_effect",
+                         "fields": {
+                          "SFX": "hit"
+                         }
+                        }
+                       }
+                      }
+                     }
+                    }
+                   }
+                  }
+                 }
+                }
+               }
+              }
              }
             }
            }
@@ -1208,9 +4940,10 @@
    "id": "paddle",
    "name": "paddle",
    "width": 3,
-   "height": 14,
+   "height": 15,
    "frames": [
     [
+     "111",
      "111",
      "111",
      "111",
@@ -1292,31 +5025,31 @@
     "start": "Create the paddles and the ball. The ball bounces on the edges of the screen.",
     "ai": "The computer moves its paddle toward the ball.",
     "miss": "The ball hit your side: you lose a life. The ball hit the other side: you get a point.",
-    "hit": "Send the ball back, a little faster each time."
+    "hit": "Five paddle zones steer the ball: edges aim outward, the center keeps its angle. Each hit adds 1 to its speed (up to 180)."
    },
    "nb": {
     "start": "Lag rekkertene og ballen. Ballen spretter på kantene av skjermen.",
     "ai": "Datamaskinen flytter rekkerten sin mot ballen.",
     "miss": "Ballen traff din side: du mister et liv. Ballen traff den andre siden: du får et poeng.",
-    "hit": "Send ballen tilbake, litt raskere hver gang."
+    "hit": "Fem treffsoner styrer ballen: kantene gir utslag, midten beholder vinkelen. Hvert treff øker farten med 1 (opptil 180)."
    },
    "es": {
     "start": "Crea las paletas y la pelota. La pelota rebota en los bordes de la pantalla.",
     "ai": "La computadora mueve su paleta hacia la pelota.",
     "miss": "Si la pelota toca tu lado pierdes una vida. Si toca el otro lado ganas un punto.",
-    "hit": "Devuelve la pelota, un poco más rápido cada vez."
+    "hit": "Cinco zonas dirigen la pelota: los extremos la desvían y el centro conserva el ángulo. Cada golpe aumenta la velocidad en 1 (hasta 180)."
    },
    "fr": {
     "start": "Crée les raquettes et la balle. La balle rebondit sur les bords de l'écran.",
     "ai": "L'ordinateur déplace sa raquette vers la balle.",
     "miss": "Si la balle touche ton côté, tu perds une vie. Si elle touche l'autre côté, tu gagnes un point.",
-    "hit": "Renvoie la balle, un peu plus vite à chaque fois."
+    "hit": "Cinq zones dirigent la balle : les bords la dévient, le centre conserve son angle. Chaque frappe augmente la vitesse de 1 (jusqu’à 180)."
    },
    "de": {
     "start": "Erstelle die Schläger und den Ball. Der Ball prallt an den Rändern ab.",
     "ai": "Der Computer bewegt seinen Schläger zum Ball.",
     "miss": "Trifft der Ball deine Seite, verlierst du ein Leben. Trifft er die andere Seite, bekommst du einen Punkt.",
-    "hit": "Schlag den Ball zurück, jedes Mal etwas schneller."
+    "hit": "Fünf Zonen lenken den Ball: Die Ränder lenken ihn ab, die Mitte behält den Winkel bei. Jeder Treffer erhöht das Tempo um 1 (bis 180)."
    }
   }
  }

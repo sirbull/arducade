@@ -1,6 +1,6 @@
 {
-  "name": "ArduBlocks",
-  "short_name": "ArduBlocks",
+  "name": "ArduCade",
+  "short_name": "ArduCade",
   "description": "Make games for Arduboy and home made Arduboy devices with blocks.",
   "start_url": "./",
   "display": "standalone",

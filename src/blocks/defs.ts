@@ -2,9 +2,12 @@
 // can be shown in every language. The meaning of each block is in toIR.ts.
 
 import * as Blockly from 'blockly/core';
-import '@blockly/field-multilineinput';
+import { registerFieldMultilineInput } from '@blockly/field-multilineinput';
 import { registerAssetFields } from './assets';
+import { registerPointPicker } from './point-picker';
+import { registerAltDrag } from './alt-drag';
 import { ICONS, type IconName } from './icons';
+import { NOTE_CHOICES } from '../engine/melody';
 
 type Arg = Record<string, unknown>;
 
@@ -97,6 +100,7 @@ export const DEFS: Def[] = [
   { type: 'ab_on_every', ...GAME, msg: 'AB_ON_EVERY', args: [{ type: 'field_number', name: 'MS', value: 500, min: 1, max: 60000, precision: 1 }], hat: true, body: true },
   { type: 'ab_on_draw', ...GRAPHICS, msg: 'AB_ON_DRAW', hat: true, body: true },
   { type: 'ab_splash', ...GAME, msg: 'AB_SPLASH', args: [text('TEXT')], statement: true },
+  { type: 'ab_splash_screen', ...GAME, msg: 'AB_SPLASH_SCREEN', statement: true, body: true },
   { type: 'ab_game_over', ...GAME, msg: 'AB_GAME_OVER', args: [dropdown('WIN', [['AB_LOSE', 'lose'], ['AB_WIN', 'win']])], statement: true },
   { type: 'ab_pause', ...GAME, msg: 'AB_PAUSE', args: [num('MS')], statement: true },
   { type: 'ab_runtime', ...GAME, msg: 'AB_RUNTIME', output: 'Number' },
@@ -250,8 +254,29 @@ export const DEFS: Def[] = [
   },
   { type: 'ab_play_tone', ...MUSIC, msg: 'AB_PLAY_TONE', args: [num('FREQ'), num('MS')], statement: true, inline: true },
   { type: 'ab_stop_sound', ...MUSIC, msg: 'AB_STOP_SOUND', statement: true },
+  {
+    type: 'ab_play_melody',
+    ...MUSIC,
+    msg: 'AB_PLAY_MELODY',
+    args: [
+      { type: 'field_input', name: 'NOTES', text: 'C D E C' },
+      num('TEMPO'),
+      dropdown('MODE', [['AB_MELODY_ONCE', 'once'], ['AB_MELODY_LOOP', 'loop']]),
+    ],
+    statement: true,
+    inline: true,
+  },
+  {
+    type: 'ab_note',
+    ...MUSIC,
+    msg: 'AB_NOTE',
+    // Note names are the same in every language, so no translation keys.
+    args: [{ type: 'field_dropdown', name: 'NOTE', options: NOTE_CHOICES.map(([name, f]) => [name, String(f)]) }],
+    output: 'Number',
+  },
 
   // Math
+  { type: 'ab_map', ...MATH, msg: 'AB_MAP', args: [num('VALUE'), num('FROM_LOW'), num('FROM_HIGH'), num('TO_LOW'), num('TO_HIGH')], output: 'Number', inline: true },
   { type: 'ab_random', ...MATH, msg: 'AB_RANDOM', args: [num('FROM'), num('TO')], output: 'Number', inline: true },
   {
     type: 'ab_minmax',
@@ -261,6 +286,10 @@ export const DEFS: Def[] = [
     output: 'Number',
     inline: true,
   },
+
+  // Comments can sit in a stack or label a group without changing execution.
+  { type: 'ab_comment', ...CUSTOM, msg: 'AB_COMMENT', args: [{ type: 'field_multilinetext', name: 'TEXT', text: '' }], statement: true },
+  { type: 'ab_comment_group', ...CUSTOM, msg: 'AB_COMMENT_GROUP', args: [{ type: 'field_multilinetext', name: 'TEXT', text: '' }], statement: true, body: true },
 
   // Custom
   { type: 'ab_cpp', ...CUSTOM, msg: 'AB_CPP', args: [{ type: 'field_multilinetext', name: 'CODE', text: '// C++' }], statement: true },
@@ -294,7 +323,10 @@ let defined = false;
 export function defineBlocks() {
   if (defined) return;
   defined = true;
+  registerFieldMultilineInput();
   registerAssetFields();
+  registerPointPicker();
+  registerAltDrag();
   for (const name of Object.keys(ICONS) as IconName[]) {
     Blockly.Extensions.register(`ab_icon_${name}`, function (this: Blockly.Block) {
       const first = this.inputList[0];

@@ -6,9 +6,10 @@ import { getApi } from '../engine/api';
 import { checkProgram, typeOf, type TypeInfo } from '../ir/check';
 import type { Diagnostic, Expr, Program, Stmt, Ty } from '../ir/ir';
 import { encodeImage, encodeTilemap, type Project } from '../project/model';
-import { enumNumber, eventsOf, hash16, Names } from './common';
+import { enumNumber, eventsOf, hash16, melodies, Names } from './common';
 import { stringLiteral, wrap16 } from './names';
 import { Writer } from './writer';
+import { levelTransitionCode } from './levels';
 
 export interface JsResult {
   code: string;
@@ -37,9 +38,11 @@ class JsGen {
   diagnostics: Diagnostic[] = [];
   locals?: Map<string, Ty>;
   private tmp = 0;
+  private melodies: ReturnType<typeof melodies>;
 
   constructor(private program: Program, private project: Project) {
     this.names = new Names(project);
+    this.melodies = melodies(program);
   }
 
   run(): JsResult {
@@ -58,7 +61,10 @@ class JsGen {
     w.line(`E.tileImages = [null${tiles.map((t) => ', ' + t).join('')}];`);
     w.line(`E.solidTiles = ${solid};`);
     for (const m of pr.tilemaps) w.line(`const ${this.names.tilemap(m.id)} = [${encodeTilemap(m).join(',')}];`);
+    for (const m of this.melodies.values()) w.line(`const ${m.name} = [${m.steps.join(',')}];`);
 
+    const levelCode = levelTransitionCode(pr, this.names, false);
+    for (const line of levelCode) w.line(line);
     const vars = [...info.vars.entries()];
     for (const [name] of vars) w.line(`let ${this.names.vars.get(name)};`);
     eventsOf(p, 'every').forEach((_, i) => w.line(`const every_${i} = { t: 0 };`));
@@ -94,6 +100,10 @@ class JsGen {
       handler(`on_every_${i}`, e.body);
       update.push(`if (E.every(every_${i}, ${Math.max(1, Math.round(e.ms))})) await on_every_${i}();`);
     });
+    if (levelCode.length) update.push('updateLevelPortals();');
+    const startMap = pr.tilemaps.find((map) => map.id === pr.startLevelId);
+    if (startMap) start.push(`E.setMap(${this.names.tilemap(startMap.id)});`);
+    if (levelCode.length) start.unshift('levelPortalLocked = false;');
     const draw = calls('draw');
 
     const buttons = eventsOf(p, 'button');
@@ -288,6 +298,7 @@ class JsGen {
       case 'enum':
         if (e.type === 'image') return this.names.image(e.v) ?? 'null';
         if (e.type === 'tilemap') return this.names.tilemap(e.v) ?? 'null';
+        if (e.type === 'melody') return this.melodies.get(e.v)!.name;
         return String(enumNumber(e.type, e.v, this.names));
       case 'api': {
         const fn = getApi(e.fn);

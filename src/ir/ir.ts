@@ -5,7 +5,7 @@
 export type Ty = 'num' | 'bool' | 'str' | 'sprite' | 'void';
 
 /** Values chosen from a fixed list, for example a sprite kind or a button. */
-export type EnumType = 'kind' | 'button' | 'flag' | 'prop' | 'dir' | 'sfx' | 'color' | 'image' | 'tile' | 'tilemap';
+export type EnumType = 'kind' | 'button' | 'flag' | 'prop' | 'dir' | 'sfx' | 'color' | 'image' | 'tile' | 'tilemap' | 'melody';
 
 export type BinOp = '+' | '-' | '*' | '/' | '%' | '==' | '!=' | '<' | '<=' | '>' | '>=' | '&&' | '||';
 

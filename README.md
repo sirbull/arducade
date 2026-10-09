@@ -1,4 +1,4 @@
-# ArduBlocks
+# ArduCade
 
 Make games for Arduboy and home made Arduboy compatible devices with blocks,
 in the browser. Like MakeCode Arcade, but for 128x64 one bit screens and small
@@ -8,7 +8,8 @@ microcontrollers.
   camera, score, lives, sound.
 * Simulator that runs the game right away in the browser.
 * Image, tile and tile map editors.
-* Templates: Platformer, Pong and Space shooter.
+* Templates: Platformer, Pong, Space shooter, 3D ghost hunt (ray casting
+  made only from blocks), Brick breaker and Flying bird.
 * C++ view that marks the code of the selected block.
 * Compiles in the browser with avr-gcc built for WebAssembly, shows the exact
   flash and RAM use, and uploads to the device over USB (Web Serial).
@@ -82,7 +83,7 @@ The simulator engine in `src/sim/engine.ts` must behave exactly like
   in `templates/` on the server and add its name to `templates/index.json`.
 * **Hardware profile:** save a profile from the editor, put the `.abprofile`
   file in `profiles/` and add its name to `profiles/index.json`. A link like
-  `https://example.com/ardublocks/?profile=profiles/my-nano.abprofile` loads
+  `https://example.com/arducade/?profile=profiles/my-nano.abprofile` loads
   it directly.
 
 ### Rebuilding the compiler files
@@ -108,7 +109,7 @@ step by step guide for one.com. In short:
 
 ## Licenses
 
-The ArduBlocks code does not have a license file yet. The WebAssembly compiler in
+The ArduCade code does not have a license file yet. The WebAssembly compiler in
 `public/compiler/tools` comes from
 [@horang-corp/avr-gcc-wasm](https://www.npmjs.com/package/@horang-corp/avr-gcc-wasm)
 and is GCC and GNU binutils (GPL v3). The sysroot contains avr-libc (BSD

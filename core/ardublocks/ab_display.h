@@ -1,4 +1,4 @@
-// ArduBlocks display drivers: SSD1306, SH1106 and SSD1309 over I2C or SPI.
+// ArduCade display drivers: SSD1306, SH1106 and SSD1309 over I2C or SPI.
 // Uses the hardware registers directly on classic AVR chips, and the Arduino
 // Wire and SPI libraries everywhere else.
 #pragma once

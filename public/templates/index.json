@@ -2,5 +2,8 @@
  "empty.abproject",
  "platformer.abproject",
  "pong.abproject",
- "shooter.abproject"
+ "shooter.abproject",
+ "maze3d.abproject",
+ "bricks.abproject",
+ "flappy.abproject"
 ]

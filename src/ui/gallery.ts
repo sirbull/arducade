@@ -34,11 +34,13 @@ export async function loadTemplates(): Promise<Project[]> {
 
 const thumbs = new Map<string, Promise<string>>();
 
-function thumbnail(p: Project): Promise<string> {
-  let th = thumbs.get(p.id);
+export function thumbnail(p: Project): Promise<string> {
+  // Keyed on modified so an edited project gets a fresh picture.
+  const key = `${p.id}:${p.modified}`;
+  let th = thumbs.get(key);
   if (!th) {
     th = gameThumbnail(p).catch(() => '');
-    thumbs.set(p.id, th);
+    thumbs.set(key, th);
   }
   return th;
 }

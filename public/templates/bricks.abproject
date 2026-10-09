@@ -1,0 +1,1332 @@
+{
+ "format": "ardublocks-project",
+ "version": 1,
+ "id": "template-bricks",
+ "name": "Brick breaker",
+ "created": 0,
+ "modified": 0,
+ "profile": {
+  "format": "ardublocks-profile",
+  "version": 1,
+  "id": "arduboy",
+  "name": "Arduboy",
+  "builtin": true,
+  "chip": "atmega32u4",
+  "display": {
+   "driver": "ssd1306",
+   "bus": "spi",
+   "i2cAddress": 60,
+   "cs": "D12",
+   "dc": "D4",
+   "rst": "D6",
+   "rotate180": false,
+   "mirror": false,
+   "contrast": 207
+  },
+  "buttons": {
+   "up": "A0",
+   "right": "A1",
+   "left": "A2",
+   "down": "A3",
+   "a": "D7",
+   "b": "D8"
+  },
+  "sound": {
+   "pin1": "D5",
+   "pin2": "D13"
+  }
+ },
+ "blocks": {
+  "blocks": {
+   "languageVersion": 0,
+   "blocks": [
+    {
+     "type": "ab_on_start",
+     "inputs": {
+      "DO": {
+       "block": {
+        "type": "ab_set_tilemap",
+        "fields": {
+         "MAP": "wall"
+        },
+        "next": {
+         "block": {
+          "type": "variables_set",
+          "fields": {
+           "VAR": {
+            "name": "paddle"
+           }
+          },
+          "inputs": {
+           "VALUE": {
+            "block": {
+             "type": "ab_sprite_create",
+             "fields": {
+              "IMAGE": "paddle",
+              "KIND": "Player"
+             }
+            }
+           }
+          },
+          "next": {
+           "block": {
+            "type": "ab_sprite_set_position",
+            "inputs": {
+             "SPRITE": {
+              "block": {
+               "type": "variables_get",
+               "fields": {
+                "VAR": {
+                 "name": "paddle"
+                }
+               }
+              }
+             },
+             "X": {
+              "block": {
+               "type": "math_number",
+               "fields": {
+                "NUM": 64
+               }
+              }
+             },
+             "Y": {
+              "block": {
+               "type": "math_number",
+               "fields": {
+                "NUM": 61
+               }
+              }
+             }
+            },
+            "next": {
+             "block": {
+              "type": "ab_move_sprite",
+              "inputs": {
+               "SPRITE": {
+                "block": {
+                 "type": "variables_get",
+                 "fields": {
+                  "VAR": {
+                   "name": "paddle"
+                  }
+                 }
+                }
+               },
+               "VX": {
+                "block": {
+                 "type": "math_number",
+                 "fields": {
+                  "NUM": 90
+                 }
+                }
+               },
+               "VY": {
+                "block": {
+                 "type": "math_number",
+                 "fields": {
+                  "NUM": 0
+                 }
+                }
+               }
+              },
+              "next": {
+               "block": {
+                "type": "ab_sprite_set_flag",
+                "fields": {
+                 "FLAG": "stayInScreen",
+                 "ON": "on"
+                },
+                "inputs": {
+                 "SPRITE": {
+                  "block": {
+                   "type": "variables_get",
+                   "fields": {
+                    "VAR": {
+                     "name": "paddle"
+                    }
+                   }
+                  }
+                 }
+                },
+                "next": {
+                 "block": {
+                  "type": "variables_set",
+                  "fields": {
+                   "VAR": {
+                    "name": "ball"
+                   }
+                  },
+                  "inputs": {
+                   "VALUE": {
+                    "block": {
+                     "type": "ab_sprite_create",
+                     "fields": {
+                      "IMAGE": "ball",
+                      "KIND": "Ball"
+                     }
+                    }
+                   }
+                  },
+                  "next": {
+                   "block": {
+                    "type": "ab_sprite_set_flag",
+                    "fields": {
+                     "FLAG": "bounceOnWall",
+                     "ON": "on"
+                    },
+                    "inputs": {
+                     "SPRITE": {
+                      "block": {
+                       "type": "variables_get",
+                       "fields": {
+                        "VAR": {
+                         "name": "ball"
+                        }
+                       }
+                      }
+                     }
+                    },
+                    "next": {
+                     "block": {
+                      "type": "variables_set",
+                      "fields": {
+                       "VAR": {
+                        "name": "bricksLeft"
+                       }
+                      },
+                      "inputs": {
+                       "VALUE": {
+                        "block": {
+                         "type": "math_number",
+                         "fields": {
+                          "NUM": 0
+                         }
+                        }
+                       }
+                      },
+                      "next": {
+                       "block": {
+                        "type": "controls_for",
+                        "fields": {
+                         "VAR": {
+                          "name": "row"
+                         }
+                        },
+                        "inputs": {
+                         "FROM": {
+                          "block": {
+                           "type": "math_number",
+                           "fields": {
+                            "NUM": 0
+                           }
+                          }
+                         },
+                         "TO": {
+                          "block": {
+                           "type": "math_number",
+                           "fields": {
+                            "NUM": 7
+                           }
+                          }
+                         },
+                         "BY": {
+                          "block": {
+                           "type": "math_number",
+                           "fields": {
+                            "NUM": 1
+                           }
+                          }
+                         },
+                         "DO": {
+                          "block": {
+                           "type": "controls_for",
+                           "fields": {
+                            "VAR": {
+                             "name": "col"
+                            }
+                           },
+                           "inputs": {
+                            "FROM": {
+                             "block": {
+                              "type": "math_number",
+                              "fields": {
+                               "NUM": 0
+                              }
+                             }
+                            },
+                            "TO": {
+                             "block": {
+                              "type": "math_number",
+                              "fields": {
+                               "NUM": 15
+                              }
+                             }
+                            },
+                            "BY": {
+                             "block": {
+                              "type": "math_number",
+                              "fields": {
+                               "NUM": 1
+                              }
+                             }
+                            },
+                            "DO": {
+                             "block": {
+                              "type": "controls_if",
+                              "inputs": {
+                               "IF0": {
+                                "block": {
+                                 "type": "ab_tile_is",
+                                 "fields": {
+                                  "TILE": "brick"
+                                 },
+                                 "inputs": {
+                                  "COL": {
+                                   "block": {
+                                    "type": "variables_get",
+                                    "fields": {
+                                     "VAR": {
+                                      "name": "col"
+                                     }
+                                    }
+                                   }
+                                  },
+                                  "ROW": {
+                                   "block": {
+                                    "type": "variables_get",
+                                    "fields": {
+                                     "VAR": {
+                                      "name": "row"
+                                     }
+                                    }
+                                   }
+                                  }
+                                 }
+                                }
+                               },
+                               "DO0": {
+                                "block": {
+                                 "type": "variables_set",
+                                 "fields": {
+                                  "VAR": {
+                                   "name": "bricksLeft"
+                                  }
+                                 },
+                                 "inputs": {
+                                  "VALUE": {
+                                   "block": {
+                                    "type": "math_arithmetic",
+                                    "fields": {
+                                     "OP": "ADD"
+                                    },
+                                    "inputs": {
+                                     "A": {
+                                      "block": {
+                                       "type": "variables_get",
+                                       "fields": {
+                                        "VAR": {
+                                         "name": "bricksLeft"
+                                        }
+                                       }
+                                      }
+                                     },
+                                     "B": {
+                                      "block": {
+                                       "type": "math_number",
+                                       "fields": {
+                                        "NUM": 1
+                                       }
+                                      }
+                                     }
+                                    }
+                                   }
+                                  }
+                                 }
+                                }
+                               }
+                              }
+                             }
+                            }
+                           }
+                          }
+                         }
+                        },
+                        "next": {
+                         "block": {
+                          "type": "procedures_callnoreturn",
+                          "extraState": {
+                           "name": "serve"
+                          },
+                          "next": {
+                           "block": {
+                            "type": "ab_life_set",
+                            "inputs": {
+                             "VALUE": {
+                              "block": {
+                               "type": "math_number",
+                               "fields": {
+                                "NUM": 3
+                               }
+                              }
+                             }
+                            },
+                            "next": {
+                             "block": {
+                              "type": "ab_score_set",
+                              "inputs": {
+                               "VALUE": {
+                                "block": {
+                                 "type": "math_number",
+                                 "fields": {
+                                  "NUM": 0
+                                 }
+                                }
+                               }
+                              }
+                             }
+                            }
+                           }
+                          }
+                         }
+                        }
+                       }
+                      }
+                     }
+                    }
+                   }
+                  }
+                 }
+                }
+               }
+              }
+             }
+            }
+           }
+          }
+         }
+        }
+       }
+      }
+     },
+     "icons": {
+      "comment": {
+       "text": "@start",
+       "pinned": false,
+       "height": 80,
+       "width": 200
+      }
+     },
+     "x": 20,
+     "y": 20
+    },
+    {
+     "type": "procedures_defnoreturn",
+     "fields": {
+      "NAME": "serve"
+     },
+     "icons": {
+      "comment": {
+       "text": "@serve",
+       "pinned": false,
+       "height": 80,
+       "width": 200
+      }
+     },
+     "inputs": {
+      "STACK": {
+       "block": {
+        "type": "ab_sprite_set_position",
+        "inputs": {
+         "SPRITE": {
+          "block": {
+           "type": "variables_get",
+           "fields": {
+            "VAR": {
+             "name": "ball"
+            }
+           }
+          }
+         },
+         "X": {
+          "block": {
+           "type": "ab_sprite_get_prop",
+           "fields": {
+            "PROP": "x"
+           },
+           "inputs": {
+            "SPRITE": {
+             "block": {
+              "type": "variables_get",
+              "fields": {
+               "VAR": {
+                "name": "paddle"
+               }
+              }
+             }
+            }
+           }
+          }
+         },
+         "Y": {
+          "block": {
+           "type": "math_number",
+           "fields": {
+            "NUM": 52
+           }
+          }
+         }
+        },
+        "next": {
+         "block": {
+          "type": "ab_sprite_set_velocity",
+          "inputs": {
+           "SPRITE": {
+            "block": {
+             "type": "variables_get",
+             "fields": {
+              "VAR": {
+               "name": "ball"
+              }
+             }
+            }
+           },
+           "VX": {
+            "block": {
+             "type": "ab_random",
+             "inputs": {
+              "FROM": {
+               "block": {
+                "type": "math_number",
+                "fields": {
+                 "NUM": -40
+                }
+               }
+              },
+              "TO": {
+               "block": {
+                "type": "math_number",
+                "fields": {
+                 "NUM": 40
+                }
+               }
+              }
+             }
+            }
+           },
+           "VY": {
+            "block": {
+             "type": "math_number",
+             "fields": {
+              "NUM": -55
+             }
+            }
+           }
+          }
+         }
+        }
+       }
+      }
+     },
+     "x": 440,
+     "y": 20
+    },
+    {
+     "type": "ab_on_update",
+     "inputs": {
+      "DO": {
+       "block": {
+        "type": "variables_set",
+        "fields": {
+         "VAR": {
+          "name": "bounced"
+         }
+        },
+        "inputs": {
+         "VALUE": {
+          "block": {
+           "type": "logic_boolean",
+           "fields": {
+            "BOOL": "FALSE"
+           }
+          }
+         }
+        },
+        "next": {
+         "block": {
+          "type": "controls_if",
+          "inputs": {
+           "IF0": {
+            "block": {
+             "type": "ab_sprite_is_hitting",
+             "fields": {
+              "DIR": "bottom"
+             },
+             "inputs": {
+              "SPRITE": {
+               "block": {
+                "type": "variables_get",
+                "fields": {
+                 "VAR": {
+                  "name": "ball"
+                 }
+                }
+               }
+              }
+             }
+            }
+           },
+           "DO0": {
+            "block": {
+             "type": "ab_play_effect",
+             "fields": {
+              "SFX": "lose"
+             },
+             "next": {
+              "block": {
+               "type": "procedures_callnoreturn",
+               "extraState": {
+                "name": "serve"
+               },
+               "next": {
+                "block": {
+                 "type": "ab_life_change",
+                 "inputs": {
+                  "VALUE": {
+                   "block": {
+                    "type": "math_number",
+                    "fields": {
+                     "NUM": -1
+                    }
+                   }
+                  }
+                 }
+                }
+               }
+              }
+             }
+            }
+           }
+          },
+          "icons": {
+           "comment": {
+            "text": "@miss",
+            "pinned": false,
+            "height": 80,
+            "width": 200
+           }
+          }
+         }
+        }
+       }
+      }
+     },
+     "x": 20,
+     "y": 280
+    },
+    {
+     "type": "ab_on_overlap",
+     "fields": {
+      "SPRITE": {
+       "name": "sprite"
+      },
+      "KIND_A": "Ball",
+      "OTHER": {
+       "name": "otherSprite"
+      },
+      "KIND_B": "Player"
+     },
+     "inputs": {
+      "DO": {
+       "block": {
+        "type": "ab_sprite_set_prop",
+        "fields": {
+         "PROP": "vy"
+        },
+        "inputs": {
+         "SPRITE": {
+          "block": {
+           "type": "variables_get",
+           "fields": {
+            "VAR": {
+             "name": "sprite"
+            }
+           }
+          }
+         },
+         "VALUE": {
+          "block": {
+           "type": "math_single",
+           "fields": {
+            "OP": "NEG"
+           },
+           "inputs": {
+            "NUM": {
+             "block": {
+              "type": "math_single",
+              "fields": {
+               "OP": "ABS"
+              },
+              "inputs": {
+               "NUM": {
+                "block": {
+                 "type": "ab_sprite_get_prop",
+                 "fields": {
+                  "PROP": "vy"
+                 },
+                 "inputs": {
+                  "SPRITE": {
+                   "block": {
+                    "type": "variables_get",
+                    "fields": {
+                     "VAR": {
+                      "name": "sprite"
+                     }
+                    }
+                   }
+                  }
+                 }
+                }
+               }
+              }
+             }
+            }
+           }
+          }
+         }
+        },
+        "next": {
+         "block": {
+          "type": "ab_sprite_set_prop",
+          "fields": {
+           "PROP": "vx"
+          },
+          "inputs": {
+           "SPRITE": {
+            "block": {
+             "type": "variables_get",
+             "fields": {
+              "VAR": {
+               "name": "sprite"
+              }
+             }
+            }
+           },
+           "VALUE": {
+            "block": {
+             "type": "math_arithmetic",
+             "fields": {
+              "OP": "MULTIPLY"
+             },
+             "inputs": {
+              "A": {
+               "block": {
+                "type": "math_arithmetic",
+                "fields": {
+                 "OP": "MINUS"
+                },
+                "inputs": {
+                 "A": {
+                  "block": {
+                   "type": "ab_sprite_get_prop",
+                   "fields": {
+                    "PROP": "x"
+                   },
+                   "inputs": {
+                    "SPRITE": {
+                     "block": {
+                      "type": "variables_get",
+                      "fields": {
+                       "VAR": {
+                        "name": "sprite"
+                       }
+                      }
+                     }
+                    }
+                   }
+                  }
+                 },
+                 "B": {
+                  "block": {
+                   "type": "ab_sprite_get_prop",
+                   "fields": {
+                    "PROP": "x"
+                   },
+                   "inputs": {
+                    "SPRITE": {
+                     "block": {
+                      "type": "variables_get",
+                      "fields": {
+                       "VAR": {
+                        "name": "otherSprite"
+                       }
+                      }
+                     }
+                    }
+                   }
+                  }
+                 }
+                }
+               }
+              },
+              "B": {
+               "block": {
+                "type": "math_number",
+                "fields": {
+                 "NUM": 6
+                }
+               }
+              }
+             }
+            }
+           }
+          },
+          "next": {
+           "block": {
+            "type": "ab_play_effect",
+            "fields": {
+             "SFX": "hit"
+            }
+           }
+          }
+         }
+        }
+       }
+      }
+     },
+     "icons": {
+      "comment": {
+       "text": "@paddle",
+       "pinned": false,
+       "height": 80,
+       "width": 200
+      }
+     },
+     "x": 440,
+     "y": 280
+    },
+    {
+     "type": "ab_on_tile",
+     "fields": {
+      "SPRITE": {
+       "name": "sprite"
+      },
+      "KIND": "Ball",
+      "TILE": "brick",
+      "COL": {
+       "name": "col"
+      },
+      "ROW": {
+       "name": "row"
+      }
+     },
+     "inputs": {
+      "DO": {
+       "block": {
+        "type": "ab_set_tile",
+        "fields": {
+         "TILE": "empty"
+        },
+        "inputs": {
+         "COL": {
+          "block": {
+           "type": "variables_get",
+           "fields": {
+            "VAR": {
+             "name": "col"
+            }
+           }
+          }
+         },
+         "ROW": {
+          "block": {
+           "type": "variables_get",
+           "fields": {
+            "VAR": {
+             "name": "row"
+            }
+           }
+          }
+         }
+        },
+        "next": {
+         "block": {
+          "type": "ab_score_change",
+          "inputs": {
+           "VALUE": {
+            "block": {
+             "type": "math_number",
+             "fields": {
+              "NUM": 1
+             }
+            }
+           }
+          },
+          "next": {
+           "block": {
+            "type": "ab_play_effect",
+            "fields": {
+             "SFX": "coin"
+            },
+            "next": {
+             "block": {
+              "type": "controls_if",
+              "inputs": {
+               "IF0": {
+                "block": {
+                 "type": "logic_negate",
+                 "inputs": {
+                  "BOOL": {
+                   "block": {
+                    "type": "variables_get",
+                    "fields": {
+                     "VAR": {
+                      "name": "bounced"
+                     }
+                    }
+                   }
+                  }
+                 }
+                }
+               },
+               "DO0": {
+                "block": {
+                 "type": "ab_sprite_set_prop",
+                 "fields": {
+                  "PROP": "vy"
+                 },
+                 "inputs": {
+                  "SPRITE": {
+                   "block": {
+                    "type": "variables_get",
+                    "fields": {
+                     "VAR": {
+                      "name": "sprite"
+                     }
+                    }
+                   }
+                  },
+                  "VALUE": {
+                   "block": {
+                    "type": "math_single",
+                    "fields": {
+                     "OP": "NEG"
+                    },
+                    "inputs": {
+                     "NUM": {
+                      "block": {
+                       "type": "ab_sprite_get_prop",
+                       "fields": {
+                        "PROP": "vy"
+                       },
+                       "inputs": {
+                        "SPRITE": {
+                         "block": {
+                          "type": "variables_get",
+                          "fields": {
+                           "VAR": {
+                            "name": "sprite"
+                           }
+                          }
+                         }
+                        }
+                       }
+                      }
+                     }
+                    }
+                   }
+                  }
+                 },
+                 "next": {
+                  "block": {
+                   "type": "variables_set",
+                   "fields": {
+                    "VAR": {
+                     "name": "bounced"
+                    }
+                   },
+                   "inputs": {
+                    "VALUE": {
+                     "block": {
+                      "type": "logic_boolean",
+                      "fields": {
+                       "BOOL": "TRUE"
+                      }
+                     }
+                    }
+                   }
+                  }
+                 }
+                }
+               }
+              },
+              "next": {
+               "block": {
+                "type": "variables_set",
+                "fields": {
+                 "VAR": {
+                  "name": "bricksLeft"
+                 }
+                },
+                "inputs": {
+                 "VALUE": {
+                  "block": {
+                   "type": "math_arithmetic",
+                   "fields": {
+                    "OP": "MINUS"
+                   },
+                   "inputs": {
+                    "A": {
+                     "block": {
+                      "type": "variables_get",
+                      "fields": {
+                       "VAR": {
+                        "name": "bricksLeft"
+                       }
+                      }
+                     }
+                    },
+                    "B": {
+                     "block": {
+                      "type": "math_number",
+                      "fields": {
+                       "NUM": 1
+                      }
+                     }
+                    }
+                   }
+                  }
+                 }
+                },
+                "next": {
+                 "block": {
+                  "type": "controls_if",
+                  "inputs": {
+                   "IF0": {
+                    "block": {
+                     "type": "logic_compare",
+                     "fields": {
+                      "OP": "EQ"
+                     },
+                     "inputs": {
+                      "A": {
+                       "block": {
+                        "type": "variables_get",
+                        "fields": {
+                         "VAR": {
+                          "name": "bricksLeft"
+                         }
+                        }
+                       }
+                      },
+                      "B": {
+                       "block": {
+                        "type": "math_number",
+                        "fields": {
+                         "NUM": 0
+                        }
+                       }
+                      }
+                     }
+                    }
+                   },
+                   "DO0": {
+                    "block": {
+                     "type": "ab_game_over",
+                     "fields": {
+                      "WIN": "win"
+                     }
+                    }
+                   }
+                  }
+                 }
+                }
+               }
+              }
+             }
+            }
+           }
+          }
+         }
+        }
+       }
+      }
+     },
+     "icons": {
+      "comment": {
+       "text": "@brick",
+       "pinned": false,
+       "height": 80,
+       "width": 200
+      }
+     },
+     "x": 20,
+     "y": 540
+    }
+   ]
+  }
+ },
+ "images": [
+  {
+   "id": "paddle",
+   "name": "paddle",
+   "width": 16,
+   "height": 3,
+   "frames": [
+    [
+     ".11111111111111.",
+     "1111111111111111",
+     ".11111111111111."
+    ]
+   ]
+  },
+  {
+   "id": "ball",
+   "name": "ball",
+   "width": 3,
+   "height": 3,
+   "frames": [
+    [
+     ".1.",
+     "111",
+     ".1."
+    ]
+   ]
+  }
+ ],
+ "tiles": [
+  {
+   "id": "brick",
+   "name": "brick",
+   "solid": false,
+   "pixels": [
+    "1111111.",
+    "1.....1.",
+    "1.1.1.1.",
+    "1.....1.",
+    "1111111.",
+    "........",
+    "........",
+    "........"
+   ]
+  }
+ ],
+ "tilemaps": [
+  {
+   "id": "wall",
+   "name": "wall",
+   "width": 16,
+   "height": 8,
+   "cells": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ]
+  }
+ ],
+ "kinds": [
+  "Ball"
+ ],
+ "template": {
+  "id": "bricks",
+  "title": {
+   "en": "Brick breaker",
+   "nb": "Murbryter",
+   "es": "Rompeladrillos",
+   "fr": "Casse-briques",
+   "de": "Mauerbrecher"
+  },
+  "description": {
+   "en": "Bounce the ball with the paddle and break all the bricks. Move with left and right.",
+   "nb": "Sprett ballen med racketen og knus alle mursteinene. Flytt med venstre og høyre.",
+   "es": "Haz rebotar la pelota con la paleta y rompe todos los ladrillos. Muévete con izquierda y derecha.",
+   "fr": "Renvoie la balle avec la raquette et casse toutes les briques. Bouge avec gauche et droite.",
+   "de": "Lass den Ball vom Schläger abprallen und zerbrich alle Steine. Bewege dich mit links und rechts."
+  },
+  "tips": [
+   {
+    "en": "Draw your own wall of bricks in the Tile map tab.",
+    "nb": "Tegn din egen mur i fanen Tilekart.",
+    "es": "Dibuja tu propio muro en la pestaña Mapa.",
+    "fr": "Dessine ton propre mur dans l’onglet Carte.",
+    "de": "Zeichne deine eigene Mauer im Tab Karte."
+   },
+   {
+    "en": "Steer the ball harder: change 6 in \"on ball hits paddle\".",
+    "nb": "Styr ballen mer: endre 6 i \"når ballen treffer racketen\".",
+    "es": "Dirige más la pelota: cambia 6 en \"cuando la pelota toca la paleta\".",
+    "fr": "Dirige plus la balle : change 6 dans « quand la balle touche la raquette ».",
+    "de": "Lenk den Ball stärker: ändere 6 in \"wenn der Ball den Schläger trifft\"."
+   },
+   {
+    "en": "Make the paddle wider in the Images tab.",
+    "nb": "Gjør racketen bredere i fanen Bilder.",
+    "es": "Haz la paleta más ancha en la pestaña Imágenes.",
+    "fr": "Élargis la raquette dans l’onglet Images.",
+    "de": "Mach den Schläger breiter im Tab Bilder."
+   }
+  ],
+  "strings": {
+   "en": {
+    "start": "Load the wall, create the paddle and the ball, and count the bricks.",
+    "serve": "Put the ball above the paddle and send it up. It bounces on the edges of the screen.",
+    "miss": "The ball hit the bottom: you lose a life.",
+    "paddle": "The ball bounces up. Where it hits the paddle decides the angle.",
+    "brick": "The ball hits a brick: take it away and get a point. Only bounce once per frame, even if two bricks are hit."
+   },
+   "nb": {
+    "start": "Last inn muren, lag racketen og ballen, og tell mursteinene.",
+    "serve": "Sett ballen over racketen og send den opp. Den spretter på kantene av skjermen.",
+    "miss": "Ballen traff bunnen: du mister et liv.",
+    "paddle": "Ballen spretter opp. Hvor den treffer racketen bestemmer vinkelen.",
+    "brick": "Ballen treffer en murstein: fjern den og få et poeng. Sprett bare én gang per bilde, selv om to steiner treffes."
+   },
+   "es": {
+    "start": "Carga el muro, crea la paleta y la pelota, y cuenta los ladrillos.",
+    "serve": "Pon la pelota sobre la paleta y lánzala hacia arriba. Rebota en los bordes de la pantalla.",
+    "miss": "La pelota tocó el fondo: pierdes una vida.",
+    "paddle": "La pelota rebota hacia arriba. El punto donde toca la paleta decide el ángulo.",
+    "brick": "La pelota toca un ladrillo: quítalo y gana un punto. Rebota solo una vez por imagen, aunque toque dos ladrillos."
+   },
+   "fr": {
+    "start": "Charge le mur, crée la raquette et la balle, et compte les briques.",
+    "serve": "Place la balle au-dessus de la raquette et lance-la vers le haut. Elle rebondit sur les bords de l’écran.",
+    "miss": "La balle a touché le bas : tu perds une vie.",
+    "paddle": "La balle rebondit vers le haut. L’endroit touché sur la raquette décide de l’angle.",
+    "brick": "La balle touche une brique : enlève-la et gagne un point. Ne rebondis qu’une fois par image, même si deux briques sont touchées."
+   },
+   "de": {
+    "start": "Lade die Mauer, erstelle Schläger und Ball und zähle die Steine.",
+    "serve": "Setz den Ball über den Schläger und schick ihn nach oben. Er prallt an den Rändern ab.",
+    "miss": "Der Ball hat den Boden berührt: Du verlierst ein Leben.",
+    "paddle": "Der Ball prallt nach oben ab. Wo er den Schläger trifft, bestimmt den Winkel.",
+    "brick": "Der Ball trifft einen Stein: Nimm ihn weg und bekomme einen Punkt. Nur einmal pro Bild abprallen, auch wenn zwei Steine getroffen werden."
+   }
+  }
+ }
+}

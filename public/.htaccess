@@ -1,4 +1,4 @@
-# ArduBlocks on Apache web servers (for example one.com).
+# ArduCade on Apache web servers (for example one.com).
 
 # Web Serial only works over HTTPS: send visitors to the HTTPS address.
 <IfModule mod_rewrite.c>

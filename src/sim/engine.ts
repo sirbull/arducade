@@ -77,7 +77,25 @@ export class Engine {
   buttons = 0;
   buttonsPrev = 0;
   /** Buttons held right now, set by the keyboard and the on screen buttons. */
-  input = 0;
+  private liveInput = 0;
+  private inputTransitions: boolean[][] = BUTTON_IDS.map(() => []);
+
+  get input() { return this.liveInput; }
+  set input(value: number) {
+    for (let b = 0; b < BUTTON_IDS.length; b++) {
+      const mask = 1 << b;
+      if ((value & mask) !== (this.liveInput & mask)) {
+        this.inputTransitions[b].push(!!(value & mask));
+      }
+    }
+    this.liveInput = value;
+  }
+
+  /** Clear pending taps when focus is lost or the game is paused. */
+  releaseInput() {
+    this.liveInput = this.buttons = this.buttonsPrev = 0;
+    this.inputTransitions.forEach((queue) => { queue.length = 0; });
+  }
   score = 0;
   life = 0;
   hiscore = 0;
@@ -104,11 +122,13 @@ export class Engine {
   private soundSteps: number[] | null = null;
   private soundPos = 0;
   private soundNext = 0;
+  private music: { steps: number[]; pos: number; next: number; tempo: number; loop: boolean } | null = null;
 
   private hooks!: GameHooks;
   private startTime = performance.now();
   private nextFrame = 0;
   private stopped = false;
+  private pausedAt: number | null = null;
   private busy = false;
   private loopCount = 0;
   private warnedCpp = false;
@@ -137,11 +157,16 @@ export class Engine {
   }
 
   millis(): number {
-    return Math.floor(performance.now() - this.startTime);
+    return Math.floor((this.pausedAt ?? performance.now()) - this.startTime);
   }
 
   runtime(): number {
     return w16(this.millis());
+  }
+
+  mapValue(value: number, fromLow: number, fromHigh: number, toLow: number, toHigh: number): number {
+    if (fromLow === fromHigh) return toLow;
+    return (Math.trunc((value - fromLow) * (toHigh - toLow) / (fromHigh - fromLow)) + toLow) << 16 >> 16;
   }
 
   random(lo: number, hi: number): number {
@@ -305,6 +330,7 @@ export class Engine {
   soundOff() {
     this.opts.tone(0);
     this.soundSteps = null;
+    this.music = null;
   }
 
   playTone(freq: number, ms: number) {
@@ -320,24 +346,49 @@ export class Engine {
     this.soundNext = 0;
   }
 
+  /** Music plays in the background, same as playMelody in ardublocks.h. */
+  playMelody(steps: number[], bpm: number, loop: boolean) {
+    this.music = { steps, pos: 0, next: 0, tempo: Math.min(Math.max(bpm, 20), 600), loop };
+  }
+
   private updateSound() {
-    if (!this.soundSteps || this.millis() < this.soundNext) return;
-    if (this.soundPos >= this.soundSteps.length) {
-      this.soundOff();
-      return;
+    if (this.pausedAt !== null) return;
+    const now = this.millis();
+    if (this.soundSteps && now >= this.soundNext) {
+      if (this.soundPos >= this.soundSteps.length) {
+        this.soundSteps = null;
+        this.opts.tone(0);
+      } else {
+        this.opts.tone(this.soundSteps[this.soundPos]);
+        this.soundNext = now + this.soundSteps[this.soundPos + 1];
+        this.soundPos += 2;
+      }
     }
-    const f = this.soundSteps[this.soundPos];
-    const ms = this.soundSteps[this.soundPos + 1];
-    this.opts.tone(f);
-    this.soundNext = this.millis() + ms;
-    this.soundPos += 2;
+    const m = this.music;
+    if (m && now >= m.next) {
+      if (m.pos >= m.steps.length && m.loop) m.pos = 0;
+      if (m.pos >= m.steps.length) {
+        this.music = null;
+        return;
+      }
+      const f = m.steps[m.pos];
+      const ms = Math.floor((m.steps[m.pos + 1] * 15000) / m.tempo);
+      if (!this.soundSteps) this.opts.tone(f, f ? ms - Math.floor(ms / 8) : undefined);
+      m.next = now + ms;
+      m.pos += 2;
+    }
   }
 
   // Input -----------------------------------------------------------------
 
   private readButtons() {
     this.buttonsPrev = this.buttons;
-    this.buttons = this.input;
+    // Consume each edge on a separate frame, even for a tap between frames.
+    for (let b = 0; b < BUTTON_IDS.length; b++) {
+      const down = this.inputTransitions[b].shift() ?? !!(this.input & (1 << b));
+      if (down) this.buttons |= 1 << b;
+      else this.buttons &= ~(1 << b);
+    }
   }
 
   isPressed(b: number): boolean {
@@ -358,10 +409,25 @@ export class Engine {
   }
 
   private sleep(ms: number): Promise<void> {
+    const until = this.millis() + ms;
     return new Promise((resolve, reject) => {
-      if (this.stopped) return reject(new StopSignal());
-      setTimeout(() => (this.stopped ? reject(new StopSignal()) : resolve()), ms);
+      const poll = () => {
+        if (this.stopped) return reject(new StopSignal());
+        if (this.pausedAt === null && this.millis() >= until) return resolve();
+        setTimeout(poll, Math.min(10, Math.max(1, until - this.millis())));
+      };
+      poll();
     });
+  }
+
+  setPaused(paused: boolean) {
+    if (paused && this.pausedAt === null) {
+      this.pausedAt = performance.now();
+      this.opts.tone(0);
+    } else if (!paused && this.pausedAt !== null) {
+      this.startTime += performance.now() - this.pausedAt;
+      this.pausedAt = null;
+    }
   }
 
   // Storage ---------------------------------------------------------------
@@ -659,7 +725,9 @@ export class Engine {
         return;
       }
     } else {
-      const row = delta > 0 ? bottom >> 3 : top >> 3;
+      // Include the floor at the exclusive bottom edge so subpixel gravity
+      // keeps grounded contact stable between frames.
+      const row = delta > 0 ? (bottom + 1) >> 3 : top >> 3;
       for (let col = left >> 3; col <= right >> 3; col++) {
         if (!this.isSolid(col, row)) continue;
         if (delta > 0) {
@@ -729,8 +797,9 @@ export class Engine {
           sp.hit |= HIT_BOTTOM;
           if (bounce && sp.vy > 0) sp.vy = -sp.vy;
         }
-        sp.x = (left + tdiv(w, 2)) * 256;
-        sp.y = (top + tdiv(h, 2)) * 256;
+        // Preserve fractional positions on axes that did not hit a boundary.
+        if (left !== px(sp.x) - tdiv(w, 2)) sp.x = (left + tdiv(w, 2)) * 256;
+        if (top !== px(sp.y) - tdiv(h, 2)) sp.y = (top + tdiv(h, 2)) * 256;
       } else if (sp.flags & FLAG_AUTO_DESTROY) {
         if (left + w < viewL || left >= viewL + 128 || top + h < viewT || top >= viewT + 64) this.destroy(i);
       }
@@ -854,11 +923,16 @@ export class Engine {
     this.drawText(64 - tdiv(text.length * 6, 2), y, text, 1);
   }
 
-  async splash(text: string) {
-    this.messageBox(text.slice(0, 31));
+  /** Shows what has been drawn so far and waits until A is pressed. */
+  async showAndWait() {
     this.opts.show(this.buffer, this.inverted);
     await this.waitForA();
     this.nextFrame = this.millis();
+  }
+
+  async splash(text: string) {
+    this.messageBox(text.slice(0, 31));
+    await this.showAndWait();
   }
 
   async pause(ms: number) {
@@ -882,6 +956,7 @@ export class Engine {
 
   private async showGameOver() {
     this.saveHiscore();
+    this.music = null;
     this.playEffect(this.gameOverWin ? SFX_WIN : SFX_LOSE);
     this.clear();
     this.center(8, this.gameOverWin ? 'YOU WIN!' : 'GAME OVER');
@@ -907,6 +982,7 @@ export class Engine {
   async begin(hooks: GameHooks) {
     this.hooks = hooks;
     this.stopped = false;
+    this.pausedAt = null;
     this.startTime = performance.now();
     this.rng = (Math.floor(Math.random() * 0xffff) & 0xffff) || 0xace1;
     this.loadHiscore();
@@ -927,7 +1003,7 @@ export class Engine {
   /** Runs one frame if it is time for it. Returns false if it was not. */
   /** force runs the frame now, used for gallery pictures. */
   async frame(force = false): Promise<boolean> {
-    if (this.busy || this.stopped) return false;
+    if (this.busy || this.stopped || this.pausedAt !== null) return false;
     const now = this.millis();
     if (!force && now - this.nextFrame < 0) return false;
     this.busy = true;
@@ -944,6 +1020,7 @@ export class Engine {
         else if (!(this.buttons & mask) && this.buttonsPrev & mask) await this.hooks.button(b, 0);
       }
       await this.hooks.update();
+      if (this.stopped) return false;
       this.updateSprites();
       await this.checkOverlaps();
       this.updateCamera();
@@ -953,6 +1030,7 @@ export class Engine {
       this.drawMap();
       this.drawSprites();
       await this.hooks.draw();
+      if (this.stopped) return false;
       this.drawHud();
       this.opts.show(this.buffer, this.inverted);
 

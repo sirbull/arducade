@@ -54,7 +54,9 @@ function imageOptions(): Option[] {
   const images = current?.images ?? [];
   if (!images.length) return [[noneLabel, '']];
   return images.map((img) => {
-    const scale = Math.max(1, Math.min(2, Math.floor(24 / Math.max(img.width, img.height))));
+    // Give artwork a consistent 32px preview; Blockly grows the containing
+    // row to fit the image plus the field's vertical padding.
+    const scale = 32 / Math.max(img.width, img.height);
     return [
       { src: pixelsToDataUrl(img.frames[0], img.width, img.height, scale), width: img.width * scale, height: img.height * scale, alt: img.name },
       img.id,
@@ -65,7 +67,7 @@ function imageOptions(): Option[] {
 function tileOptions(): Option[] {
   const tiles = current?.tiles ?? [];
   const opts: Option[] = [[emptyTileLabel, 'empty']];
-  for (const t of tiles) opts.push([{ src: pixelsToDataUrl(t.pixels, 8, 8, 2), width: 16, height: 16, alt: t.name }, t.id]);
+  for (const t of tiles) opts.push([{ src: pixelsToDataUrl(t.pixels, 8, 8, 4), width: 32, height: 32, alt: t.name }, t.id]);
   return opts;
 }
 

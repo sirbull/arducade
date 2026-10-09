@@ -1,6 +1,8 @@
 // Shared parts of the C++ and JavaScript generators.
 
 import { BUILTIN_KINDS, BUTTON_IDS, COLORS, FLAGS, HIT, PROPS, SFX } from '../engine/enums';
+import { parseMelody } from '../engine/melody';
+import { forEachExpr } from '../ir/check';
 import type { EnumType, Event, Func, Program } from '../ir/ir';
 import type { Project } from '../project/model';
 import { NameTable, sanitize } from './names';
@@ -85,4 +87,13 @@ export function hash16(s: string): number {
   let h = 0x811c;
   for (let i = 0; i < s.length; i++) h = ((h ^ s.charCodeAt(i)) * 0x193) & 0xffff;
   return h === 0 ? 1 : h;
+}
+
+/** Each melody text in the program with its constant name and notes. */
+export function melodies(p: Program): Map<string, { name: string; steps: number[]; bad: string[] }> {
+  const out = new Map<string, { name: string; steps: number[]; bad: string[] }>();
+  forEachExpr(p, (e) => {
+    if (e.k === 'enum' && e.type === 'melody' && !out.has(e.v)) out.set(e.v, { name: `mel_${out.size}`, ...parseMelody(e.v) });
+  });
+  return out;
 }

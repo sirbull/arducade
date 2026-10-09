@@ -83,7 +83,8 @@ class Converter {
 
   private func(b: Block): Func {
     const name = this.field(b, 'NAME');
-    const params = ((b as unknown as { getVars?: () => string[] }).getVars?.() ?? []).map((p) => ({ name: p, ty: 'num' as const }));
+    const models = (b as unknown as { getVarModels?: () => { getName(): string }[] }).getVarModels?.() ?? [];
+    const params = models.map((m) => ({ name: m.getName(), ty: 'num' as const }));
     const body = this.body(b, 'STACK');
     const ret = b.getInputTargetBlock('RETURN');
     if (ret) body.push({ k: 'return', value: this.expr(ret), id: b.id });
@@ -127,6 +128,10 @@ class Converter {
     const id = b.id;
     const f = (n: string) => this.field(b, n);
     switch (b.type) {
+      case 'ab_comment':
+        return { k: 'comment', text: f('TEXT'), id };
+      case 'ab_comment_group':
+        return [{ k: 'comment', text: f('TEXT'), id }, ...this.body(b)];
       // Blockly built in blocks
       case 'variables_set':
         return { k: 'set', name: this.varField(b, 'VAR'), value: this.input(b, 'VALUE'), id };
@@ -166,6 +171,8 @@ class Converter {
       // Game
       case 'ab_splash':
         return this.api('game.splash', [this.input(b, 'TEXT', { k: 'str', v: '' })], id);
+      case 'ab_splash_screen':
+        return [this.api('game.clear', [], id), ...this.body(b), this.api('game.showAndWait', [], id)];
       case 'ab_game_over':
         return this.api('game.over', [{ k: 'bool', v: f('WIN') === 'win' }], id);
       case 'ab_pause':
@@ -259,6 +266,8 @@ class Converter {
         return this.api('music.tone', [this.input(b, 'FREQ', { k: 'num', v: 440 }), this.input(b, 'MS', { k: 'num', v: 200 })], id);
       case 'ab_stop_sound':
         return this.api('music.stop', [], id);
+      case 'ab_play_melody':
+        return this.api('music.melody', [this.en('melody', f('NOTES')), this.input(b, 'TEMPO', { k: 'num', v: 120 }), { k: 'bool', v: f('MODE') === 'loop' }], id);
 
       case 'ab_cpp':
         return { k: 'cpp', code: f('CODE'), id };
@@ -369,8 +378,12 @@ class Converter {
         return api('storage.load', [this.input(b, 'SLOT')]);
       case 'ab_get_pixel':
         return api('draw.getPixel', [this.input(b, 'X'), this.input(b, 'Y')]);
+      case 'ab_map':
+        return api('math.map', ['VALUE', 'FROM_LOW', 'FROM_HIGH', 'TO_LOW', 'TO_HIGH'].map((name) => this.input(b, name)));
       case 'ab_random':
         return api('math.random', [this.input(b, 'FROM'), this.input(b, 'TO', { k: 'num', v: 10 })]);
+      case 'ab_note':
+        return { k: 'num', v: Number(f('NOTE')) || 440, id };
       case 'ab_minmax':
         return api(f('OP') === 'max' ? 'math.max' : 'math.min', [this.input(b, 'A'), this.input(b, 'B')]);
     }

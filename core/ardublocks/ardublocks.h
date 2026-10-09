@@ -1,4 +1,4 @@
-// ArduBlocks game engine for Arduboy and Arduboy compatible devices.
+// ArduCade game engine for Arduboy and Arduboy compatible devices.
 //
 // Include ab_config.h (generated from the hardware profile) before this file.
 // The whole engine is in this header so the game is compiled as one unit,
@@ -113,7 +113,7 @@ static uint16_t rng = 0xACE1;
 
 static const uint8_t *map;       // [w, h, cells...] in flash
 static const uint8_t *const *tileImages;
-static uint16_t solidTiles;      // bit per tile id
+static uint32_t solidTiles;      // bit per tile id (tiles 1 to 31)
 static uint8_t tileCleared[(AB_TILE_CELLS + 7) / 8];
 static uint16_t overlayIndex[AB_TILE_OVERLAY];
 static uint8_t overlayTile[AB_TILE_OVERLAY];
@@ -128,11 +128,21 @@ static uint8_t textLen;
 
 static const uint16_t *soundPos; // pairs of frequency and duration, ends with 0
 static uint32_t soundNext;
+static const uint16_t *musicStart, *musicPos; // pairs of frequency and quarter beats, ends with 0
+static uint32_t musicNext;
+static uint16_t musicTempo;
+static bool musicLoop;
 
 // Math helpers with the same results on every chip and in the simulator.
 
 static int16_t div(int16_t a, int16_t b) { return b == 0 ? 0 : (int16_t)(a / b); }
 static int16_t mod(int16_t a, int16_t b) { return b == 0 ? 0 : (int16_t)(a % b); }
+
+static int16_t mapValue(int16_t value, int16_t fromLow, int16_t fromHigh, int16_t toLow, int16_t toHigh) {
+  if (fromLow == fromHigh) return toLow;
+  // Wide intermediates avoid overflow when scaling 16 bit ranges.
+  return (int16_t)(((int64_t)value - fromLow) * ((int32_t)toHigh - toLow) / ((int32_t)fromHigh - fromLow) + toLow);
+}
 
 static int16_t random(int16_t lo, int16_t hi) {
   if (hi < lo) { int16_t t = lo; lo = hi; hi = t; }
@@ -169,13 +179,28 @@ static uint8_t getPixel(int16_t x, int16_t y) {
   return (buffer[(y >> 3) * 128 + x] >> (y & 7)) & 1;
 }
 
-static void hline(int16_t x, int16_t y, int16_t w, uint8_t color) {
-  for (int16_t i = 0; i < w; i++) drawPixel(x + i, y, color);
+// Same pixels as drawPixel for every point, but clipped first and written a
+// byte (8 rows) at a time. Ray casting games fill most of the screen each frame.
+static void fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint8_t color) {
+  int16_t x0 = x < 0 ? 0 : x, y0 = y < 0 ? 0 : y;
+  int32_t x1 = (int32_t)x + w, y1 = (int32_t)y + h;
+  if (x1 > 128) x1 = 128;
+  if (y1 > 64) y1 = 64;
+  if (x0 >= x1 || y0 >= y1) return;
+  for (int16_t row = y0; row < y1; row = (row | 7) + 1) {
+    int16_t last = row | 7;
+    if (last >= y1) last = y1 - 1;
+    uint8_t mask = (uint8_t)(0xff << (row & 7)) & (uint8_t)(0xff >> (7 - (last & 7)));
+    uint8_t *b = &buffer[(row >> 3) * 128 + x0];
+    for (int16_t i = x0; i < x1; i++, b++) {
+      if (color == 1) *b |= mask;
+      else if (color == 0) *b &= ~mask;
+      else *b ^= mask;
+    }
+  }
 }
 
-static void fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint8_t color) {
-  for (int16_t j = 0; j < h; j++) hline(x, y + j, w, color);
-}
+static void hline(int16_t x, int16_t y, int16_t w, uint8_t color) { fillRect(x, y, w, 1, color); }
 
 static void drawRect(int16_t x, int16_t y, int16_t w, int16_t h, uint8_t color) {
   if (w <= 0 || h <= 0) return;
@@ -188,6 +213,13 @@ static void drawRect(int16_t x, int16_t y, int16_t w, int16_t h, uint8_t color) 
 }
 
 static void drawLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint8_t color) {
+  // Straight lines are rectangles one pixel wide: the same pixels, much faster.
+  if (x0 == x1 || y0 == y1) {
+    int32_t w = (int32_t)(x1 > x0 ? x1 - (int32_t)x0 : x0 - (int32_t)x1) + 1;
+    int32_t h = (int32_t)(y1 > y0 ? y1 - (int32_t)y0 : y0 - (int32_t)y1) + 1;
+    fillRect(x0 < x1 ? x0 : x1, y0 < y1 ? y0 : y1, w > 32767 ? 32767 : w, h > 32767 ? 32767 : h, color);
+    return;
+  }
   int16_t dx = x1 > x0 ? x1 - x0 : x0 - x1;
   int16_t dy = y1 > y0 ? y0 - y1 : y1 - y0;
   int8_t sx = x0 < x1 ? 1 : -1;
@@ -306,6 +338,7 @@ static void soundOff() {
   noTone(AB_PIN_SOUND1);
 #endif
   soundPos = 0;
+  musicPos = 0;
 }
 
 static void playTone(uint16_t freq, uint16_t ms) {
@@ -323,16 +356,44 @@ static void playSound(const uint16_t *steps) {
   soundNext = 0;
 }
 
+// Music plays in the background. A sound effect covers it while it plays.
+static void playMelody(const uint16_t *notes, int16_t bpm, bool loop) {
+  musicStart = musicPos = notes;
+  musicNext = 0;
+  musicTempo = constrain(bpm, 20, 600);
+  musicLoop = loop;
+}
+
 static void updateSound() {
 #if defined(AB_PIN_SOUND1)
-  if (!soundPos || millis() < soundNext) return;
-  uint16_t f = pgm_read_word(soundPos);
-  uint16_t ms = pgm_read_word(soundPos + 1);
-  if (!ms) { soundOff(); return; }
-  if (f) tone(AB_PIN_SOUND1, f);
-  else noTone(AB_PIN_SOUND1);
-  soundNext = millis() + ms;
-  soundPos += 2;
+  uint32_t now = millis();
+  if (soundPos && now >= soundNext) {
+    uint16_t f = pgm_read_word(soundPos);
+    uint16_t ms = pgm_read_word(soundPos + 1);
+    if (!ms) {
+      soundPos = 0;
+      noTone(AB_PIN_SOUND1);
+    } else {
+      if (f) tone(AB_PIN_SOUND1, f);
+      else noTone(AB_PIN_SOUND1);
+      soundNext = now + ms;
+      soundPos += 2;
+    }
+  }
+  if (musicPos && now >= musicNext) {
+    if (!pgm_read_word(musicPos + 1)) musicPos = musicLoop ? musicStart : 0;
+    uint16_t beats = musicPos ? pgm_read_word(musicPos + 1) : 0;
+    if (!beats) { musicPos = 0; return; }
+    uint16_t f = pgm_read_word(musicPos);
+    uint16_t ms = (uint32_t)beats * 15000 / musicTempo;
+    // Stop a little early so two equal notes do not run together.
+    if (!soundPos) {
+      if (f) tone(AB_PIN_SOUND1, f, ms - ms / 8);
+      else noTone(AB_PIN_SOUND1);
+    }
+    musicNext = now + ms;
+    musicPos += 2;
+  }
 #endif
 }
 
@@ -423,7 +484,7 @@ static void saveHiscore() {
 static int16_t mapW() { return map ? pgm_read_byte(map) : 0; }
 static int16_t mapH() { return map ? pgm_read_byte(map + 1) : 0; }
 
-static void setMap(const uint8_t *m, const uint8_t *const *images, uint16_t solid) {
+static void setMap(const uint8_t *m, const uint8_t *const *images, uint32_t solid) {
   map = m;
   tileImages = images;
   solidTiles = solid;
@@ -480,7 +541,7 @@ static bool isSolid(int16_t col, int16_t row) {
   // The left and right side of the map are walls.
   if (col < 0 || col >= mapW()) return true;
   if (row < 0 || row >= mapH()) return false;
-  return solidTiles & (1 << tileAt(col, row));
+  return solidTiles & (1UL << tileAt(col, row));
 }
 
 static void drawMap() {
@@ -671,7 +732,9 @@ static void moveAxis(Sprite &sp, bool horizontal, int32_t delta) {
       return;
     }
   } else {
-    int16_t row = delta > 0 ? bottom >> 3 : top >> 3;
+    // Include the floor at the exclusive bottom edge so subpixel gravity
+    // keeps grounded contact stable between frames.
+    int16_t row = delta > 0 ? (bottom + 1) >> 3 : top >> 3;
     for (int16_t col = left >> 3; col <= right >> 3; col++) {
       if (!isSolid(col, row)) continue;
       if (delta > 0) { top = row * 8 - h; sp.hit |= HIT_BOTTOM; }
@@ -714,8 +777,9 @@ static void updateSprites() {
       if (left + w > viewL + 128) { left = viewL + 128 - w; sp.hit |= HIT_RIGHT; if (bounce && sp.vx > 0) sp.vx = -sp.vx; }
       if (top < viewT) { top = viewT; sp.hit |= HIT_TOP; if (bounce && sp.vy < 0) sp.vy = -sp.vy; }
       if (top + h > viewT + 64) { top = viewT + 64 - h; sp.hit |= HIT_BOTTOM; if (bounce && sp.vy > 0) sp.vy = -sp.vy; }
-      sp.x = (int32_t)(left + w / 2) << 8;
-      sp.y = (int32_t)(top + h / 2) << 8;
+      // Preserve fractional positions on axes that did not hit a boundary.
+      if (left != px(sp.x) - w / 2) sp.x = (int32_t)(left + w / 2) << 8;
+      if (top != px(sp.y) - h / 2) sp.y = (int32_t)(top + h / 2) << 8;
     } else if (sp.flags & FLAG_AUTO_DESTROY) {
       if (left + w < viewL || left >= viewL + 128 || top + h < viewT || top >= viewT + 64) destroy(i);
     }
@@ -832,11 +896,16 @@ static void centerP(int16_t y, const char *progmemText) {
   drawText(64 - textWidth(textBuf) / 2, y, textBuf, 1);
 }
 
-static void splash(const char *text) {
-  messageBox(text);
+// Shows what has been drawn so far and waits until A is pressed.
+static void showAndWait() {
   displayShow(buffer);
   waitForA();
   nextFrame = millis();
+}
+
+static void splash(const char *text) {
+  messageBox(text);
+  showAndWait();
 }
 
 static void pause(int16_t ms) {
@@ -862,6 +931,7 @@ static void restart() {
 
 static void showGameOver() {
   saveHiscore();
+  musicPos = 0;
   playEffect(gameOverWin ? 5 : 6);
   clear();
   if (gameOverWin) centerP(8, PSTR("YOU WIN!"));

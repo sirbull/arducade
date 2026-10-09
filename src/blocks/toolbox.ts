@@ -26,6 +26,15 @@ export function buildToolbox(): Json {
         block('ab_on_update'),
         block('ab_on_every'),
         block('ab_splash', { TEXT: s('Hello!') }),
+        block('ab_splash_screen', {
+          DO: {
+            block: {
+              type: 'ab_draw_image',
+              inputs: { X: n(56), Y: n(8) },
+              next: { block: { type: 'ab_draw_text', inputs: { TEXT: s('Hello!'), X: n(46), Y: n(40) } } },
+            },
+          },
+        }),
         block('ab_game_over'),
         block('ab_pause', { MS: n(500) }),
         block('ab_runtime'),
@@ -93,7 +102,13 @@ export function buildToolbox(): Json {
         block('ab_draw_image', { X: n(0), Y: n(0) }),
         block('ab_get_pixel', { X: n(0), Y: n(0) }),
       ]),
-      category('MUSIC', 'ab_music', [block('ab_play_effect'), block('ab_play_tone', { FREQ: n(440), MS: n(200) }), block('ab_stop_sound')]),
+      category('MUSIC', 'ab_music', [
+        block('ab_play_effect'),
+        block('ab_play_melody', { TEMPO: n(120) }, { NOTES: 'C D E F G:2 G:2 A A A A G:4 F F F F E:2 E:2 D D D D C:4', MODE: 'loop' }),
+        block('ab_play_tone', { FREQ: { shadow: { type: 'ab_note', fields: { NOTE: '440' } } }, MS: n(200) }),
+        block('ab_note'),
+        block('ab_stop_sound'),
+      ]),
       category('LOGIC', 'ab_logic', [
         block('controls_if'),
         { kind: 'block', type: 'controls_if', extraState: { hasElse: true } },
@@ -111,6 +126,7 @@ export function buildToolbox(): Json {
       category('MATH', 'ab_math', [
         block('math_number'),
         block('math_arithmetic', { A: n(0), B: n(0) }),
+        block('ab_map', { VALUE: n(512), FROM_LOW: n(0), FROM_HIGH: n(1024), TO_LOW: n(0), TO_HIGH: n(100) }),
         block('ab_random', { FROM: n(0), TO: n(10) }),
         block('math_modulo', { DIVIDEND: n(10), DIVISOR: n(3) }),
         block('ab_minmax', { A: n(0), B: n(0) }),
@@ -119,7 +135,7 @@ export function buildToolbox(): Json {
       ]),
       { kind: 'category', name: '%{BKY_AB_CAT_VARIABLES}', categorystyle: 'ab_variables', custom: 'VARIABLE' },
       { kind: 'category', name: '%{BKY_AB_CAT_FUNCTIONS}', categorystyle: 'ab_functions', custom: 'PROCEDURE' },
-      category('CUSTOM', 'ab_custom', [block('ab_cpp')]),
+      category('CUSTOM', 'ab_custom', [block('ab_comment'), block('ab_comment_group'), block('ab_cpp')]),
     ],
   };
 }

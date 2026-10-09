@@ -97,6 +97,9 @@ function setButtons(port: AVRIOPort, bits: number) {
   for (let b = 0; b < 6; b++) port.setPin(2 + b, !(bits & (1 << b)));
 }
 
+/** CPU cycles at each shown frame of the last runOnAvr. */
+let frameCycles: number[] = [];
+
 function runOnAvr(hex: string, frames: number): Uint8Array[] {
   const program = new Uint16Array(0x4000);
   const bytes = parseHex(hex);
@@ -116,12 +119,14 @@ function runOnAvr(hex: string, frames: number): Uint8Array[] {
   twi.eventHandler = screen;
   const limit = 16e6 * (frames * 0.05 + 2);
   let shown = 0;
+  frameCycles = [];
   while (screen.frames.length < frames && cpu.cycles < limit) {
     avrInstruction(cpu);
     cpu.tick();
     // Change the buttons right after a frame is shown, before the next one.
     if (screen.frames.length !== shown) {
       shown = screen.frames.length;
+      frameCycles.push(cpu.cycles);
       setButtons(portD, inputFor(shown + 1));
     }
   }
@@ -160,8 +165,8 @@ function diff(a: Uint8Array, b: Uint8Array): number {
 }
 
 describe.skipIf(!haveTools)('device code matches the simulator', () => {
-  it('platformer on an ATmega328P with an SSD1306 over I2C', async () => {
-    const project = templateToProject(TEMPLATE_SOURCES.find((t) => t.id === 'platformer')!);
+  it.each(['platformer', 'maze3d'])('%s on an ATmega328P with an SSD1306 over I2C', async (id) => {
+    const project = templateToProject(TEMPLATE_SOURCES.find((t) => t.id === id)!);
     const { cpp, js } = compileProject(project);
     const profile = BUILTIN_PROFILES.find((p) => p.id === 'nano-ssd1306-i2c')!;
     const out = await compileGame(src, { mcu: 'atmega328p', game: cpp.code, config: profileToConfigH(profile), headers });
@@ -175,5 +180,7 @@ describe.skipIf(!haveTools)('device code matches the simulator', () => {
     expect(diffs).toEqual(Array(frames).fill(0));
     // The hero moved: the picture changed during the run.
     expect(diff(device[5], device[frames - 1])).toBeGreaterThan(20);
+    const ms = frameCycles.slice(1).map((c, i) => (c - frameCycles[i]) / 16000);
+    console.log(id, 'ms per frame: max', Math.max(...ms).toFixed(1), 'mean', (ms.reduce((a, b) => a + b, 0) / ms.length).toFixed(1));
   }, 180000);
 });

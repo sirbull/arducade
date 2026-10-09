@@ -94,6 +94,14 @@ export function cloneProfile(p: Profile, name: string): Profile {
   return copy;
 }
 
+/** A blank editable profile; the user chooses the button wiring. */
+export function createCustomProfile(name = 'Custom'): Profile {
+  const p = cloneProfile(BUILTIN_PROFILES[1], name);
+  p.buttons = { up: '', down: '', left: '', right: '', a: '', b: '' };
+  p.sound = {};
+  return p;
+}
+
 // Validation ---------------------------------------------------------------
 
 export type IssueLevel = 'error' | 'warning' | 'info';
@@ -117,8 +125,8 @@ function pinUses(p: Profile): PinUse[] {
   if (p.display.bus === 'spi') {
     if (p.display.cs) uses.push({ pin: p.display.cs, role: 'display.cs', input: false });
     if (p.display.dc) uses.push({ pin: p.display.dc, role: 'display.dc', input: false });
-    if (p.display.rst) uses.push({ pin: p.display.rst, role: 'display.rst', input: false });
   }
+  if (p.display.rst) uses.push({ pin: p.display.rst, role: 'display.rst', input: false });
   if (p.sound.pin1) uses.push({ pin: p.sound.pin1, role: 'sound.pin1', input: false });
   if (p.sound.pin2) uses.push({ pin: p.sound.pin2, role: 'sound.pin2', input: false });
   return uses;
@@ -130,6 +138,16 @@ export function validateProfile(p: Profile): ProfileIssue[] {
   const chip = CHIPS.find((c) => c.id === p.chip);
   if (!chip) return [{ level: 'error', key: 'profile.unknownChip', params: { chip: p.chip } }];
 
+  if (!DISPLAY_DRIVERS.some((d) => d.id === p.display.driver) || !['spi', 'i2c'].includes(p.display.bus) || !Number.isInteger(p.display.i2cAddress) || p.display.i2cAddress < 1 || p.display.i2cAddress > 127 || !Number.isFinite(p.display.contrast) || p.display.contrast < 0 || p.display.contrast > 255 || (p.sound.pin2 && !p.sound.pin1)) {
+    issues.push({ level: 'error', key: 'profile.invalidConfig' });
+  }
+  // Arduino analog aliases may refer to the same physical digital pin.
+  const pinKey = (id: string) => {
+    const bases: Record<string, number> = { atmega328p: 14, atmega328pb: 14, atmega32u4: 18, atmega644p: 24, atmega1284p: 24, atmega2560: 54, lgt8f328p: 14 };
+    const base = bases[chip.id];
+    if (base !== undefined && /^A[0-9]+$/.test(id)) return String(base + Number(id.slice(1)));
+    return findPin(chip, id)?.cpp ?? id;
+  };
   const uses = pinUses(p);
   const busPins: { pin: string; role: string }[] = [];
   if (p.display.bus === 'i2c') {
@@ -157,18 +175,18 @@ export function validateProfile(p: Profile): ProfileIssue[] {
     if (info.analogOnly) issues.push({ level: 'error', key: 'profile.pinAnalogOnly', params: { pin: u.pin, role: u.role } });
     else if (u.input && info.noPullup) issues.push({ level: 'warning', key: 'profile.pinNoPullup', params: { pin: u.pin, role: u.role } });
     if (info.serial) issues.push({ level: 'warning', key: 'profile.pinSerial', params: { pin: u.pin, role: u.role } });
-    const bus = busPins.find((bp) => bp.pin === u.pin);
+    const bus = busPins.find((bp) => pinKey(bp.pin) === pinKey(u.pin));
     if (bus) issues.push({ level: 'error', key: 'profile.pinBus', params: { pin: u.pin, role: u.role, bus: bus.role } });
     if (p.display.bus === 'spi' && chip.family === 'avr' && u.input && u.pin === chip.bus.ss) {
-      issues.push({ level: 'warning', key: 'profile.pinSpiSs', params: { pin: u.pin, role: u.role } });
+      issues.push({ level: 'error', key: 'profile.pinSpiSs', params: { pin: u.pin, role: u.role } });
     }
   }
 
   const seen = new Map<string, string>();
   for (const u of uses) {
-    const first = seen.get(u.pin);
+    const first = seen.get(pinKey(u.pin));
     if (first) issues.push({ level: 'error', key: 'profile.pinDuplicate', params: { pin: u.pin, role: u.role, other: first } });
-    else seen.set(u.pin, u.role);
+    else seen.set(pinKey(u.pin), u.role);
   }
 
   if (p.display.bus === 'i2c') {
@@ -200,6 +218,11 @@ export function parseProfile(text: string): Profile {
   if (!p || p.format !== 'ardublocks-profile') throw new Error('file.notProfile');
   if (typeof p.version !== 'number' || p.version > 1) throw new Error('file.tooNew');
   if (typeof p.chip !== 'string' || !p.display || !p.buttons || !p.sound) throw new Error('file.broken');
+  const record = (v: unknown) => !!v && typeof v === 'object' && !Array.isArray(v);
+  if (!CHIPS.some((c) => c.id === p.chip) || !record(p.display) || !record(p.buttons) || !record(p.sound) ||
+      !DISPLAY_DRIVERS.some((d) => d.id === p.display!.driver) || !['i2c', 'spi'].includes(p.display.bus) ||
+      [p.display.cs, p.display.dc, p.display.rst, p.sound.pin1, p.sound.pin2, ...BUTTONS.map((b) => p.buttons![b])].some((v) => v !== undefined && typeof v !== 'string') ||
+      [p.display.i2cAddress, p.display.contrast].some((v) => v !== undefined && (typeof v !== 'number' || !Number.isFinite(v)))) throw new Error('file.broken');
   const result: Profile = {
     format: 'ardublocks-profile',
     version: 1,
@@ -242,9 +265,10 @@ function pinCpp(chip: Chip, id: string | undefined): string | undefined {
 
 /** Creates the ab_config.h header for a profile. */
 export function profileToConfigH(p: Profile): string {
+  if (hasErrors(validateProfile(p))) throw new Error('profile.hasErrors');
   const chip = getChip(p.chip);
   const lines: string[] = [
-    '// Generated by ArduBlocks from the hardware profile.',
+    '// Generated by ArduCade from the hardware profile.',
     `// Profile: ${p.name.replace(/[\r\n]/g, ' ')}`,
     '#pragma once',
     '',
@@ -258,11 +282,11 @@ export function profileToConfigH(p: Profile): string {
   } else {
     const cs = pinCpp(chip, p.display.cs);
     const dc = pinCpp(chip, p.display.dc);
-    const rst = pinCpp(chip, p.display.rst);
     if (cs) lines.push(`#define AB_PIN_CS ${cs}`);
     if (dc) lines.push(`#define AB_PIN_DC ${dc}`);
-    if (rst) lines.push(`#define AB_PIN_RST ${rst}`);
   }
+  const rst = pinCpp(chip, p.display.rst);
+  if (rst) lines.push(`#define AB_PIN_RST ${rst}`);
   lines.push(`#define AB_ROTATE180 ${p.display.rotate180 ? 1 : 0}`);
   lines.push(`#define AB_MIRROR ${p.display.mirror ? 1 : 0}`);
   lines.push(`#define AB_CONTRAST ${clamp(p.display.contrast, 0, 255)}`);

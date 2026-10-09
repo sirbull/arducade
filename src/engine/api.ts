@@ -25,6 +25,8 @@ const api = <T extends Record<string, ApiFn>>(t: T) => t;
 export const API = api({
   // Game
   'game.splash': { ret: 'void', args: ['str'], cpp: 'ab::splash($0)', js: 'await E.splash($0)', async: true, name: 'game.splash' },
+  'game.clear': { ret: 'void', args: [], cpp: 'ab::clear()', js: 'E.clear()', name: 'screen.clear' },
+  'game.showAndWait': { ret: 'void', args: [], cpp: 'ab::showAndWait()', js: 'await E.showAndWait()', async: true, name: 'game.waitForA' },
   'game.over': { ret: 'void', args: ['bool'], cpp: 'ab::gameOver($0)', js: 'E.gameOver($0)', name: 'game.over' },
   'game.pause': { ret: 'void', args: ['num'], cpp: 'ab::pause($0)', js: 'await E.pause($0)', async: true, name: 'pause' },
   'game.runtime': { ret: 'num', args: [], cpp: '(int16_t)ab::runtime()', js: 'E.runtime()', name: 'game.runtime' },
@@ -102,9 +104,11 @@ export const API = api({
   // Music
   'music.effect': { ret: 'void', args: ['sfx'], cpp: 'ab::playEffect($0)', js: 'E.playEffect($0)', name: 'music.play' },
   'music.tone': { ret: 'void', args: ['num', 'num'], cpp: 'ab::playTone($0, $1)', js: 'E.playTone($0, $1)', name: 'music.playTone' },
+  'music.melody': { ret: 'void', args: ['melody', 'num', 'bool'], cpp: 'ab::playMelody($0, $1, $2)', js: 'E.playMelody($0, $1, $2)', name: 'music.playMelody' },
   'music.stop': { ret: 'void', args: [], cpp: 'ab::soundOff()', js: 'E.soundOff()', name: 'music.stopAllSounds' },
 
   // Math
+  'math.map': { ret: 'num', args: ['num', 'num', 'num', 'num', 'num'], cpp: 'ab::mapValue($0, $1, $2, $3, $4)', js: 'E.mapValue($0, $1, $2, $3, $4)', name: 'Math.map' },
   'math.random': { ret: 'num', args: ['num', 'num'], cpp: 'ab::random($0, $1)', js: 'E.random($0, $1)', name: 'randint' },
   'math.abs': { ret: 'num', args: ['num'], cpp: 'abs($0)', js: '$w(Math.abs($0))', name: 'Math.abs' },
   'math.min': { ret: 'num', args: ['num', 'num'], cpp: 'min($0, $1)', js: 'Math.min($0, $1)', name: 'Math.min' },

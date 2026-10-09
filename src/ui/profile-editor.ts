@@ -6,6 +6,7 @@ import {
   BUILTIN_PROFILES,
   BUTTONS,
   cloneProfile,
+  createCustomProfile,
   DISPLAY_DRIVERS,
   hasErrors,
   parseProfile,
@@ -82,10 +83,13 @@ export function openProfileDialog(current: Profile, onChoose: (p: Profile) => vo
   const d = openDialog(t('profile.title'), { wide: true });
   let working: Profile = JSON.parse(JSON.stringify(current));
 
+  let renderVersion = 0;
   const render = async () => {
-    clear(d.body);
+    const version = ++renderVersion;
     const list = await allProfiles();
-    const options = list.map((p) => ({ value: p.id, label: p.builtin ? p.name : `${p.name} (${t('profile.own')})` }));
+    if (version !== renderVersion) return;
+    clear(d.body);
+    const options = [{ value: '__custom__', label: t('profile.custom') }, ...list.map((p) => ({ value: p.id, label: p.builtin ? p.name : `${p.name} (${t('profile.own')})` }))];
     if (!list.some((p) => p.id === working.id)) options.push({ value: working.id, label: working.name });
     d.body.append(
       h(
@@ -96,6 +100,11 @@ export function openProfileDialog(current: Profile, onChoose: (p: Profile) => vo
           { class: 'inline grow' },
           t('profile.choose'),
           select(options, working.id, (id) => {
+            if (id === '__custom__') {
+              working = createCustomProfile(t('profile.custom'));
+              void render();
+              return;
+            }
             const p = list.find((x) => x.id === id);
             if (p) working = JSON.parse(JSON.stringify(p));
             void render();
@@ -107,7 +116,10 @@ export function openProfileDialog(current: Profile, onChoose: (p: Profile) => vo
       ),
     );
     if (working.builtin) d.body.append(h('p', { class: 'muted small' }, t('profile.builtinHelp')));
-    d.body.append(profileForm(working, !!working.builtin, () => void render()));
+    d.body.append(profileForm(working, false, () => {
+      if (working.builtin) working = cloneProfile(working, working.name);
+      void render();
+    }));
   };
 
   const copy = async () => {
@@ -170,21 +182,21 @@ export function openProfileDialog(current: Profile, onChoose: (p: Profile) => vo
   void render();
 }
 
-/** Form with all settings of a profile. Read only for built in profiles. */
+/** Form with all settings; preset edits become a custom copy. */
 function profileForm(p: Profile, readonly: boolean, onChange: () => void): HTMLElement {
   const chip = getChip(p.chip);
-  const pinOptions = [{ value: '', label: t('profile.none') }, ...chip.pins.map((x) => ({ value: x.id, label: x.id }))];
+  const pinOptions = [{ value: '', label: t('profile.none') }, ...chip.pins.filter((x) => !x.reserved && !x.analogOnly).map((x) => ({ value: x.id, label: x.id }))];
   const changed = () => {
-    if (!readonly) void profileStore.save(p);
     onChange();
   };
   const pinSelect = (value: string | undefined, set: (v: string | undefined) => void, label: string) =>
-    h('label', { class: 'field' }, label, select(pinOptions, value ?? '', (v) => (set(v || undefined), changed()), { disabled: readonly }));
+    h('label', { class: 'field' }, label, select(value && !pinOptions.some((x) => x.value === value) ? [...pinOptions, { value, label: value }] : pinOptions, value ?? '', (v) => (set(v || undefined), changed()), { disabled: readonly }));
 
   const chipOptions = CHIPS.map((c) => ({ value: c.id, label: `${c.name} (${c.boards[0]})${c.browserCompile ? '' : ' *'}` }));
   const form = h(
     'div',
     { class: 'profile-form' },
+    h('label', { class: 'field' }, t('profile.name'), h('input', { value: p.name, disabled: readonly, onchange: (e) => { p.name = (e.target as HTMLInputElement).value.trim() || t('profile.custom'); changed(); } })),
     h(
       'fieldset',
       { disabled: readonly },
@@ -234,7 +246,8 @@ function profileForm(p: Profile, readonly: boolean, onChange: () => void): HTMLE
               (v) => ((p.display.i2cAddress = Number(v)), changed()),
             ),
           )
-        : [pinSelect(p.display.cs, (v) => (p.display.cs = v), 'CS'), pinSelect(p.display.dc, (v) => (p.display.dc = v), 'DC'), pinSelect(p.display.rst, (v) => (p.display.rst = v), 'RST')],
+        : [pinSelect(p.display.cs, (v) => (p.display.cs = v), 'CS'), pinSelect(p.display.dc, (v) => (p.display.dc = v), 'DC')],
+      pinSelect(p.display.rst, (v) => (p.display.rst = v), 'RST'),
       checkbox(t('profile.rotate'), p.display.rotate180, (v) => ((p.display.rotate180 = v), changed())),
       checkbox(t('profile.mirror'), p.display.mirror, (v) => ((p.display.mirror = v), changed())),
       h('label', { class: 'field' }, t('profile.contrast'), range(p.display.contrast, (v) => ((p.display.contrast = v), changed()))),

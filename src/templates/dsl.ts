@@ -39,7 +39,21 @@ export const change = (name: string, by: number) => blk('math_change', { f: { VA
 export const arith = (op: 'ADD' | 'MINUS' | 'MULTIPLY' | 'DIVIDE', a: B, b: B) => blk('math_arithmetic', { f: { OP: op }, i: { A: a, B: b } });
 export const cmp = (op: 'EQ' | 'NEQ' | 'LT' | 'LTE' | 'GT' | 'GTE', a: B, b: B) => blk('logic_compare', { f: { OP: op }, i: { A: a, B: b } });
 export const and = (a: B, b: B) => blk('logic_operation', { f: { OP: 'AND' }, i: { A: a, B: b } });
+export const or = (a: B, b: B) => blk('logic_operation', { f: { OP: 'OR' }, i: { A: a, B: b } });
+export const not = (a: B) => blk('logic_negate', { i: { BOOL: a } });
 export const abs = (a: B) => blk('math_single', { f: { OP: 'ABS' }, i: { NUM: a } });
+export const neg = (a: B) => blk('math_single', { f: { OP: 'NEG' }, i: { NUM: a } });
+export const minmax = (op: 'min' | 'max', a: B, b: B) => blk('ab_minmax', { f: { OP: op }, i: { A: a, B: b } });
+export const random = (from: number, to: number) => blk('ab_random', { i: { FROM: num(from), TO: num(to) } });
+export const pressed = (button: string) => blk('ab_is_pressed', { f: { BUTTON: button } });
+
+export const forRange = (name: string, from: B, to: B, body: B[], comment?: string) =>
+  blk('controls_for', { f: { VAR: { name } }, i: { FROM: from, TO: to, BY: num(1) }, body, comment });
+export const whileDo = (cond: B, body: B[]) => blk('controls_whileUntil', { f: { MODE: 'WHILE' }, i: { BOOL: cond }, body });
+export const repeat = (times: number, body: B[]) => blk('controls_repeat_ext', { i: { TIMES: num(times) }, body });
+export const breakLoop = () => blk('controls_flow_statements', { f: { FLOW: 'BREAK' } });
+export const forKind = (name: string, kind: string, body: B[], comment?: string) =>
+  blk('ab_for_each_kind', { f: { VAR: { name }, KIND: kind }, body, comment });
 
 export function ifThen(cond: B, then: B[], els?: B[], comment?: string): B {
   const inputs: B = { IF0: { block: cond } };
@@ -70,6 +84,22 @@ export function func(name: string, body: B[], comment?: string): B {
   const c = chain(body);
   if (c) b.inputs = { STACK: { block: c } };
   return b;
+}
+
+/** Function with parameters that gives back a value. */
+export function funcRet(name: string, params: string[], body: B[], ret: B, comment?: string): B {
+  const b = blk('procedures_defreturn', { f: { NAME: name }, comment, extra: { params: params.map((p) => ({ name: p })) } });
+  const inputs: B = { RETURN: { block: ret } };
+  const c = chain(body);
+  if (c) inputs.STACK = { block: c };
+  b.inputs = inputs;
+  return b;
+}
+
+export function callRet(name: string, params: string[], args: B[]): B {
+  const inputs: B = {};
+  args.forEach((a, i) => (inputs[`ARG${i}`] = { block: a }));
+  return { type: 'procedures_callreturn', extraState: { name, params }, inputs };
 }
 
 /** Places top level blocks in a column. */

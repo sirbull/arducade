@@ -7,19 +7,19 @@
     <meta name="theme-color" content="#0b0b0c" />
     <link rel="icon" href="favicon.svg" type="image/svg+xml" />
     <link rel="manifest" href="manifest.webmanifest" />
-    <title>ArduBlocks</title>
+    <title>ArduCade</title>
   </head>
   <body>
     <header class="topbar">
-      <div class="brand" aria-label="ArduBlocks">
+      <button id="btn-home" class="brand" aria-label="ArduCade" data-i18n-title="home.back">
         <svg width="22" height="22" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">
           <rect x="1.5" y="1.5" width="13" height="13" rx="2" />
           <rect x="4" y="4" width="8" height="4.5" rx=".5" />
           <path d="M5 11h2M6 10v2" stroke-linecap="round" />
           <circle cx="10.5" cy="11" r=".6" fill="currentColor" />
         </svg>
-        <span>ArduBlocks</span>
-      </div>
+        <span>ArduCade</span>
+      </button>
       <input id="project-name" class="project-name" type="text" data-i18n-title="project.name" spellcheck="false" />
       <nav class="actions">
         <button id="btn-new" data-i18n="menu.new"></button>
@@ -28,11 +28,15 @@
         <button id="btn-export" data-i18n="menu.export"></button>
       </nav>
       <span class="spacer"></span>
-      <select id="lang" data-i18n-title="settings.language"></select>
+      <div id="language-picker" class="language-picker">
+        <button id="lang" type="button" data-i18n-title="settings.language" aria-haspopup="menu" aria-expanded="false" aria-controls="language-menu"></button>
+        <div id="language-menu" class="language-menu" role="menu" data-i18n-title="settings.language" hidden></div>
+      </div>
       <button id="btn-settings" data-i18n="menu.settings"></button>
     </header>
 
-    <main class="layout">
+    <main id="home" class="home" hidden></main>
+    <main id="editor-layout" class="layout">
       <section class="editor">
         <nav class="tabs" role="tablist">
           <button role="tab" data-tab="blocks" class="active" data-i18n="tab.blocks"></button>
@@ -41,8 +45,9 @@
           <button role="tab" data-tab="map" data-i18n="tab.map"></button>
           <button role="tab" data-tab="code" data-i18n="tab.code"></button>
           <button role="tab" data-tab="text" disabled data-i18n="tab.text" data-i18n-title="tab.textSoon"></button>
+          <button id="btn-comments" type="button" aria-pressed="false" aria-controls="comments-panel" data-i18n="comments.toggle"></button>
         </nav>
-        <div class="pane active" id="pane-blocks" role="tabpanel"><div id="blockly"></div></div>
+        <div class="pane active" id="pane-blocks" role="tabpanel"><div class="block-search"><button type="button" class="block-search-toggle" data-i18n-title="blocks.search"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 5 5"/></svg></button><input id="block-search" type="search" size="1" data-i18n-placeholder="blocks.search" data-i18n-title="blocks.search" autocomplete="off"></div><div class="blocks-content"><div id="blockly"></div><aside id="comments-panel" hidden></aside></div></div>
         <div class="pane assets" id="pane-images" role="tabpanel"></div>
         <div class="pane assets" id="pane-tiles" role="tabpanel"></div>
         <div class="pane" id="pane-map" role="tabpanel"></div>
@@ -53,16 +58,15 @@
           </div>
           <pre id="code" class="code" tabindex="0"></pre>
         </div>
+
       </section>
 
       <aside class="side">
+        <div class="side-content">
+        <div id="sim-shell" class="sim-shell">
         <div class="sim" id="sim" tabindex="0" data-i18n-title="sim.focus">
+          <button id="btn-sim-size" class="sim-control sim-size" data-i18n-title="sim.sizeSmall" hidden></button>
           <div class="screen-frame"><canvas id="screen" width="128" height="64"></canvas></div>
-          <div class="sim-bar">
-            <button id="btn-run" class="primary" data-i18n="sim.restart"></button>
-            <button id="btn-stop" data-i18n="sim.stop"></button>
-            <button id="btn-mute" data-i18n="sim.mute"></button>
-          </div>
           <div class="pad" aria-hidden="false">
             <div class="dpad">
               <button data-btn="up" class="up" data-i18n-title="button.up">&#9650;</button>
@@ -70,21 +74,45 @@
               <button data-btn="right" class="right" data-i18n-title="button.right">&#9654;</button>
               <button data-btn="down" class="down" data-i18n-title="button.down">&#9660;</button>
             </div>
+            <div class="sim-bar">
+              <button id="btn-run" class="primary sim-control" data-i18n-title="sim.play"></button>
+              <button id="btn-stop" class="sim-control" data-i18n-title="sim.stop"></button>
+              <button id="btn-restart" class="sim-control" data-i18n-title="sim.restart"></button>
+              <button id="btn-mute" class="sim-control" data-i18n-title="sim.mute"></button>
+              <button id="btn-sim-view" class="sim-control" data-i18n-title="sim.standalone"></button>
+              <button id="btn-sim-color" class="sim-control" data-i18n-title="sim.color"></button>
+            </div>
             <div class="ab">
               <button data-btn="b" class="b">B</button>
               <button data-btn="a" class="a">A</button>
             </div>
           </div>
-          <p class="muted small keys" data-i18n="sim.keys"></p>
-          <div id="sim-message" class="sim-message" role="status"></div>
         </div>
+        <div id="sim-message" class="sim-message" role="status"></div>
+        <p class="muted small keys" data-i18n="sim.keys"></p>
+        </div>
+
+        <div class="panel guide-panel" id="guide-panel" hidden></div>
 
         <div class="panel" id="problems-panel">
           <h3 data-i18n="problems.title"></h3>
           <ul id="problems" class="problems"></ul>
         </div>
 
-        <div class="panel device">
+
+        <div class="panel tips" id="tips-panel" hidden>
+          <h3 data-i18n="tips.title"></h3>
+          <ol id="tips"></ol>
+        </div>
+        </div>
+        <footer class="side-device-bar">
+          <div id="meter-summary" class="meter-summary"></div>
+          <button id="btn-device-export" class="small" data-i18n="device.export"></button>
+        </footer>
+      </aside>
+    </main>
+    <div id="device-panel-home" hidden>
+        <div class="device" id="device-panel">
           <h3 data-i18n="device.title"></h3>
           <div class="row">
             <span id="profile-name" class="grow"></span>
@@ -99,12 +127,7 @@
           <p id="device-status" class="muted small" role="status"></p>
         </div>
 
-        <div class="panel tips" id="tips-panel" hidden>
-          <h3 data-i18n="tips.title"></h3>
-          <ol id="tips"></ol>
-        </div>
-      </aside>
-    </main>
+    </div>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

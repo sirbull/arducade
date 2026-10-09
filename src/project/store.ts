@@ -63,6 +63,10 @@ export interface Settings {
   lastProjectId?: string;
   muted: boolean;
   firstRunDone: boolean;
+  /** Stars per finished guide level. */
+  guideStars?: Record<string, number>;
+  /** Let the user open guide levels in any order. */
+  guideFree?: boolean;
 }
 
 const SETTINGS_KEY = 'ardublocks.settings';

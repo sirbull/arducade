@@ -4,7 +4,7 @@
 import { compileInWorker } from '../compile/client';
 import type { CompileOutput } from '../compile/avrgcc';
 import { getChip, usableFlash, type Chip } from '../hw/chips';
-import { profileToConfigH } from '../hw/profile';
+import { hasErrors, validateProfile, profileToConfigH } from '../hw/profile';
 import { t } from '../i18n/i18n';
 import type { Diagnostic } from '../ir/ir';
 import { CORE_HEADERS } from '../project/sketch';
@@ -26,6 +26,13 @@ export class DeviceTools {
   private busy = false;
 
   constructor(private app: App) {
+    $('#btn-device-export').addEventListener('click', () => {
+      const panel = $('#device-panel');
+      const dialog = openDialog(t('device.export'), {
+        onClose: () => $('#device-panel-home').append(panel),
+      });
+      dialog.body.append(panel);
+    });
     $('#btn-compile').addEventListener('click', () => void this.compile());
     $('#btn-upload').addEventListener('click', () => void this.upload());
     $('#btn-sketch').addEventListener('click', () => this.app.downloadSketch());
@@ -85,6 +92,10 @@ export class DeviceTools {
       );
     };
     el.append(bar(t('device.flash'), flash, flashMax), bar(t('device.ram'), ram, ramMax));
+    const summary = $('#meter-summary');
+    clear(summary);
+    summary.append(bar(t('device.flash'), flash, flashMax), bar(t('device.ram'), ram, ramMax));
+    summary.title = estimate ? t('device.estimate') : t('device.exact');
     el.append(h('p', { class: 'muted small' }, estimate ? t('device.estimate') : t('device.exact')));
     if (flash > flashMax) el.append(h('p', { class: 'error small' }, t('device.tooBig')));
     else if (ram > ramMax - 300) el.append(h('p', { class: 'warning small' }, t('device.lowRam')));
@@ -110,6 +121,10 @@ export class DeviceTools {
     }
     if (!chip.browserCompile) {
       toast(t('device.exportOnly', { chip: chip.name }), 'info');
+      return null;
+    }
+    if (hasErrors(validateProfile(this.app.project.profile))) {
+      toast(t('profile.hasErrors'), 'error');
       return null;
     }
     const profileKey = JSON.stringify(this.app.project.profile);

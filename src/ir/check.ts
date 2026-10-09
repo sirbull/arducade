@@ -108,6 +108,11 @@ function walkExprs(stmts: Stmt[], fn: (e: Expr) => void) {
   });
 }
 
+/** Every expression in the program. */
+export function forEachExpr(p: Program, fn: (e: Expr) => void) {
+  for (const { body } of bodies(p)) walkExprs(body, fn);
+}
+
 /** All statement lists in the program, with the function they belong to. */
 function bodies(p: Program): { body: Stmt[]; func?: Func }[] {
   return [...p.events.map((e) => ({ body: e.body })), ...p.funcs.map((f) => ({ body: f.body, func: f }))];

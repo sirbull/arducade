@@ -200,7 +200,7 @@ Platformer er den viktigste malen, fordi mange vil prøve den først. Den vises 
 * Et brett på rundt 64x8 ruter i tilekartet, der kameraet følger spilleren sidelengs.
 * Mynter som gir poeng, fiender som går fram og tilbake, og pigger som tar et liv.
 * Man kan hoppe på fiender for å fjerne dem.
-* Et flagg ved målet som gir "Du vant" og viser poengsummen.
+* Et flagg ved målet som viser "You win" (på valgt språk når malen åpnes) og poengsummen.
 * Tre liv. Når man mister et liv, starter man fra begynnelsen av brettet.
 * Forslag til endringer: "Hopp høyere", "Tegn ditt eget brett i tile-editoren", "Legg til flere fiender".
 * Brettet lagres i flash, så det bruker nesten ikke RAM. Et brett på 64x8 ruter tar 512 byte flash.

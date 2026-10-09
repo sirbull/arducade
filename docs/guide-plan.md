@@ -140,8 +140,8 @@ Guidebrettene bruker bare grafikk fra biblioteket.
 
 ## 9. Rekkefølge for å bygge
 
-1. **Guidemotor:** panel, strukturkrav, hjelp med fasit, «Neste». Ett testbrett (1-1).
-2. **Kjørekrav** og «Prøv spillet»-trinn.
+1. **Guidemotor (gjort):** panel, strukturkrav, hjelp med hele koden, «Tilbake» og «Neste», bonusoppgave og stjerner. Brett 1-1 og 1-2. Brettene ligger på startsiden som kort, låst i rekkefølge, med «Velg brett fritt». Koden ligger i `src/guides/` og `src/ui/guide-panel.ts`.
+2. **Kjørekrav** og «Prøv spillet»-trinn. Enkle versjoner finnes («du har trykket ▶», «du har brukt pilene»). Det som mangler, er å kjøre spillet uten skjerm og sjekke resultatet.
 3. **Verden 1** (fire brett og slottet), med test av alle fasiter.
 4. **Spillverdenen** på startskjermen, med fremgang og stjerner.
 5. **Verdenene 2a, 2b og 2c** og det store spillet.

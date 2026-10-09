@@ -493,7 +493,7 @@
     "library.open": "Library",
     "library.images": "Sprite library",
     "library.tiles": "Tile library",
-    "library.helpImages": "Click a sprite to put a copy in your project. You can change it afterwards. Sprites with 🎞 are animations: delete frames if you want a still picture.",
+    "library.helpImages": "Click a sprite to put a copy in your project. You can change it afterwards. Sprites with a film icon are animations: delete frames if you want a still picture.",
     "library.helpTiles": "Click a tile to add it, or add a whole set with edges and corners. Sets fit together in the tile map.",
     "library.view": "Show",
     "library.view.any": "All",

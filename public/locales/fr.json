@@ -387,7 +387,7 @@
     "library.open": "Bibliothèque",
     "library.images": "Bibliothèque de sprites",
     "library.tiles": "Bibliothèque de cases",
-    "library.helpImages": "Clique sur un sprite pour en mettre une copie dans ton projet. Tu peux le modifier ensuite. Les sprites avec 🎞 sont animés : supprime des images si tu veux une image fixe.",
+    "library.helpImages": "Clique sur un sprite pour en mettre une copie dans ton projet. Tu peux le modifier ensuite. Les sprites avec une icône de pellicule sont animés : supprime des images si tu veux une image fixe.",
     "library.helpTiles": "Clique sur une case pour l’ajouter, ou ajoute un jeu entier avec bords et coins. Les jeux s’assemblent dans la carte.",
     "library.view": "Afficher",
     "library.view.any": "Tout",

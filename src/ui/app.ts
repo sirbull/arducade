@@ -21,7 +21,7 @@ import { ImagesPane, MapPane, TilesPane } from './assets-panes';
 import { buildWorkspace, type BuildResult } from './build';
 import { CodeView } from './code-view';
 import { confirmDialog } from './dialogs';
-import { $, clear, h, toast } from './dom';
+import { $, clear, h, icon, LOCK_ICON, toast } from './dom';
 import { loadTemplates, openGallery, openProjectsDialog, thumbnail } from './gallery';
 import { allProfiles, loadServerProfiles, openProfileDialog, profileFromUrl } from './profile-editor';
 import { openFirstRun, openSettings } from './settings-dialog';
@@ -553,7 +553,7 @@ export class App {
       h('div', { class: 'row' },
         h('button', { class: 'primary', onclick: async () => this.loadProject(newProject(t('project.defaultName'), await this.defaultProfile())) }, t('home.create')),
         h('button', { onclick: () => this.importProject() }, t('menu.import')))),
-      guidesSection, projectsSection, templatesSection);
+      projectsSection, templatesSection, guidesSection);
     this.renderGuides(guidesSection);
     heading.focus();
     projectsSection.append(h('h2', {}, t('projects.title')), h('p', { class: 'muted' }, t('ui.loading')));
@@ -643,7 +643,7 @@ export class App {
         'aria-label': `${g.number} ${title}${open ? '' : `, ${t('guide.locked')}`}${done ? `, ${t('guide.stars', { n: done })}` : ''}`,
         onclick: () => void this.openGuide(g),
       },
-      h('span', { class: 'guide-badge' }, open ? g.number : '🔒'),
+      h('span', { class: 'guide-badge' }, open ? g.number : icon(LOCK_ICON)),
       h('strong', {}, title),
       h('span', { class: 'muted small' }, localized(g.description, lang)),
       h('span', { class: 'guide-level-stars', 'aria-hidden': 'true' }, done ? '★'.repeat(done) + '☆'.repeat((g.bonus ? 2 : 1) - done) : '')));

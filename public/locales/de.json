@@ -387,7 +387,7 @@
     "library.open": "Bibliothek",
     "library.images": "Sprite-Bibliothek",
     "library.tiles": "Kachel-Bibliothek",
-    "library.helpImages": "Klicke auf ein Sprite, um eine Kopie ins Projekt zu legen. Du kannst es danach ändern. Sprites mit 🎞 sind Animationen: lösche Bilder, wenn du ein Standbild willst.",
+    "library.helpImages": "Klicke auf ein Sprite, um eine Kopie ins Projekt zu legen. Du kannst es danach ändern. Sprites mit Filmsymbol sind Animationen: lösche Bilder, wenn du ein Standbild willst.",
     "library.helpTiles": "Klicke auf eine Kachel, um sie hinzuzufügen, oder füge ein ganzes Set mit Kanten und Ecken hinzu. Die Sets passen in der Karte zusammen.",
     "library.view": "Zeigen",
     "library.view.any": "Alle",

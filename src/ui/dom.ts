@@ -50,3 +50,16 @@ export function toast(message: string, kind: 'info' | 'error' | 'ok' = 'info') {
   clearTimeout(toastTimer);
   toastTimer = window.setTimeout(() => (el!.className = ''), 4000);
 }
+
+/** A one color line icon from an SVG path on a 24x24 grid. Sized 1em so it follows the font size. */
+export function icon(d: string): SVGSVGElement {
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('viewBox', '0 0 24 24'); svg.setAttribute('width', '1em'); svg.setAttribute('height', '1em'); svg.setAttribute('aria-hidden', 'true');
+  const path = document.createElementNS(svg.namespaceURI, 'path');
+  path.setAttribute('d', d); path.setAttribute('fill', 'none'); path.setAttribute('stroke', 'currentColor');
+  path.setAttribute('stroke-width', '2'); path.setAttribute('stroke-linecap', 'round'); path.setAttribute('stroke-linejoin', 'round');
+  svg.append(path); return svg;
+}
+
+export const LOCK_ICON = 'M6 11h12v10H6z M8 11V7a4 4 0 018 0v4';
+export const FILM_ICON = 'M4 4h16v16H4z M8 4v16 M16 4v16 M4 8h4 M4 12h4 M4 16h4 M16 8h4 M16 12h4 M16 16h4';

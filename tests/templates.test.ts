@@ -49,3 +49,12 @@ describe.each(TEMPLATE_SOURCES.map((t) => [t.id, t] as const))('template %s', (i
     expect(frames).toBeGreaterThan(250);
   });
 });
+
+it('flappy spawns pipes and gate inside the screen so autoDestroy keeps them', async () => {
+  const { flappy } = await import('../src/templates/flappy');
+  // Spawned at x=131; autoDestroy kills sprites whose left edge is >= 128.
+  for (const id of ['pipeTop', 'pipeBottom', 'gate']) {
+    const img = flappy.images.find((i) => i.id === id)!;
+    expect(131 - Math.trunc(img.width / 2), id).toBeLessThan(128);
+  }
+});

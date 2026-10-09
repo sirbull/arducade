@@ -387,7 +387,7 @@
     "library.open": "Bibliotek",
     "library.images": "Bibliotek med sprites",
     "library.tiles": "Bibliotek med ruter",
-    "library.helpImages": "Trykk på en sprite for å legge en kopi i prosjektet. Du kan endre den etterpå. Sprites med 🎞 er animasjoner: slett bilder hvis du vil ha et stillbilde.",
+    "library.helpImages": "Trykk på en sprite for å legge en kopi i prosjektet. Du kan endre den etterpå. Sprites med filmikon er animasjoner: slett bilder hvis du vil ha et stillbilde.",
     "library.helpTiles": "Trykk på en rute for å legge den til, eller legg til et helt sett med kanter og hjørner. Settene passer sammen i tilekartet.",
     "library.view": "Vis",
     "library.view.any": "Alle",

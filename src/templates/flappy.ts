@@ -84,7 +84,7 @@ export const flappy: TemplateSource = {
     },
     { id: 'pipeTop', name: 'pipe top', width: 8, height: PIPE_H, frames: [pipe(false)] },
     { id: 'pipeBottom', name: 'pipe bottom', width: 8, height: PIPE_H, frames: [pipe(true)] },
-    { id: 'gate', name: 'gate', width: 2, height: GAP, frames: [Array<string>(GAP).fill('11')] },
+    { id: 'gate', name: 'gate', width: 8, height: GAP, frames: [Array<string>(GAP).fill('11111111')] },
   ],
   tiles: [],
   tilemaps: [],

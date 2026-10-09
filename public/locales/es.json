@@ -387,7 +387,7 @@
     "library.open": "Biblioteca",
     "library.images": "Biblioteca de sprites",
     "library.tiles": "Biblioteca de casillas",
-    "library.helpImages": "Haz clic en un sprite para poner una copia en tu proyecto. Puedes cambiarlo después. Los sprites con 🎞 son animaciones: borra fotogramas si quieres una imagen fija.",
+    "library.helpImages": "Haz clic en un sprite para poner una copia en tu proyecto. Puedes cambiarlo después. Los sprites con un icono de película son animaciones: borra fotogramas si quieres una imagen fija.",
     "library.helpTiles": "Haz clic en una casilla para añadirla, o añade un conjunto entero con bordes y esquinas. Los conjuntos encajan en el mapa.",
     "library.view": "Mostrar",
     "library.view.any": "Todo",

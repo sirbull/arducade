@@ -10,9 +10,11 @@ export function registerAltDrag() {
     startDrag(e?: PointerEvent | KeyboardEvent): Blockly.IDraggable;
   };
   const startDrag = proto.startDrag;
+  // The copy's own startDrag comes back here with Alt still held.
+  let copying = false;
   proto.startDrag = function (e) {
     const ws = this.block.workspace;
-    if (!(e instanceof PointerEvent) || !e.altKey || ws.isFlyout) return startDrag.call(this, e);
+    if (copying || !(e instanceof PointerEvent) || !e.altKey || ws.isFlyout) return startDrag.call(this, e);
     // The gesture swaps a shadow for its parent; startBlock is what was clicked.
     // ponytail: startBlock is private in Blockly, falls back to the dragged block.
     const clicked = ((ws.getGesture(e) as unknown as { startBlock?: Blockly.BlockSvg } | null)?.startBlock) ?? this.block;
@@ -22,6 +24,7 @@ export function registerAltDrag() {
     copy.render();
     copy.moveTo(clicked.getRelativeToSurfaceXY());
     copy.bringToFront();
-    return copy.startDrag(e);
+    copying = true;
+    try { return copy.startDrag(e); } finally { copying = false; }
   };
 }

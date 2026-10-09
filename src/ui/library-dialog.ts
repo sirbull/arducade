@@ -5,7 +5,7 @@ import { currentLanguage, t } from '../i18n/i18n';
 import { LIBRARY_IMAGES, LIBRARY_TILE_GROUPS, type LibraryImage, type LibraryTile, type LibraryView } from '../project/library';
 import { localized, type PixelRows } from '../project/model';
 import { openDialog } from './dialogs';
-import { clear, h } from './dom';
+import { clear, FILM_ICON, h, icon } from './dom';
 
 let view: LibraryView = 'any';
 
@@ -13,7 +13,7 @@ const shows = (v: LibraryView) => view === 'any' || v === 'any' || v === view;
 
 export function filmBadge(frames: number): HTMLElement {
   const label = t('library.animated', { n: frames });
-  return h('span', { class: 'film-badge', title: label, 'aria-label': label }, '🎞');
+  return h('span', { class: 'film-badge', title: label, 'aria-label': label }, icon(FILM_ICON));
 }
 
 function viewSwitch(render: () => void): HTMLElement {

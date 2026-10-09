@@ -1,0 +1,9 @@
+Generated with the built-in image_gen tool.
+
+Shared prompt: Use case: stylized-concept. Asset type: landscape 2:1 course thumbnail for ArduCade. Style: polished original retro pixel-art game cover, crisp square pixels and angular silhouettes, rich midnight navy with vibrant cyan, warm orange and gold accents, matching a friendly robot adventure series. Exciting welcoming arcade adventure, striking readable subjects at small thumbnail size. Full bleed wide composition. No text, no letters except X and O game pieces, no logos, no UI, no borders, no rounded rectangles or oval shapes. True circles allowed. Output one landscape image.
+
+w2-maze.jpg: Labyrinth escape: a little angular robot explorer holding a glowing gold key in an intricate ancient stone maze, a luminous exit doorway beyond, elevated perspective showing winding square corridors.
+w2-states.jpg: The changing guard: little angular robot adventurer sneaking past a large block-shaped robotic guard protecting a luminous cyan diamond in a castle corridor. Guard alert red eye, comic sparkling stars indicate stun, dramatic stealth chase energy.
+w2-pet.jpg: Pocket friend: an adorable little pixel cat companion with pointed ears and expressive cyan eyes, joyfully playing beside a food bowl and ball in a cozy magical pixel garden, warm friendly mood.
+w2-tictactoe.jpg: Three in a row: a dramatic glowing three-by-three tic tac toe board with chunky gold X pieces and cyan circular O pieces, two small angular friendly robot rivals facing each other across the board, playful arcade strategy showdown.
+w2-bombs.jpg: Bomb maze: little angular robot adventurer escaping a brilliant cross-shaped pixel explosion through a maze of square stone blocks and wooden crates, circular black bomb with sparking fuse and a red enemy robot, exciting cartoon arcade action.

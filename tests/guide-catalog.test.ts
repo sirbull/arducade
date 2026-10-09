@@ -10,7 +10,7 @@ import { GUIDES } from '../src/guides/world1';
 import { guideProject } from '../src/guides/guide';
 function world(overrides: Partial<CatalogHost> = {}) {
   const root=document.createElement('div');document.body.append(root);
-  const host:CatalogHost={stars:{},free:false,projects:[],setFree:vi.fn(),open:vi.fn(),home:vi.fn(),...overrides};
+  const host:CatalogHost={stars:{},free:false,projects:[],setFree:vi.fn(),open:vi.fn(),...overrides};
   renderGuideCatalog(root,host);return {root,host};
 }
 afterEach(()=>{document.body.replaceChildren();vi.clearAllMocks();});
@@ -77,7 +77,7 @@ describe('guide catalog',()=>{
     const earlier=guideProject(GUIDES[0],'en');earlier.modified=1;
     const recent=guideProject(GUIDES[5],'en');recent.modified=2;
     const {root,host}=world({free:true,projects:[earlier,recent]});
-    expect(root.querySelector('.catalog-recommendation h2')!.textContent).toBe(GUIDES[5].title.en);
+    expect(root.querySelector('.catalog-recommendation h3')!.textContent).toBe(GUIDES[5].title.en);
     (root.querySelector('.catalog-resume') as HTMLButtonElement).click();
     expect(host.open).toHaveBeenCalledWith(GUIDES[5]);
     expect([...root.querySelectorAll<HTMLButtonElement>('.course-card')].every(card=>card.tabIndex===0)).toBe(true);

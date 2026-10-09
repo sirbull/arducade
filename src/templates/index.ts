@@ -1,6 +1,7 @@
 import { BUILTIN_PROFILES, DEFAULT_PROFILE_ID } from '../hw/profile';
 import { PROJECT_VERSION, type Project } from '../project/model';
 import { blk, workspace } from './dsl';
+import { match3 } from './match3';
 import { bricks } from './bricks';
 import { flappy } from './flappy';
 import { maze3d } from './maze3d';
@@ -31,7 +32,7 @@ const empty: TemplateSource = {
   blocks: workspace([blk('ab_on_start'), blk('ab_on_update')]),
 };
 
-export const TEMPLATE_SOURCES: TemplateSource[] = [empty, platformer, pong, shooter, maze3d, bricks, flappy].sort((a, b) => a.order - b.order);
+export const TEMPLATE_SOURCES: TemplateSource[] = [empty, platformer, pong, shooter, maze3d, bricks, flappy, match3].sort((a, b) => a.order - b.order);
 
 export function templateToProject(t: TemplateSource): Project {
   return {

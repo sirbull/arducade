@@ -25,6 +25,20 @@ export function openDialog(title: string, opts: { wide?: boolean; onClose?: () =
     },
   };
   closeBtn?.addEventListener('click', () => handle.close());
+  const outsideDialog = (event: MouseEvent) => {
+    const bounds = el.getBoundingClientRect();
+    return event.target === el && (event.clientX < bounds.left || event.clientX > bounds.right
+      || event.clientY < bounds.top || event.clientY > bounds.bottom);
+  };
+  let pressedOutside = false;
+  el.addEventListener('pointerdown', (event) => {
+    pressedOutside = event.isPrimary && event.button === 0 && outsideDialog(event);
+  });
+  el.addEventListener('pointercancel', () => { pressedOutside = false; });
+  el.addEventListener('click', (event) => {
+    if (opts.closable !== false && pressedOutside && outsideDialog(event)) handle.close();
+    pressedOutside = false;
+  });
   el.addEventListener('cancel', (e) => {
     if (opts.closable === false) e.preventDefault();
   });

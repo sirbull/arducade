@@ -37,7 +37,14 @@ describe.each(TEMPLATE_SOURCES.map((t) => [t.id, t] as const))('template %s', (i
     });
     const factory = new Function('E', '$w', '$div', '$mod', '$lg', js.code) as (...a: unknown[]) => GameHooks;
     const hooks = factory(engine, (v: number) => (v << 16) >> 16, div16, mod16, engine.loopGuard);
-    await engine.begin(hooks);
+    // Tap A until the start code (which may wait on a splash screen) is done.
+    let begun = false;
+    void engine.begin(hooks).then(() => (begun = true));
+    for (let i = 0; i < 50 && !begun; i++) {
+      engine.input = i % 4 < 2 ? 1 << 4 : 0;
+      await vi.advanceTimersByTimeAsync(20);
+    }
+    expect(begun).toBe(true);
     for (let i = 0; i < 300; i++) {
       // Hold right and press A now and then.
       engine.input = (1 << 3) | (i % 20 < 3 ? 1 << 4 : 0);

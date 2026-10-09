@@ -35,7 +35,6 @@ import { applyPageTheme, BLOCK_RENDERER, blocklyTheme, THEME_IDS, type ThemeId }
 import { DeviceTools } from './device';
 import { GuidePanel } from './guide-panel';
 import { guideProject, type Guide } from '../guides/guide';
-import { GUIDES } from '../guides/world1';
 import { renderGuideCatalog, reachedStep } from './guide-catalog';
 
 const DEFAULT_SETTINGS: Settings = {
@@ -62,7 +61,6 @@ export class App {
   private map!: MapPane;
   private device!: DeviceTools;
   private guide!: GuidePanel;
-  private guidesVisible = false;
   private buildTimer = 0;
   private saveTimer = 0;
   private loading = false;
@@ -542,10 +540,7 @@ export class App {
       this.ws.setTheme(blocklyTheme(this.settings.theme as ThemeId));
       this.guide.render();
     }
-    if (this.homeVisible) {
-      if (this.guidesVisible) await this.showGuides(false);
-      else await this.showHome(false);
-    }
+    if (this.homeVisible) await this.showHome(false);
     if (profileChanged && this.project) {
       const p = await this.defaultProfile();
       if (await confirmDialog(t('settings.profile'), t('settings.applyProfile', { name: p.name }), t('ui.yes'))) this.setProfile(p);
@@ -586,7 +581,6 @@ export class App {
   // Projects --------------------------------------------------------------
 
   async showHome(save = true) {
-    this.guidesVisible = false;
     if (save && !this.homeVisible && this.hasProject) {
       clearTimeout(this.buildTimer);
       clearTimeout(this.saveTimer);
@@ -612,8 +606,7 @@ export class App {
       h('div', { class: 'row' },
         h('button', { class: 'primary', onclick: async () => this.loadProject(newProject(t('project.defaultName'), await this.defaultProfile())) }, t('home.create')),
         h('button', { onclick: () => this.importProject() }, t('menu.import')))),
-      guidesSection, projectsSection, templatesSection);
-    this.renderGuides(guidesSection);
+      projectsSection, templatesSection, guidesSection);
     heading.focus();
     projectsSection.append(h('h2', {}, t('projects.title')), h('p', { class: 'muted' }, t('ui.loading')));
     templatesSection.append(h('h2', {}, t('home.templates')), h('p', { class: 'muted' }, t('ui.loading')));
@@ -680,31 +673,18 @@ export class App {
       h('span', { class: 'muted small' }, localized(template.template?.description, currentLanguage()))));
     }
     templatesSection.append(templates.length ? templateGrid : h('p', { class: 'muted' }, t('gallery.none')));
-  }
-
-  private renderGuides(section: HTMLElement) {
-    section.append(h('button', { class: 'guide-launcher', onclick: () => void this.showGuides(false) },
-      h('span', { class: 'guide-launcher-copy' },
-        h('span', { class: 'catalog-eyebrow' }, t('guide.worldEyebrow')),
-        h('strong', {}, t('guide.worldTitle')),
-        h('span', { class: 'muted' }, t('guide.worldTeaser', { n: GUIDES.length })),
-        h('span', { class: 'guide-launcher-link' }, t('guide.worldEnter') + ' →'))));
-  }
-
-  private async showGuides(save = true) {
-    await this.showHome(save);
-    const version = ++this.homeRender;
-    this.guidesVisible = true;
-    const projects = await projectStore.list().catch(() => [] as Project[]);
-    if (!this.homeVisible || version !== this.homeRender) return;
-    renderGuideCatalog($('#home'), {
+    renderGuideCatalog(guidesSection, {
       stars: this.settings.guideStars ?? {},
       free: !!this.settings.guideFree,
       projects,
       setFree: (value) => { this.settings.guideFree = value; saveSettings(this.settings); },
       open: (g, step) => void this.openGuide(g, step),
-      home: () => void this.showHome(false),
     });
+  }
+
+  private async showGuides(save = true) {
+    await this.showHome(save);
+    document.querySelector('.home-guides')?.scrollIntoView();
   }
 
   /** Opens the user's project for a guide level, or starts the level. */
@@ -718,7 +698,6 @@ export class App {
       project.guide.reached = reached;
       project.guide.step = Math.min(Math.max(0, step), reached, g.steps.length - 1);
     }
-    this.guidesVisible = false;
     this.loadProject(project);
     this.selectTab('blocks');
   }

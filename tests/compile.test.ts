@@ -81,6 +81,8 @@ describe.skipIf(!haveTools)('WebAssembly compiler', () => {
     ['arduboy', 'atmega32u4', 'platformer'],
     ['nano-sh1106-i2c', 'atmega328p', 'maze3d'],
     ['arduboy', 'atmega32u4', 'maze3d'],
+    ['nano-sh1106-i2c', 'atmega328p', 'match3'],
+    ['arduboy', 'atmega32u4', 'match3'],
   ] as const) {
     it(`compiles the ${template} for ${mcu}`, async () => {
       const game = readFileSync(join(__dirname, `../.cache/gen/${template}.ino`), 'utf8');

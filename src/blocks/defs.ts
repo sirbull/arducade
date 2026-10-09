@@ -120,6 +120,7 @@ export const DEFS: Def[] = [
   { type: 'ab_sprite_set_velocity', ...SPRITES, msg: 'AB_SPRITE_SET_VELOCITY', args: [sprite('SPRITE'), num('VX'), num('VY')], statement: true, inline: true },
   { type: 'ab_sprite_set_outline_width', ...SPRITES, msg: 'AB_SPRITE_SET_OUTLINE_WIDTH', args: [sprite('SPRITE'), num('WIDTH')], statement: true, inline: true },
   { type: 'ab_sprite_set_outline', ...SPRITES, msg: 'AB_SPRITE_SET_OUTLINE', args: [sprite('SPRITE'), dropdown('OUTLINE', [['AB_OUTLINE_AUTO', '3'], ['AB_OUTLINE_OFF', '0'], ['AB_COLOR_BLACK', '1'], ['AB_COLOR_WHITE', '2']])], statement: true, inline: true },
+  { type: 'ab_sprite_set_z', ...SPRITES, msg: 'AB_SPRITE_SET_Z', args: [sprite('SPRITE'), num('Z')], statement: true, inline: true },
   { type: 'ab_sprite_set_image', ...SPRITES, msg: 'AB_SPRITE_SET_IMAGE', args: [sprite('SPRITE'), image()], statement: true, inline: true },
   {
     type: 'ab_sprite_set_flag',
@@ -129,6 +130,7 @@ export const DEFS: Def[] = [
       sprite('SPRITE'),
       dropdown('FLAG', [
         ['AB_FLAG_STAY_IN_SCREEN', 'stayInScreen'],
+        ['AB_FLAG_STAY_IN_MAP', 'stayInMap'],
         ['AB_FLAG_BOUNCE_ON_WALL', 'bounceOnWall'],
         ['AB_FLAG_GHOST', 'ghost'],
         ['AB_FLAG_AUTO_DESTROY', 'autoDestroy'],

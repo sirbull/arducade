@@ -204,6 +204,8 @@ class Converter {
         return this.api('sprites.setPosition', [this.spriteIn(b), this.input(b, 'X'), this.input(b, 'Y')], id);
       case 'ab_sprite_set_velocity':
         return this.api('sprites.setVelocity', [this.spriteIn(b), this.input(b, 'VX'), this.input(b, 'VY')], id);
+      case 'ab_sprite_set_z':
+        return this.api('sprites.setZ', [this.spriteIn(b), this.input(b, 'Z', { k: 'num', v: 0 })], id);
       case 'ab_sprite_set_outline_width':
         return this.api('sprites.setOutlineWidth', [this.spriteIn(b), this.input(b, 'WIDTH', { k: 'num', v: 1 })], id);
       case 'ab_sprite_set_outline':

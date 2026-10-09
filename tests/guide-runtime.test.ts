@@ -30,9 +30,9 @@ describe('guide gameplay validation', () => {
       b.inputs.SPRITE.block.fields.VAR = { name: 'wrongSprite' };
     })).toContain(false);
   });
-  it('rejects destroying the hero instead of the coin', async () => {
-    expect(await results('w1-coins', 'ab_sprite_destroy', (b) => {
-      b.inputs.SPRITE.block.fields.VAR = { name: 'sprite' };
+  it('rejects moving the hero instead of the coin', async () => {
+    expect(await results('w1-coins', 'ab_sprite_set_position', (b) => {
+      if (b.inputs.SPRITE.block.fields.VAR.name === 'otherSprite') b.inputs.SPRITE.block.fields.VAR = { name: 'sprite' };
     })).toContain(false);
   });
   it('rejects a counter that changes the wrong variable', async () => {

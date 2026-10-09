@@ -74,6 +74,7 @@ enum : uint8_t {
   FLAG_AUTO_DESTROY = 8,
   FLAG_INVISIBLE = 16,
   FLAG_DESTROY_ON_WALL = 32,
+  FLAG_STAY_IN_MAP = 64,
 };
 
 // Hit directions, set when a sprite hits a wall or the screen edge.
@@ -93,6 +94,7 @@ struct Sprite {
   uint8_t flags;
   uint8_t outlineWidth; // 0 means default thickness of 1
   uint8_t outline;    // 0 off, 1 black, 2 white, 3 automatic
+  int8_t z;           // drawing layer, higher is drawn on top
   uint8_t hit;
   uint8_t frame;
   uint8_t animRate;  // frames between animation steps, 0 for no animation
@@ -539,10 +541,10 @@ static void setTile(int16_t col, int16_t row, uint8_t tile) {
   overlayCount++;
 }
 
-static bool isSolid(int16_t col, int16_t row) {
+static bool isSolid(int16_t col, int16_t row, bool edgeWalls) {
   if (!map) return false;
-  // The left and right side of the map are walls.
-  if (col < 0 || col >= mapW()) return true;
+  // Outside the left and right side of the map is a wall only for sprites that stay in the map.
+  if (col < 0 || col >= mapW()) return edgeWalls;
   if (row < 0 || row >= mapH()) return false;
   return solidTiles & (1UL << tileAt(col, row));
 }
@@ -666,6 +668,10 @@ static void setVelocity(uint8_t s, int16_t vx, int16_t vy) {
   sprites[s].vy = clamp16((int32_t)vy * 16);
 }
 
+static void setZ(uint8_t s, int16_t z) {
+  if (exists(s)) sprites[s].z = z < -128 ? -128 : z > 127 ? 127 : z;
+}
+
 static void setOutlineWidth(uint8_t s, int16_t width) {
   if (exists(s)) sprites[s].outlineWidth = width < 1 ? 1 : width > 8 ? 8 : width;
 }
@@ -732,10 +738,11 @@ static void moveAxis(Sprite &sp, bool horizontal, int32_t delta) {
   int16_t left = px(sp.x) - w / 2, top = px(sp.y) - h / 2;
   int16_t right = left + w - 1, bottom = top + h - 1;
   bool bounce = sp.flags & FLAG_BOUNCE_ON_WALL;
+  bool edgeWalls = sp.flags & FLAG_STAY_IN_MAP;
   if (horizontal) {
     int16_t col = delta > 0 ? right >> 3 : left >> 3;
     for (int16_t row = top >> 3; row <= bottom >> 3; row++) {
-      if (!isSolid(col, row)) continue;
+      if (!isSolid(col, row, edgeWalls)) continue;
       if (delta > 0) { left = col * 8 - w; sp.hit |= HIT_RIGHT; }
       else { left = (col + 1) * 8; sp.hit |= HIT_LEFT; }
       sp.x = (int32_t)(left + w / 2) << 8;
@@ -747,7 +754,7 @@ static void moveAxis(Sprite &sp, bool horizontal, int32_t delta) {
     // keeps grounded contact stable between frames.
     int16_t row = delta > 0 ? (bottom + 1) >> 3 : top >> 3;
     for (int16_t col = left >> 3; col <= right >> 3; col++) {
-      if (!isSolid(col, row)) continue;
+      if (!isSolid(col, row, edgeWalls)) continue;
       if (delta > 0) { top = row * 8 - h; sp.hit |= HIT_BOTTOM; }
       else { top = (row + 1) * 8; sp.hit |= HIT_TOP; }
       sp.y = (int32_t)(top + h / 2) << 8;
@@ -847,31 +854,42 @@ static bool outlineSolid(const uint8_t *shape, int16_t w, int16_t h, int16_t x, 
   return x >= 0 && y >= 0 && x < w && y < h && (pgm_read_byte(shape + (y >> 3) * w + x) & (1 << (y & 7)));
 }
 
-static void drawSprites() {
-  for (uint8_t i = 0; i < AB_MAX_SPRITES; i++) {
-    Sprite &sp = sprites[i];
-    if (!sp.alive || (sp.flags & FLAG_INVISIBLE)) continue;
-    int16_t w = imgW(sp.img), h = imgH(sp.img);
-    int16_t x = px(sp.x) - w / 2 - camX, y = px(sp.y) - h / 2 - camY;
-    if (sp.outline && sp.img) {
-      int16_t radius = sp.outlineWidth ? sp.outlineWidth : 1;
-      uint16_t size = ((h + 7) >> 3) * w;
-      uint8_t masked = pgm_read_byte(sp.img + 3) & 1;
-      uint8_t frame = sp.frame < imgFrames(sp.img) ? sp.frame : 0;
-      const uint8_t *shape = sp.img + 4 + frame * size * (masked ? 2 : 1) + (masked ? size : 0);
-      // Clip first and visit each contour pixel once, including diagonal neighbors.
-      for (int16_t cy = y < radius ? -y : -radius; cy < h + radius && cy + y < 64; cy++) {
-        for (int16_t cx = x < radius ? -x : -radius; cx < w + radius && cx + x < 128; cx++) {
-          if (outlineSolid(shape, w, h, cx, cy)) continue;
-          bool adjacent = false;
-          for (int8_t dy = -radius; dy <= radius && !adjacent; dy++)
-            for (int8_t dx = -radius; dx <= radius; dx++)
-              if (outlineSolid(shape, w, h, cx + dx, cy + dy)) { adjacent = true; break; }
-          if (adjacent) drawPixel(x + cx, y + cy, sp.outline == 3 ? 2 : sp.outline - 1);
-        }
+static void drawSprite(Sprite &sp) {
+  if (sp.flags & FLAG_INVISIBLE) return;
+  int16_t w = imgW(sp.img), h = imgH(sp.img);
+  int16_t x = px(sp.x) - w / 2 - camX, y = px(sp.y) - h / 2 - camY;
+  if (sp.outline && sp.img) {
+    int16_t radius = sp.outlineWidth ? sp.outlineWidth : 1;
+    uint16_t size = ((h + 7) >> 3) * w;
+    uint8_t masked = pgm_read_byte(sp.img + 3) & 1;
+    uint8_t frame = sp.frame < imgFrames(sp.img) ? sp.frame : 0;
+    const uint8_t *shape = sp.img + 4 + frame * size * (masked ? 2 : 1) + (masked ? size : 0);
+    // Clip first and visit each contour pixel once, including diagonal neighbors.
+    for (int16_t cy = y < radius ? -y : -radius; cy < h + radius && cy + y < 64; cy++) {
+      for (int16_t cx = x < radius ? -x : -radius; cx < w + radius && cx + x < 128; cx++) {
+        if (outlineSolid(shape, w, h, cx, cy)) continue;
+        bool adjacent = false;
+        for (int8_t dy = -radius; dy <= radius && !adjacent; dy++)
+          for (int8_t dx = -radius; dx <= radius; dx++)
+            if (outlineSolid(shape, w, h, cx + dx, cy + dy)) { adjacent = true; break; }
+        if (adjacent) drawPixel(x + cx, y + cy, sp.outline == 3 ? 2 : sp.outline - 1);
       }
     }
-    drawImage(x, y, sp.img, sp.frame);
+  }
+  drawImage(x, y, sp.img, sp.frame);
+}
+
+// Lowest layer first; sprites on the same layer are drawn in pool order.
+static void drawSprites() {
+  int16_t layer = -129;
+  for (;;) {
+    int16_t next = 128;
+    for (uint8_t i = 0; i < AB_MAX_SPRITES; i++)
+      if (sprites[i].alive && sprites[i].z > layer && sprites[i].z < next) next = sprites[i].z;
+    if (next == 128) return;
+    for (uint8_t i = 0; i < AB_MAX_SPRITES; i++)
+      if (sprites[i].alive && sprites[i].z == next) drawSprite(sprites[i]);
+    layer = next;
   }
 }
 

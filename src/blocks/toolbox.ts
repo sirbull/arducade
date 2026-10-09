@@ -54,6 +54,7 @@ export function buildToolbox(): Json {
         block('variables_set', { VALUE: { block: { type: 'ab_sprite_projectile', inputs: { FROM: spriteVar(), VX: n(0), VY: n(-80) } } } }, { VAR: { name: 'projectile' } }),
         block('ab_sprite_set_outline', { SPRITE: spriteVar() }),
         block('ab_sprite_set_outline_width', { SPRITE: spriteVar(), WIDTH: n(1) }),
+        block('ab_sprite_set_z', { SPRITE: spriteVar(), Z: n(1) }),
         block('ab_sprite_set_image', { SPRITE: spriteVar() }),
         block('ab_sprite_animate', { SPRITE: spriteVar(), MS: n(200) }),
         block('ab_sprite_destroy', { SPRITE: spriteVar() }),

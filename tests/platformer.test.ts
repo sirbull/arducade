@@ -30,3 +30,16 @@ it('accepts a grounded jump on every frame, including subpixel gravity frames', 
     expect(engine.getProp(0, 3)).toBeGreaterThan(-100);
   }
 });
+
+it('keeps the enemies inside the level, so the last one turns at the right end', async () => {
+  const { js } = compileProject(templateToProject(platformer));
+  const engine = new Engine({ show: () => {}, tone: () => {}, storage: { read: () => 0, write: () => {} }, onSkippedCpp: () => {}, maxSprites: 16, hiscoreMagic: js.hiscoreKey, noWaits: true });
+  engine.millis = () => engine.frameCount * 33;
+  await engine.begin(new Function('E', '$w', '$div', '$mod', '$lg', js.code)(engine, (v: number) => (v << 16) >> 16, div16, mod16, engine.loopGuard) as GameHooks);
+  // Without the hero the enemies just walk back and forth.
+  engine.destroy(0);
+  for (let i = 0; i < 900; i++) await engine.frame(true);
+  const enemies = [...Array(16).keys()].filter((s) => engine.exists(s));
+  expect(enemies.length).toBeGreaterThan(0);
+  for (const s of enemies) expect(engine.getProp(s, 9)).toBeLessThanOrEqual(engine.mapW() * 8);
+});

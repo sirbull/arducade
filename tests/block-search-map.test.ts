@@ -7,7 +7,7 @@ import { workspaceToIR } from '../src/blocks/toIR';
 
 it('finds all sprite blocks by category and map by block text', () => {
   const workspace = { getToolboxCategoryCallback: () => undefined } as unknown as Blockly.WorkspaceSvg;
-  expect(searchBlocks('sprites', workspace)).toHaveLength(20);
+  expect(searchBlocks('sprites', workspace)).toHaveLength(23);
   expect(searchBlocks('map', workspace).some((entry) => entry.type === 'ab_map')).toBe(true);
   expect(searchBlocks('nothing matches this', workspace)).toEqual([]);
 });

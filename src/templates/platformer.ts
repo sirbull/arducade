@@ -1,4 +1,4 @@
-import { and, arith, blk, call, cmp, func, get, hitting, ifThen, num, prop, set, setProp, workspace } from './dsl';
+import { and, arith, blk, call, cmp, flag, func, get, hitting, ifThen, num, prop, set, setProp, workspace } from './dsl';
 import type { TemplateSource } from './types';
 
 const W = 64;
@@ -141,6 +141,7 @@ export const platformer: TemplateSource = {
       body: [
         blk('ab_set_tilemap', { f: { MAP: 'level1' } }),
         set('hero', blk('ab_sprite_create', { f: { IMAGE: 'hero', KIND: 'Player' } })),
+        flag('hero', 'stayInMap'),
         blk('ab_place_on_tile', { i: { SPRITE: get('hero'), COL: num(2), ROW: num(5) } }),
         setProp('hero', 'ay', num(400)),
         blk('ab_move_sprite', { i: { SPRITE: get('hero'), VX: num(60), VY: num(0) } }),
@@ -149,7 +150,7 @@ export const platformer: TemplateSource = {
         blk('ab_spawn_on_tiles', { f: { TILE: 'enemyMarker', IMAGE: 'enemy', KIND: 'Enemy' }, comment: '@enemies' }),
         blk('ab_for_each_kind', {
           f: { VAR: { name: 'enemy' }, KIND: 'Enemy' },
-          body: [setProp('enemy', 'vx', num(-20)), setProp('enemy', 'ay', num(400))],
+          body: [setProp('enemy', 'vx', num(-20)), setProp('enemy', 'ay', num(400)), flag('enemy', 'stayInMap')],
         }),
         blk('ab_life_set', { i: { VALUE: num(3) } }),
         blk('ab_score_set', { i: { VALUE: num(0) } }),

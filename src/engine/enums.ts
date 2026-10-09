@@ -13,6 +13,7 @@ export const FLAGS = {
   autoDestroy: 8,
   invisible: 16,
   destroyOnWall: 32,
+  stayInMap: 64,
 } as const;
 export type FlagName = keyof typeof FLAGS;
 

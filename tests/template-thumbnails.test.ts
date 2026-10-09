@@ -37,8 +37,8 @@ describe('template gallery pictures', () => {
 
   it('frog crossing shows a filled home and all three lives left', async () => {
     const b = await screen('frogger');
-    // The home tile in bay column 6 is filled; bay column 2 is still empty.
-    expect(lit(b, 49, 51, 13, 13)).toBe(true);
+    // The home tile in bay column 9 is filled; bay column 2 is still empty.
+    expect(lit(b, 73, 75, 13, 13)).toBe(true);
     expect(lit(b, 17, 19, 13, 13)).toBe(false);
     expect(lit(b, 15, 19, 1, 5)).toBe(true);
   });

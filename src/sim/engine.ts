@@ -13,6 +13,7 @@ const FLAG_GHOST = 4;
 const FLAG_AUTO_DESTROY = 8;
 const FLAG_INVISIBLE = 16;
 const FLAG_DESTROY_ON_WALL = 32;
+const FLAG_STAY_IN_MAP = 64;
 const HIT_LEFT = 1;
 const HIT_RIGHT = 2;
 const HIT_TOP = 4;
@@ -43,6 +44,8 @@ interface Sprite {
   flags: number;
   outline: number;
   outlineWidth: number;
+  /** Drawing layer, higher is drawn on top. */
+  z: number;
   hit: number;
   frame: number;
   animRate: number;
@@ -51,7 +54,7 @@ interface Sprite {
 }
 
 function newSprite(): Sprite {
-  return { x: 0, y: 0, vx: 0, vy: 0, ax: 0, ay: 0, img: null, kind: 0, flags: 0, outline: 0, outlineWidth: 1, hit: 0, frame: 0, animRate: 0, animCount: 0, alive: false };
+  return { x: 0, y: 0, vx: 0, vy: 0, ax: 0, ay: 0, img: null, kind: 0, flags: 0, outline: 0, outlineWidth: 1, z: 0, hit: 0, frame: 0, animRate: 0, animCount: 0, alive: false };
 }
 
 const w16 = (v: number) => (v << 16) >> 16;
@@ -543,9 +546,10 @@ export class Engine {
     this.overlay.push({ idx, tile });
   }
 
-  private isSolid(col: number, row: number): boolean {
+  /** Outside the left and right side of the map is a wall only for sprites that stay in the map. */
+  private isSolid(col: number, row: number, edgeWalls: boolean): boolean {
     if (!this.map) return false;
-    if (col < 0 || col >= this.mapW()) return true;
+    if (col < 0 || col >= this.mapW()) return edgeWalls;
     if (row < 0 || row >= this.mapH()) return false;
     return (this.solidTiles & (1 << this.tileAt(col, row))) !== 0;
   }
@@ -695,6 +699,10 @@ export class Engine {
     if (this.exists(s)) this.sprites[s].outlineWidth = Math.max(1, Math.min(8, Math.trunc(width)));
   }
 
+  setZ(s: number, z: number) {
+    if (this.exists(s)) this.sprites[s].z = Math.max(-128, Math.min(127, Math.trunc(z)));
+  }
+
   setOutline(s: number, mode: number) {
     if (this.exists(s)) this.sprites[s].outline = mode >= 0 && mode <= 3 ? Math.trunc(mode) : 0;
   }
@@ -758,10 +766,11 @@ export class Engine {
     const right = left + w - 1;
     const bottom = top + h - 1;
     const bounce = (sp.flags & FLAG_BOUNCE_ON_WALL) !== 0;
+    const edgeWalls = (sp.flags & FLAG_STAY_IN_MAP) !== 0;
     if (horizontal) {
       const col = delta > 0 ? right >> 3 : left >> 3;
       for (let row = top >> 3; row <= bottom >> 3; row++) {
-        if (!this.isSolid(col, row)) continue;
+        if (!this.isSolid(col, row, edgeWalls)) continue;
         if (delta > 0) {
           left = col * 8 - w;
           sp.hit |= HIT_RIGHT;
@@ -778,7 +787,7 @@ export class Engine {
       // keeps grounded contact stable between frames.
       const row = delta > 0 ? (bottom + 1) >> 3 : top >> 3;
       for (let col = left >> 3; col <= right >> 3; col++) {
-        if (!this.isSolid(col, row)) continue;
+        if (!this.isSolid(col, row, edgeWalls)) continue;
         if (delta > 0) {
           top = row * 8 - h;
           sp.hit |= HIT_BOTTOM;
@@ -906,34 +915,43 @@ export class Engine {
     }
   }
 
+  /** Lowest layer first; sprites on the same layer are drawn in pool order. */
   private drawSprites() {
-    for (const sp of this.sprites) {
-      if (!sp.alive || sp.flags & FLAG_INVISIBLE) continue;
-      const w = sp.img ? sp.img[0] : 0;
-      const h = sp.img ? sp.img[1] : 0;
-      const x = px(sp.x) - tdiv(w, 2) - this.camX;
-      const y = px(sp.y) - tdiv(h, 2) - this.camY;
-      if (sp.outline && sp.img) {
-        const radius = sp.outlineWidth;
-        const img = sp.img;
-        const size = ((h + 7) >> 3) * w;
-        const masked = img[3] & 1;
-        const frame = sp.frame < img[2] ? sp.frame : 0;
-        const offset = 4 + frame * size * (masked ? 2 : 1) + (masked ? size : 0);
-        const solid = (cx: number, cy: number) => cx >= 0 && cy >= 0 && cx < w && cy < h && !!(img[offset + (cy >> 3) * w + cx] & (1 << (cy & 7)));
-        // Visit each contour pixel once, so automatic inversion never cancels itself.
-        for (let cy = Math.max(-radius, -y); cy <= Math.min(h - 1 + radius, 63 - y); cy++) {
-          for (let cx = Math.max(-radius, -x); cx <= Math.min(w - 1 + radius, 127 - x); cx++) {
-            if (solid(cx, cy)) continue;
-            let adjacent = false;
-            for (let dy = -radius; dy <= radius && !adjacent; dy++)
-              for (let dx = -radius; dx <= radius; dx++) if (solid(cx + dx, cy + dy)) { adjacent = true; break; }
-            if (adjacent) this.drawPixel(x + cx, y + cy, sp.outline === 3 ? 2 : sp.outline - 1);
-          }
+    for (let layer = -129; ; ) {
+      let next = 128;
+      for (const sp of this.sprites) if (sp.alive && sp.z > layer && sp.z < next) next = sp.z;
+      if (next === 128) return;
+      for (const sp of this.sprites) if (sp.alive && sp.z === next) this.drawSprite(sp);
+      layer = next;
+    }
+  }
+
+  private drawSprite(sp: Sprite) {
+    if (sp.flags & FLAG_INVISIBLE) return;
+    const w = sp.img ? sp.img[0] : 0;
+    const h = sp.img ? sp.img[1] : 0;
+    const x = px(sp.x) - tdiv(w, 2) - this.camX;
+    const y = px(sp.y) - tdiv(h, 2) - this.camY;
+    if (sp.outline && sp.img) {
+      const radius = sp.outlineWidth;
+      const img = sp.img;
+      const size = ((h + 7) >> 3) * w;
+      const masked = img[3] & 1;
+      const frame = sp.frame < img[2] ? sp.frame : 0;
+      const offset = 4 + frame * size * (masked ? 2 : 1) + (masked ? size : 0);
+      const solid = (cx: number, cy: number) => cx >= 0 && cy >= 0 && cx < w && cy < h && !!(img[offset + (cy >> 3) * w + cx] & (1 << (cy & 7)));
+      // Visit each contour pixel once, so automatic inversion never cancels itself.
+      for (let cy = Math.max(-radius, -y); cy <= Math.min(h - 1 + radius, 63 - y); cy++) {
+        for (let cx = Math.max(-radius, -x); cx <= Math.min(w - 1 + radius, 127 - x); cx++) {
+          if (solid(cx, cy)) continue;
+          let adjacent = false;
+          for (let dy = -radius; dy <= radius && !adjacent; dy++)
+            for (let dx = -radius; dx <= radius; dx++) if (solid(cx + dx, cy + dy)) { adjacent = true; break; }
+          if (adjacent) this.drawPixel(x + cx, y + cy, sp.outline === 3 ? 2 : sp.outline - 1);
         }
       }
-      this.drawImage(x, y, sp.img, sp.frame);
     }
+    this.drawImage(x, y, sp.img, sp.frame);
   }
 
   // Score and lives -------------------------------------------------------

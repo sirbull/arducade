@@ -75,12 +75,13 @@ export const setProp = (sprite: string, p: string, v: B, comment?: string) =>
 export const flag = (sprite: string, f: string, on = true) => blk('ab_sprite_set_flag', { f: { FLAG: f, ON: on ? 'on' : 'off' }, i: { SPRITE: get(sprite) } });
 export const hitting = (sprite: string, dir: string) => blk('ab_sprite_is_hitting', { f: { DIR: dir }, i: { SPRITE: get(sprite) } });
 
-export function call(name: string): B {
-  return { type: 'procedures_callnoreturn', extraState: { name } };
+export function call(name: string, params: string[] = [], args: B[] = []): B {
+  if (!params.length) return { type: 'procedures_callnoreturn', extraState: { name } };
+  return { ...callRet(name, params, args), type: 'procedures_callnoreturn' };
 }
 
-export function func(name: string, body: B[], comment?: string): B {
-  const b = blk('procedures_defnoreturn', { f: { NAME: name }, comment });
+export function func(name: string, body: B[], comment?: string, params: string[] = []): B {
+  const b = blk('procedures_defnoreturn', { f: { NAME: name }, comment, extra: params.length ? { params: params.map((p) => ({ name: p })) } : undefined });
   const c = chain(body);
   if (c) b.inputs = { STACK: { block: c } };
   return b;

@@ -55,6 +55,7 @@ export const API = api({
   'sprites.change': { ret: 'void', args: ['sprite', 'prop', 'num'], cpp: 'ab::changeProp($0, $1, $2)', js: 'E.changeProp($0, $1, $2)', name: 'sprite.change' },
   'sprites.setPosition': { ret: 'void', args: ['sprite', 'num', 'num'], cpp: 'ab::setPosition($0, $1, $2)', js: 'E.setPosition($0, $1, $2)', name: 'sprite.setPosition' },
   'sprites.setVelocity': { ret: 'void', args: ['sprite', 'num', 'num'], cpp: 'ab::setVelocity($0, $1, $2)', js: 'E.setVelocity($0, $1, $2)', name: 'sprite.setVelocity' },
+  'sprites.setZ': { ret: 'void', args: ['sprite', 'num'], cpp: 'ab::setZ($0, $1)', js: 'E.setZ($0, $1)', name: 'sprite.setZ' },
   'sprites.setOutlineWidth': { ret: 'void', args: ['sprite', 'num'], cpp: 'ab::setOutlineWidth($0, $1)', js: 'E.setOutlineWidth($0, $1)', name: 'sprite.setOutlineWidth' },
   'sprites.setOutline': { ret: 'void', args: ['sprite', 'num'], cpp: 'ab::setOutline($0, $1)', js: 'E.setOutline($0, $1)', name: 'sprite.setOutline' },
   'sprites.setImage': { ret: 'void', args: ['sprite', 'image'], cpp: 'ab::setImage($0, $1)', js: 'E.setImage($0, $1)', name: 'sprite.setImage' },

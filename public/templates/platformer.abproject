@@ -70,7 +70,11 @@
           },
           "next": {
            "block": {
-            "type": "ab_place_on_tile",
+            "type": "ab_sprite_set_flag",
+            "fields": {
+             "FLAG": "stayInMap",
+             "ON": "on"
+            },
             "inputs": {
              "SPRITE": {
               "block": {
@@ -81,30 +85,11 @@
                 }
                }
               }
-             },
-             "COL": {
-              "block": {
-               "type": "math_number",
-               "fields": {
-                "NUM": 2
-               }
-              }
-             },
-             "ROW": {
-              "block": {
-               "type": "math_number",
-               "fields": {
-                "NUM": 5
-               }
-              }
              }
             },
             "next": {
              "block": {
-              "type": "ab_sprite_set_prop",
-              "fields": {
-               "PROP": "ay"
-              },
+              "type": "ab_place_on_tile",
               "inputs": {
                "SPRITE": {
                 "block": {
@@ -116,18 +101,29 @@
                  }
                 }
                },
-               "VALUE": {
+               "COL": {
                 "block": {
                  "type": "math_number",
                  "fields": {
-                  "NUM": 400
+                  "NUM": 2
+                 }
+                }
+               },
+               "ROW": {
+                "block": {
+                 "type": "math_number",
+                 "fields": {
+                  "NUM": 5
                  }
                 }
                }
               },
               "next": {
                "block": {
-                "type": "ab_move_sprite",
+                "type": "ab_sprite_set_prop",
+                "fields": {
+                 "PROP": "ay"
+                },
                 "inputs": {
                  "SPRITE": {
                   "block": {
@@ -139,26 +135,18 @@
                    }
                   }
                  },
-                 "VX": {
+                 "VALUE": {
                   "block": {
                    "type": "math_number",
                    "fields": {
-                    "NUM": 60
-                   }
-                  }
-                 },
-                 "VY": {
-                  "block": {
-                   "type": "math_number",
-                   "fields": {
-                    "NUM": 0
+                    "NUM": 400
                    }
                   }
                  }
                 },
                 "next": {
                  "block": {
-                  "type": "ab_sprite_animate",
+                  "type": "ab_move_sprite",
                   "inputs": {
                    "SPRITE": {
                     "block": {
@@ -170,18 +158,26 @@
                      }
                     }
                    },
-                   "MS": {
+                   "VX": {
                     "block": {
                      "type": "math_number",
                      "fields": {
-                      "NUM": 150
+                      "NUM": 60
+                     }
+                    }
+                   },
+                   "VY": {
+                    "block": {
+                     "type": "math_number",
+                     "fields": {
+                      "NUM": 0
                      }
                     }
                    }
                   },
                   "next": {
                    "block": {
-                    "type": "ab_camera_follow",
+                    "type": "ab_sprite_animate",
                     "inputs": {
                      "SPRITE": {
                       "block": {
@@ -192,65 +188,62 @@
                         }
                        }
                       }
+                     },
+                     "MS": {
+                      "block": {
+                       "type": "math_number",
+                       "fields": {
+                        "NUM": 150
+                       }
+                      }
                      }
                     },
                     "next": {
                      "block": {
-                      "type": "ab_spawn_on_tiles",
-                      "fields": {
-                       "TILE": "enemyMarker",
-                       "IMAGE": "enemy",
-                       "KIND": "Enemy"
-                      },
-                      "icons": {
-                       "comment": {
-                        "text": "@enemies",
-                        "pinned": false,
-                        "height": 80,
-                        "width": 200
+                      "type": "ab_camera_follow",
+                      "inputs": {
+                       "SPRITE": {
+                        "block": {
+                         "type": "variables_get",
+                         "fields": {
+                          "VAR": {
+                           "name": "hero"
+                          }
+                         }
+                        }
                        }
                       },
                       "next": {
                        "block": {
-                        "type": "ab_for_each_kind",
+                        "type": "ab_spawn_on_tiles",
                         "fields": {
-                         "VAR": {
-                          "name": "enemy"
-                         },
+                         "TILE": "enemyMarker",
+                         "IMAGE": "enemy",
                          "KIND": "Enemy"
                         },
-                        "inputs": {
-                         "DO": {
-                          "block": {
-                           "type": "ab_sprite_set_prop",
-                           "fields": {
-                            "PROP": "vx"
+                        "icons": {
+                         "comment": {
+                          "text": "@enemies",
+                          "pinned": false,
+                          "height": 80,
+                          "width": 200
+                         }
+                        },
+                        "next": {
+                         "block": {
+                          "type": "ab_for_each_kind",
+                          "fields": {
+                           "VAR": {
+                            "name": "enemy"
                            },
-                           "inputs": {
-                            "SPRITE": {
-                             "block": {
-                              "type": "variables_get",
-                              "fields": {
-                               "VAR": {
-                                "name": "enemy"
-                               }
-                              }
-                             }
-                            },
-                            "VALUE": {
-                             "block": {
-                              "type": "math_number",
-                              "fields": {
-                               "NUM": -20
-                              }
-                             }
-                            }
-                           },
-                           "next": {
+                           "KIND": "Enemy"
+                          },
+                          "inputs": {
+                           "DO": {
                             "block": {
                              "type": "ab_sprite_set_prop",
                              "fields": {
-                              "PROP": "ay"
+                              "PROP": "vx"
                              },
                              "inputs": {
                               "SPRITE": {
@@ -267,38 +260,87 @@
                                "block": {
                                 "type": "math_number",
                                 "fields": {
-                                 "NUM": 400
+                                 "NUM": -20
+                                }
+                               }
+                              }
+                             },
+                             "next": {
+                              "block": {
+                               "type": "ab_sprite_set_prop",
+                               "fields": {
+                                "PROP": "ay"
+                               },
+                               "inputs": {
+                                "SPRITE": {
+                                 "block": {
+                                  "type": "variables_get",
+                                  "fields": {
+                                   "VAR": {
+                                    "name": "enemy"
+                                   }
+                                  }
+                                 }
+                                },
+                                "VALUE": {
+                                 "block": {
+                                  "type": "math_number",
+                                  "fields": {
+                                   "NUM": 400
+                                  }
+                                 }
+                                }
+                               },
+                               "next": {
+                                "block": {
+                                 "type": "ab_sprite_set_flag",
+                                 "fields": {
+                                  "FLAG": "stayInMap",
+                                  "ON": "on"
+                                 },
+                                 "inputs": {
+                                  "SPRITE": {
+                                   "block": {
+                                    "type": "variables_get",
+                                    "fields": {
+                                     "VAR": {
+                                      "name": "enemy"
+                                     }
+                                    }
+                                   }
+                                  }
+                                 }
                                 }
                                }
                               }
                              }
                             }
                            }
-                          }
-                         }
-                        },
-                        "next": {
-                         "block": {
-                          "type": "ab_life_set",
-                          "inputs": {
-                           "VALUE": {
-                            "block": {
-                             "type": "math_number",
-                             "fields": {
-                              "NUM": 3
-                             }
-                            }
-                           }
                           },
                           "next": {
                            "block": {
-                            "type": "ab_score_set",
+                            "type": "ab_life_set",
                             "inputs": {
                              "VALUE": {
                               "block": {
                                "type": "math_number",
                                "fields": {
-                                "NUM": 0
+                                "NUM": 3
+                               }
+                              }
+                             }
+                            },
+                            "next": {
+                             "block": {
+                              "type": "ab_score_set",
+                              "inputs": {
+                               "VALUE": {
+                                "block": {
+                                 "type": "math_number",
+                                 "fields": {
+                                  "NUM": 0
+                                 }
+                                }
                                }
                               }
                              }

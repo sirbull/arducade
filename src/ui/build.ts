@@ -8,6 +8,7 @@ import { generateJs, type GameHooks, type JsResult } from '../gen/js';
 import type { Diagnostic, Program } from '../ir/ir';
 import type { Project } from '../project/model';
 import { parseSource } from '../text/languages';
+import { BUTTON_IDS, FRAME_MS } from '../engine/enums';
 import { Engine } from '../sim/engine';
 import { PIXEL_RGB, type PixelColor } from '../sim/runner';
 import { div16, mod16 } from '../sim/intmath';
@@ -52,9 +53,14 @@ export function buildProject(project: Project): BuildResult {
   }
 }
 
-/** Runs a game for a moment without a screen and returns a picture of it. */
-export async function gameThumbnail(project: Project, frames = 45, pixelColor: PixelColor = project.pixelColor ?? 'white'): Promise<string> {
+/**
+ * Runs a game for a moment without a screen and returns its screen buffer.
+ * The clock and random seed are fixed, so the picture is the same every time.
+ * Templates can script how long to run and which buttons to tap.
+ */
+export async function thumbnailScreen(project: Project, frames = 45): Promise<Uint8Array> {
   const { js } = buildProject(project);
+  const script = project.template?.thumbnail;
   let last = new Uint8Array(1024);
   const engine = new Engine({
     show: (b) => (last = b.slice()),
@@ -63,15 +69,29 @@ export async function gameThumbnail(project: Project, frames = 45, pixelColor: P
     onSkippedCpp: () => {},
     maxSprites: 16,
     hiscoreMagic: js.hiscoreKey,
+    seed: 0xace1,
+    noWaits: true,
   });
+  // Timers follow the frames, not how fast this machine runs them.
+  engine.millis = () => engine.frameCount * FRAME_MS;
+  const taps = new Set(Object.entries(script?.taps ?? {}).flatMap(([b, fs]) => fs!.map((f) => `${f}:${b}`)));
   const run = async () => {
     const factory = new Function('E', '$w', '$div', '$mod', '$lg', js.code) as (...a: unknown[]) => GameHooks;
     await engine.begin(factory(engine, (v: number) => (v << 16) >> 16, div16, mod16, engine.loopGuard));
-    for (let i = 0; i < frames; i++) await engine.frame(true);
+    for (let i = 0; i < (script?.frames ?? frames); i++) {
+      engine.input = BUTTON_IDS.reduce((m, b, bit) => (taps.has(`${i}:${b}`) ? m | (1 << bit) : m), 0);
+      await engine.frame(true);
+    }
   };
   // A game waiting for a button (splash) must not block the gallery.
   await Promise.race([run().catch(() => {}), new Promise((r) => setTimeout(r, 300))]);
   engine.stop();
+  return last;
+}
+
+/** Runs a game for a moment without a screen and returns a picture of it. */
+export async function gameThumbnail(project: Project, frames = 45, pixelColor: PixelColor = project.pixelColor ?? 'white'): Promise<string> {
+  const last = await thumbnailScreen(project, frames);
   const canvas = document.createElement('canvas');
   canvas.width = 128;
   canvas.height = 64;

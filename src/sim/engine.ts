@@ -70,6 +70,10 @@ export interface EngineOptions {
   onSkippedCpp(): void;
   maxSprites: number;
   hiscoreMagic: number;
+  /** Fixed random seed, for pictures that look the same every time. */
+  seed?: number;
+  /** Do not wait for A or for pauses, for pictures made without a player. */
+  noWaits?: boolean;
 }
 
 export class Engine {
@@ -431,6 +435,7 @@ export class Engine {
   }
 
   private async waitForA() {
+    if (this.opts.noWaits) return;
     const poll = async (want: boolean) => {
       do {
         this.readButtons();
@@ -444,6 +449,7 @@ export class Engine {
   }
 
   private sleep(ms: number): Promise<void> {
+    if (this.opts.noWaits) return Promise.resolve();
     const until = this.millis() + ms;
     return new Promise((resolve, reject) => {
       const poll = () => {
@@ -1049,7 +1055,7 @@ export class Engine {
     this.stopped = false;
     this.pausedAt = null;
     this.startTime = performance.now();
-    this.rng = (Math.floor(Math.random() * 0xffff) & 0xffff) || 0xace1;
+    this.rng = this.opts.seed ?? ((Math.floor(Math.random() * 0xffff) & 0xffff) || 0xace1);
     this.loadHiscore();
     this.loopCount = 0;
     await this.restart();

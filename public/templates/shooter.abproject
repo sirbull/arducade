@@ -700,6 +700,14 @@
     "hit": "Eine Kugel trifft einen Gegner: beide verschwinden und du bekommst einen Punkt.",
     "crash": "Ein Gegner trifft das Raumschiff: du verlierst ein Leben."
    }
+  },
+  "thumbnail": {
+   "frames": 90,
+   "taps": {
+    "a": [
+     86
+    ]
+   }
   }
  }
 }

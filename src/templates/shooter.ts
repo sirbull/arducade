@@ -4,6 +4,8 @@ import type { TemplateSource } from './types';
 export const shooter: TemplateSource = {
   id: 'shooter',
   order: 3,
+  // Two enemies on screen and a shot on its way up.
+  thumbnail: { frames: 90, taps: { a: [86] } },
   title: { en: 'Space shooter', nb: 'Romskyting', es: 'Batalla espacial', fr: 'Tir spatial', de: 'Weltraum-Shooter' },
   description: {
     en: 'Shoot the falling enemies with A. Do not let them hit you.',

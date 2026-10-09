@@ -37,6 +37,9 @@ import { GuidePanel } from './guide-panel';
 import { guideProject, type Guide } from '../guides/guide';
 import { renderGuideCatalog, reachedStep } from './guide-catalog';
 
+// Picked once per page load so the header only changes on refresh.
+const headerImage = Math.floor(Math.random() * 5) + 1;
+
 const DEFAULT_SETTINGS: Settings = {
   language: 'en',
   theme: 'color',
@@ -602,7 +605,8 @@ export class App {
     const templatesSection = h('section', { 'aria-label': t('home.templates') });
     const projectsSection = h('section', { 'aria-label': t('projects.title') });
     const guidesSection = h('section', { class: 'home-guides', 'aria-label': t('guide.homeTitle') });
-    home.append(h('div', { class: 'home-intro' }, heading, h('p', { class: 'muted' }, t('home.help')),
+    home.append(h('img', { class: 'home-header', src: `images/header_${headerImage}.jpg`, alt: '' }),
+      h('div', { class: 'home-intro' }, heading, h('p', { class: 'muted' }, t('home.help')),
       h('div', { class: 'row' },
         h('button', { class: 'primary', onclick: async () => this.loadProject(newProject(t('project.defaultName'), await this.defaultProfile())) }, t('home.create')),
         h('button', { onclick: () => this.importProject() }, t('menu.import')))),

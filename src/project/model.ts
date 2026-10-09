@@ -2,6 +2,7 @@
 // upgrade later. Bump PROJECT_VERSION and add an upgrade step in
 // upgradeProject when the format changes.
 
+import type { ButtonName } from '../engine/enums';
 import type { GuideState } from '../guides/guide';
 import { BUILTIN_PROFILES, DEFAULT_PROFILE_ID, parseProfile, type Profile } from '../hw/profile';
 
@@ -55,6 +56,12 @@ export interface TilemapAsset {
 /** Text in several languages, used by templates. */
 export type LocalizedText = Record<string, string>;
 
+/** How the gallery picture is taken: frames to run and buttons tapped (down for one frame) at given frames. */
+export interface ThumbnailScript {
+  frames: number;
+  taps?: Partial<Record<ButtonName, number[]>>;
+}
+
 export interface TemplateInfo {
   id: string;
   title: LocalizedText;
@@ -66,6 +73,7 @@ export interface TemplateInfo {
    * in the blocks written as "@key" are replaced when the template is opened.
    */
   strings?: Record<string, Record<string, string>>;
+  thumbnail?: ThumbnailScript;
 }
 
 export interface Project {
@@ -219,6 +227,8 @@ export function instantiateTemplate(template: Project, lang: string): Project {
   const now = Date.now();
   const copy: Project = JSON.parse(JSON.stringify(template));
   copy.blocks = replace(copy.blocks);
+  // The scripted taps only fit the template as shipped.
+  if (copy.template) delete copy.template.thumbnail;
   copy.id = newId('p');
   copy.name = localized(template.template?.title, lang) || template.name;
   copy.pixelColor = 'white';

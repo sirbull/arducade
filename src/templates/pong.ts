@@ -60,6 +60,8 @@ function returnBall(direction: 1 | -1): B[] {
 export const pong: TemplateSource = {
   id: 'pong',
   order: 2,
+  // Both paddles and the ball near the middle.
+  thumbnail: { frames: 9 },
   title: { en: 'Pong', nb: 'Pong', es: 'Pong', fr: 'Pong', de: 'Pong' },
   description: {
     en: 'Hit the ball past the computer. Move with up and down.',

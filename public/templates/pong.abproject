@@ -5051,6 +5051,9 @@
     "miss": "Trifft der Ball deine Seite, verlierst du ein Leben. Trifft er die andere Seite, bekommst du einen Punkt.",
     "hit": "Fünf Zonen lenken den Ball: Die Ränder lenken ihn ab, die Mitte behält den Winkel bei. Jeder Treffer erhöht das Tempo um 1 (bis 180)."
    }
+  },
+  "thumbnail": {
+   "frames": 9
   }
  }
 }

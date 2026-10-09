@@ -48,6 +48,6 @@ export function templateToProject(t: TemplateSource): Project {
     tiles: t.tiles,
     tilemaps: t.tilemaps,
     kinds: t.kinds,
-    template: { id: t.id, title: t.title, description: t.description, tips: t.tips, strings: t.strings },
+    template: { id: t.id, title: t.title, description: t.description, tips: t.tips, strings: t.strings, thumbnail: t.thumbnail },
   };
 }

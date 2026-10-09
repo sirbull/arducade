@@ -44,7 +44,9 @@ async function start() {
   expect(begun).toBe(true);
   const press = async (...buttons: number[]) => { for (const b of buttons) await hooks.button(b, 1); };
   const update = async (frames: number) => { for (let i = 0; i < frames; i++) await hooks.update(); };
-  return { engine, hooks, press, update };
+  // Picks the figure under the cursor, swaps it and lets the slide finish.
+  const swapTo = async (dir: number) => { await press(A, dir); await update(5); };
+  return { engine, hooks, press, update, swapTo };
 }
 
 describe('Match three', () => {
@@ -58,18 +60,26 @@ describe('Match three', () => {
     expect(cells().some(([x, y]) => lineAt(b, x, y))).toBe(false);
   });
 
-  it('undoes a swap that makes no line', async () => {
-    const { engine, press } = await start();
+  it('slides the two figures into each other\'s place', async () => {
+    const { engine, hooks, press, update } = await start();
     setBoard(engine);
+    // The drop at (3,2) moves 2 pixels down each frame: its tip (58,22) leaves, its left side reaches (55,30).
+    const drawn = async () => { engine.clear(); await hooks.draw(); return [engine.getPixel(58, 22), engine.getPixel(55, 30)]; };
+    expect(await drawn()).toEqual([1, 0]);
     await press(A, DOWN);
+    await update(2);
+    expect(await drawn()).toEqual([0, 1]);
+    // No line: it slides back home and the board is unchanged.
+    await update(10);
+    expect(await drawn()).toEqual([1, 0]);
     expect(board(engine).flat()).toEqual(cells().map(([x, y]) => dead(x, y)));
   });
 
   it('turns four in a line into a bomb where the player moved', async () => {
-    const { engine, press, update } = await start();
+    const { engine, swapTo, update } = await start();
     // Cursor starts at (3,2). Moving the 5 at (3,3) up makes 5 5 5 5 in row 2.
     setBoard(engine, { '1,2': 5, '2,2': 5, '4,2': 5, '3,3': 5 });
-    await press(A, DOWN);
+    await swapTo(DOWN);
     expect([1, 2, 3, 4].every((x) => marked(engine, 3, x, 2))).toBe(true);
     expect(marked(engine, 4, 3, 2)).toBe(true);
     await update(12);
@@ -77,32 +87,32 @@ describe('Match three', () => {
   });
 
   it('turns five in a line into a prism', async () => {
-    const { engine, press, update } = await start();
+    const { engine, swapTo, update } = await start();
     setBoard(engine, { '1,2': 5, '2,2': 5, '4,2': 5, '5,2': 5, '3,3': 5 });
-    await press(A, DOWN);
+    await swapTo(DOWN);
     await update(12);
     expect(kindAt(engine, 3, 2)).toBe(7);
   });
 
   it('clears every figure of a kind when a prism is swapped with it', async () => {
-    const { engine, press } = await start();
+    const { engine, swapTo } = await start();
     setBoard(engine, { '3,2': 7 });
-    await press(A, RIGHT);
+    await swapTo(RIGHT);
     const target = dead(4, 2);
     for (const [x, y] of cells()) expect(marked(engine, 3, x, y), `${x},${y}`).toBe(dead(x, y) === target || (x === 3 && y === 2));
   });
 
   it('blows up everything within two squares of three bombs', async () => {
-    const { engine, press } = await start();
+    const { engine, swapTo } = await start();
     setBoard(engine, { '2,2': 6, '4,2': 6, '3,3': 6 });
-    await press(A, DOWN);
+    await swapTo(DOWN);
     for (const [x, y] of cells()) expect(marked(engine, 3, x, y), `${x},${y}`).toBe(x <= 6);
   });
 
   it.each([[true, {}], [false, { '1,2': 5, '2,2': 5, '4,2': 5, '3,3': 5 }]] as const)('ends the game only when no move is left (%s)', async (over, next) => {
-    const { engine, press, update } = await start();
+    const { engine, swapTo, update } = await start();
     setBoard(engine, { '1,2': 5, '2,2': 5, '4,2': 5, '3,3': 5 });
-    await press(A, DOWN);
+    await swapTo(DOWN);
     // The line is cleared and the board starts to fall: swap in a full board instead.
     await update(12);
     setBoard(engine, next);
@@ -111,9 +121,9 @@ describe('Match three', () => {
   });
 
   it('refills the board after a move and keeps playing', async () => {
-    const { engine, press, update } = await start();
+    const { engine, swapTo, update } = await start();
     setBoard(engine, { '1,2': 5, '2,2': 5, '4,2': 5, '3,3': 5 });
-    await press(A, DOWN);
+    await swapTo(DOWN);
     await update(200);
     const b = board(engine);
     expect(b.flat().every((k) => k >= 1 && k <= 7)).toBe(true);

@@ -1251,6 +1251,31 @@
     "ground": "Berührt der Vogel den Boden, ist das Spiel vorbei.",
     "crash": "Berührt der Vogel ein Rohr, ist das Spiel vorbei."
    }
+  },
+  "thumbnail": {
+   "frames": 220,
+   "taps": {
+    "a": [
+     0,
+     14,
+     26,
+     39,
+     48,
+     61,
+     73,
+     86,
+     98,
+     111,
+     123,
+     136,
+     148,
+     161,
+     179,
+     190,
+     203,
+     215
+    ]
+   }
   }
  }
 }

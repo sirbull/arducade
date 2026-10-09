@@ -15,6 +15,8 @@ const pipe = (rimTop: boolean) => {
 export const flappy: TemplateSource = {
   id: 'flappy',
   order: 6,
+  // Flaps through three gaps; the bird is between two pairs of pipes.
+  thumbnail: { frames: 220, taps: { a: [0, 14, 26, 39, 48, 61, 73, 86, 98, 111, 123, 136, 148, 161, 179, 190, 203, 215] } },
   title: { en: 'Flying bird', nb: 'Flaksefugl', es: 'Pájaro aleteador', fr: 'Oiseau battant', de: 'Flatter-Vogel' },
   description: {
     en: 'Press A to flap and fly between the pipes. Each gap you pass gives a point.',

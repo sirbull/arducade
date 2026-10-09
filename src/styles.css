@@ -1009,10 +1009,18 @@ button.brand { background: none; border: 0; padding: 6px 0; }
 button.brand:hover:not(:disabled) { background: none; color: var(--text); }
 .show-home .project-name, .show-home .actions { display: none; }
 .home {
+  --home-pad: max(24px, calc((100vw - 1040px) / 2));
   min-height: 0;
   height: auto;
   overflow-y: auto;
-  padding: 36px max(24px, calc((100vw - 1040px) / 2)) 56px;
+  padding: 36px var(--home-pad) 56px;
+}
+.home-header {
+  display: block;
+  width: calc(100% + 2 * var(--home-pad));
+  height: clamp(96px, 10vw, 192px);
+  margin: -36px calc(-1 * var(--home-pad)) 36px;
+  object-fit: cover;
 }
 .home-intro { margin-bottom: 36px; }
 .home h1 { margin: 0 0 10px; font-size: clamp(26px, 4vw, 38px); }
@@ -1025,7 +1033,8 @@ button.brand:hover:not(:disabled) { background: none; color: var(--text); }
 .home .card strong { font-size: 16px; }
 .home-projects .card { min-height: 90px; justify-content: center; }
 @media (max-width: 640px) {
-  .home { padding: 24px 16px 40px; }
+  .home { --home-pad: 16px; padding: 24px 16px 40px; }
+  .home-header { margin-top: -24px; }
   .show-home .topbar { flex-wrap: nowrap; height: 52px; padding: 0 12px; }
   .show-home .brand { font-size: 14px; }
   .show-home .home { height: auto; }

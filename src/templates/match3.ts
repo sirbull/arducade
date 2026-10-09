@@ -3,12 +3,13 @@
 // board lives in tile map rows below the screen: each layer holds one on/off
 // tile per square. Setting a tile back to its own picture or to empty only
 // flips a bit in RAM, so every square can change as often as it likes.
-import { and, arith, blk, bool, callRet, chain, cmp, forRange, funcRet, get, ifThen, minmax, not, num, or, set, txt, whileDo, workspace, type B } from './dsl';
+import { and, arith, blk, bool, callRet, chain, cmp, forRange, funcRet, get, ifThen, minmax, neg, not, num, or, set, txt, whileDo, workspace, type B } from './dsl';
 import type { TemplateSource } from './types';
 
 const W = 8, H = 5, CELL = 10, OX = 24, OY = 2;
 const MEM = 8; // first tile map row of the hidden layers, just below the screen
-const PLAY = 0, SHOW = 1, FALL = 2;
+const PLAY = 0, SHOW = 1, FALL = 2, SWAP = 3, BACK = 4;
+const STEP = 2; // pixels a swapped figure slides each frame
 const BOMB = 6, PRISM = 7;
 // Layers 0-2 hold the figure number (1 + 2 + 4), 3-5 are marks for the next clear.
 const LAYERS = ['bit1', 'bit2', 'bit4', 'gone', 'newBomb', 'newPrism'];
@@ -46,6 +47,9 @@ const swap = (ax: B, ay: B, bx: B, by: B) => run('swapCells', ['ax', 'ay', 'bx',
 const matchAt = (x: B, y: B) => callRet('matchAt', ['mx', 'my'], [x, y]);
 const callProc = (name: string) => run(name, [], []);
 const randomKind = () => blk('ab_random', { i: { FROM: n(1), TO: v('kinds') } });
+// Draws the figure k of square (x, y), moved by (ox, oy) pixels.
+const gemAt = (k: B, x: B, y: B, ox: B, oy: B) =>
+  run('drawGem', ['dk', 'gemX', 'gemY'], [k, add(add(n(OX), mul(x, n(CELL))), ox), add(add(n(OY), mul(y, n(CELL))), oy)]);
 const show = () => [set('state', n(SHOW)), set('timer', n(12))];
 
 // Looks for lines along one direction: rows when dx is 1, columns when dy is 1.
@@ -291,7 +295,7 @@ export const match3: TemplateSource = {
         set('px', add(v('rx0'), mul(v('ri'), v('rdx')))),
         set('py', add(v('ry0'), mul(v('ri'), v('rdy')))),
         setBit(3, v('px'), v('py'), true),
-        ifThen(or(and(eq(v('px'), v('cx')), eq(v('py'), v('cy'))), and(eq(v('px'), v('nx')), eq(v('py'), v('ny')))), [set('spot', v('ri'))]),
+        ifThen(or(and(eq(v('px'), v('fromX')), eq(v('py'), v('fromY'))), and(eq(v('px'), v('toX')), eq(v('py'), v('toY')))), [set('spot', v('ri'))]),
         ifThen(eq(v('rk'), BOMB), [
           forRange('qy', sub(v('py'), v('blast')), add(v('py'), v('blast')), [
             forRange('qx', sub(v('px'), v('blast')), add(v('px'), v('blast')), [
@@ -313,26 +317,26 @@ export const match3: TemplateSource = {
         ifThen(or(eq(read(v('kx'), v('ky')), v('target')), eq(v('target'), PRISM)), [setBit(3, v('kx'), v('ky'), true)]),
       ]),
     ]),
-    proc('trySwap', [], [
-      set('ta', read(v('cx'), v('cy'))),
-      set('tb', read(v('nx'), v('ny'))),
+    // Runs when the two figures have slid into each other's place.
+    proc('finishSwap', [], [
+      set('ta', read(v('fromX'), v('fromY'))),
+      set('tb', read(v('toX'), v('toY'))),
+      swap(v('fromX'), v('fromY'), v('toX'), v('toY')),
       ifThen(or(eq(v('ta'), PRISM), eq(v('tb'), PRISM)), [
         callProc('clearMarks'),
         ifThen(eq(v('ta'), PRISM), [run('clearKind', ['target'], [v('tb')])], [run('clearKind', ['target'], [v('ta')])]),
-        setBit(3, v('cx'), v('cy'), true),
-        setBit(3, v('nx'), v('ny'), true),
+        setBit(3, v('fromX'), v('fromY'), true),
+        setBit(3, v('toX'), v('toY'), true),
         sound('powerUp'),
-        set('combo', n(1)),
-        ...show(),
-      ], [
-        swap(v('cx'), v('cy'), v('nx'), v('ny')),
-        callProc('findMatches'),
-        ifThen(eq(v('found'), 1), [set('combo', n(1)), ...show(), set('cx', v('nx')), set('cy', v('ny'))], [
-          swap(v('cx'), v('cy'), v('nx'), v('ny')),
-          sound('hit'),
-        ]),
+        set('found', n(1)),
+      ], [callProc('findMatches')]),
+      ifThen(eq(v('found'), 1), [set('combo', n(1)), ...show(), set('cx', v('toX')), set('cy', v('toY'))], [
+        // No line: swap back and let the figures slide home.
+        swap(v('fromX'), v('fromY'), v('toX'), v('toY')),
+        sound('hit'),
+        set('state', n(BACK)),
+        set('timer', n(CELL)),
       ]),
-      set('selected', bool(false)),
     ]),
     proc('clearBoard', [], [
       set('cleared', n(0)),
@@ -390,6 +394,14 @@ export const match3: TemplateSource = {
             ]),
           ]),
         ]),
+        ifThen(eq(v('state'), SWAP), [
+          inc('timer', STEP),
+          ifThen(cmp('GTE', v('timer'), n(CELL)), [callProc('finishSwap')]),
+        ]),
+        ifThen(eq(v('state'), BACK), [
+          inc('timer', -STEP),
+          ifThen(cmp('LTE', v('timer'), n(0)), [set('state', n(PLAY))]),
+        ]),
       ],
     }),
     blk('ab_on_button', {
@@ -403,7 +415,15 @@ export const match3: TemplateSource = {
         set('nx', add(v('cx'), n(dx))),
         set('ny', add(v('cy'), n(dy))),
         ifThen(inBoard(v('nx'), v('ny')), [
-          ifThen(and(v('selected'), eq(v('state'), PLAY)), [callProc('trySwap')], [set('cx', v('nx')), set('cy', v('ny'))]),
+          ifThen(and(v('selected'), eq(v('state'), PLAY)), [
+            set('fromX', v('cx')),
+            set('fromY', v('cy')),
+            set('toX', v('nx')),
+            set('toY', v('ny')),
+            set('selected', bool(false)),
+            set('state', n(SWAP)),
+            set('timer', n(0)),
+          ], [set('cx', v('nx')), set('cy', v('ny'))]),
         ]),
       ],
     })),
@@ -413,10 +433,18 @@ export const match3: TemplateSource = {
       body: [
         blk('ab_draw_rect', { f: { COLOR: 'white', FILL: 'outline' }, i: { X: n(OX - 2), Y: n(OY - 2), W: n(W * CELL + 3), H: n(H * CELL + 3) } }),
         each('dx', 'dy', [
+          set('hide', bool(false)),
           // Squares that are about to be cleared blink.
-          ifThen(or(cmp('NEQ', v('state'), n(SHOW)), or(cmp('GTE', mod(v('timer'), 4), n(2)), not(isOn(3, v('dx'), v('dy'))))), [
-            run('drawGem', ['dk', 'gemX', 'gemY'], [read(v('dx'), v('dy')), add(n(OX), mul(v('dx'), n(CELL))), add(n(OY), mul(v('dy'), n(CELL)))]),
-          ]),
+          ifThen(and(eq(v('state'), SHOW), and(cmp('LT', mod(v('timer'), 4), n(2)), isOn(3, v('dx'), v('dy')))), [set('hide', bool(true))]),
+          // The two swapped figures are drawn sliding, below.
+          ifThen(and(cmp('GTE', v('state'), n(SWAP)), or(and(eq(v('dx'), v('fromX')), eq(v('dy'), v('fromY'))), and(eq(v('dx'), v('toX')), eq(v('dy'), v('toY'))))), [set('hide', bool(true))]),
+          ifThen(not(v('hide')), [gemAt(read(v('dx'), v('dy')), v('dx'), v('dy'), n(0), n(0))]),
+        ]),
+        ifThen(cmp('GTE', v('state'), n(SWAP)), [
+          set('slideX', mul(sub(v('toX'), v('fromX')), v('timer'))),
+          set('slideY', mul(sub(v('toY'), v('fromY')), v('timer'))),
+          gemAt(read(v('fromX'), v('fromY')), v('fromX'), v('fromY'), v('slideX'), v('slideY')),
+          gemAt(read(v('toX'), v('toY')), v('toX'), v('toY'), neg(v('slideX')), neg(v('slideY'))),
         ]),
         blk('ab_draw_rect', { f: { COLOR: 'white', FILL: 'outline' }, i: { X: add(n(OX - 1), mul(v('cx'), n(CELL))), Y: add(n(OY - 1), mul(v('cy'), n(CELL))), W: n(CELL + 1), H: n(CELL + 1) } }),
         ifThen(v('selected'), [

@@ -635,6 +635,19 @@ static void moveWithButtons(uint8_t s, int16_t vx, int16_t vy) {
   controlVy = vy;
 }
 
+// Puts a new sprite on every tile of one type and clears those tiles.
+static void spawnOnTiles(uint8_t tile, const uint8_t *img, uint8_t kind) {
+  for (int16_t r = 0; r < mapH(); r++) {
+    for (int16_t c = 0; c < mapW(); c++) {
+      if (tileAt(c, r) != tile) continue;
+      uint8_t s = create(img, kind);
+      if (s == NONE) return;
+      setPosition(s, c * 8 + 4, r * 8 + 4);
+      setTile(c, r, 0);
+    }
+  }
+}
+
 static void cameraFollow(uint8_t s) { cameraSprite = s; }
 static void setCamera(int16_t x, int16_t y) { cameraSprite = NONE; camX = x; camY = y; }
 

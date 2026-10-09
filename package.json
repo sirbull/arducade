@@ -14,6 +14,7 @@
   },
   "license": "MIT",
   "dependencies": {
+    "@blockly/field-multilineinput": "^13.3.0",
     "blockly": "^13.3.0"
   },
   "devDependencies": {

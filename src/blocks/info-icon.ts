@@ -17,7 +17,8 @@ export function docSubject(block: Blockly.Block): string {
   return value?.type.startsWith('ab_') ? value.type : block.type;
 }
 
-const SIZE = 16;
+// Large enough to hit with a finger in the scaled down toolbox.
+const SIZE = 20;
 
 class InfoIcon extends Blockly.icons.Icon {
   static readonly TYPE = new Blockly.icons.IconType<InfoIcon>('ab_info');
@@ -31,8 +32,8 @@ class InfoIcon extends Blockly.icons.Icon {
     super.initView(pointerdownListener);
     const { createSvgElement } = Blockly.utils.dom;
     createSvgElement('circle', { cx: SIZE / 2, cy: SIZE / 2, r: SIZE / 2 - 1, fill: 'none', stroke: '#fff', 'stroke-width': 1.6 }, this.svgRoot);
-    createSvgElement('rect', { x: 7, y: 3.5, width: 2, height: 2, fill: '#fff' }, this.svgRoot);
-    createSvgElement('rect', { x: 7, y: 6.5, width: 2, height: 6, fill: '#fff' }, this.svgRoot);
+    createSvgElement('rect', { x: 9, y: 4.5, width: 2, height: 2, fill: '#fff' }, this.svgRoot);
+    createSvgElement('rect', { x: 9, y: 8, width: 2, height: 7.5, fill: '#fff' }, this.svgRoot);
     this.setTooltip(t('docs.aboutBlock'));
   }
 

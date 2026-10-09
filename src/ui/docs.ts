@@ -52,7 +52,7 @@ const EXAMPLES: Record<string, Json[]> = {
   ab_random: [b('ab_on_every', body(b('ab_sprite_set_position', { SPRITE: v('mySprite'), X: val(b('ab_random', { FROM: n(0), TO: n(120) })), Y: n(0) })), { MS: 1000 })],
   controls_if: [b('ab_on_update', body(b('controls_if', { IF0: val(b('logic_compare', { A: val(b('ab_score')), B: n(9) }, { OP: 'GT' })), DO0: val(b('ab_game_over', undefined, { WIN: 'win' })) })))],
   procedures_defnoreturn: [
-    b('procedures_defnoreturn', body(b('ab_score_set', { VALUE: n(0) }, undefined, b('ab_life_set', { VALUE: n(3) }))), { NAME: 'restart' }),
+    b('procedures_defnoreturn', { STACK: val(b('ab_score_set', { VALUE: n(0) }, undefined, b('ab_life_set', { VALUE: n(3) }))) }, { NAME: 'restart' }),
     b('ab_on_start', body({ type: 'procedures_callnoreturn', extraState: { name: 'restart' } })),
   ],
 };

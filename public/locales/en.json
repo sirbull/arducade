@@ -466,6 +466,10 @@
   "diag.textVariable.hint": "Put the text directly into the block that shows it, or use \"join\" to combine text and numbers.",
   "diag.typeMismatch.hint": "Use one variable for numbers and another one for sprites.",
   "diag.unknownBlock.hint": "The block may come from a newer version of ArduBlocks. Delete it.",
-  "diag.unknownFunction.hint": "The block may come from a newer version of ArduBlocks. Delete it."
+  "diag.unknownFunction.hint": "The block may come from a newer version of ArduBlocks. Delete it.",
+  "sim.compilingEmulator": "The game has C++ blocks, so it is compiled and run in an emulated ATmega328P. The first time the compiler is downloaded (about 17 MB).",
+  "sim.emulator": "Running in an emulated ATmega328P because the game has C++ blocks. Problems can not be linked to blocks while it runs.",
+  "runtime.emulatorError": "The emulated device stopped: {detail}",
+  "runtime.emulatorError.hint": "Check the code in the C++ blocks."
  }
 }

@@ -466,6 +466,10 @@
   "diag.textVariable.hint": "Skriv teksten rett inn i blokken som viser den, eller bruk \"sett sammen\" for å kombinere tekst og tall.",
   "diag.typeMismatch.hint": "Bruk én variabel til tall og en annen til sprites.",
   "diag.unknownBlock.hint": "Blokken kan komme fra en nyere versjon av ArduBlocks. Slett den.",
-  "diag.unknownFunction.hint": "Blokken kan komme fra en nyere versjon av ArduBlocks. Slett den."
+  "diag.unknownFunction.hint": "Blokken kan komme fra en nyere versjon av ArduBlocks. Slett den.",
+  "sim.compilingEmulator": "Spillet har C++ blokker, så det kompileres og kjøres i en emulert ATmega328P. Første gang lastes kompilatoren ned (rundt 17 MB).",
+  "sim.emulator": "Kjører i en emulert ATmega328P fordi spillet har C++ blokker. Mens det kjører, kan problemer ikke knyttes til blokker.",
+  "runtime.emulatorError": "Den emulerte enheten stoppet: {detail}",
+  "runtime.emulatorError.hint": "Sjekk koden i C++ blokkene."
  }
 }

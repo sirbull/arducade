@@ -9,7 +9,10 @@ import { buildToolbox } from '../blocks/toolbox';
 import { getChip } from '../hw/chips';
 import { BUILTIN_PROFILES, DEFAULT_PROFILE_ID, type Profile } from '../hw/profile';
 import { currentLanguage, kindName, LANGUAGES, loadLanguage, t, translatePage } from '../i18n/i18n';
-import type { Diagnostic } from '../ir/ir';
+import type { Diagnostic, Program, Stmt } from '../ir/ir';
+import { compileInWorker } from '../compile/client';
+import { EMULATOR_PROFILE, profileToConfigH } from '../hw/profile';
+import { CORE_HEADERS } from '../project/sketch';
 import { instantiateTemplate, localized, newProject, parseProject, PROJECT_EXTENSION, serializeProject, type Project } from '../project/model';
 import { sketchZip } from '../project/sketch';
 import { downloadFile, loadSettings, pickTextFile, profiles as profileStore, projects as projectStore, safeFileName, saveSettings, type Settings } from '../project/store';
@@ -24,7 +27,24 @@ import { openGallery, openProjectsDialog } from './gallery';
 import { allProfiles, loadServerProfiles, openProfileDialog, profileFromUrl } from './profile-editor';
 import { openFirstRun, openSettings } from './settings-dialog';
 import { applyPageTheme, blocklyTheme, THEME_IDS, type ThemeId } from './themes';
-import { DeviceTools } from './device';
+import { compilerErrorsToBlocks, DeviceTools } from './device';
+
+/** True if the game has C++ blocks. */
+function hasCpp(p: Program): boolean {
+  let found = false;
+  const walk = (list: Stmt[]) => {
+    for (const s of list) {
+      if (s.k === 'cpp') found = true;
+      else if (s.k === 'if') {
+        walk(s.then);
+        if (s.else) walk(s.else);
+      } else if (s.k === 'while' || s.k === 'repeat' || s.k === 'for' || s.k === 'forKind') walk(s.body);
+    }
+  };
+  p.events.forEach((e) => walk(e.body));
+  p.funcs.forEach((f) => walk(f.body));
+  return found;
+}
 
 /** The hint for a problem: what the user can do about it. Empty if none. */
 function hintText(key: string, params?: Record<string, string | number>): string {
@@ -201,8 +221,10 @@ export class App {
     this.refreshProblems();
     this.device.estimate();
     this.scheduleSave();
-    if (forceRestart || this.build.js.code !== this.lastJs) {
-      this.lastJs = this.build.js.code;
+    // Games with C++ blocks run from the C++ code, so changes there count too.
+    const runCode = hasCpp(this.build.program) ? this.build.cpp.code : this.build.js.code;
+    if (forceRestart || runCode !== this.lastJs) {
+      this.lastJs = runCode;
       this.restartSim();
     }
   }
@@ -249,7 +271,43 @@ export class App {
       this.simMessage(t('sim.fixErrors'), 'error');
       return;
     }
+    if (hasCpp(this.build.program)) {
+      void this.startEmulator();
+      return;
+    }
     void this.runner.start(this.build.js, `ardublocks.eeprom.${this.project.id}`, this.maxSprites());
+  }
+
+  private emulatorHex: { code: string; hex: string } | null = null;
+
+  /**
+   * Games with C++ blocks run as real machine code: compile for the emulated
+   * console and run it there.
+   */
+  private async startEmulator() {
+    const build = this.build!;
+    const code = build.cpp.code;
+    this.runner.stop();
+    let hex = this.emulatorHex?.code === code ? this.emulatorHex.hex : '';
+    if (!hex) {
+      this.simMessage(t('sim.compilingEmulator'), 'info');
+      try {
+        const out = await compileInWorker({ mcu: 'atmega328p', game: code, config: profileToConfigH(EMULATOR_PROFILE), headers: CORE_HEADERS });
+        hex = out.hex;
+        this.emulatorHex = { code, hex };
+      } catch (e) {
+        const log = (e as { log?: string[] }).log ?? [];
+        this.compileProblems = compilerErrorsToBlocks(log, build.cpp.ranges);
+        if (!this.compileProblems.length) this.compileProblems = [{ level: 'error', key: 'runtime.emulatorError', params: { detail: log.slice(-3).join(' ') || String((e as Error).message) } }];
+        this.refreshProblems();
+        this.simMessage(t('sim.fixErrors'), 'error');
+        return;
+      }
+      // The blocks may have changed while compiling.
+      if (this.build?.cpp.code !== code) return;
+    }
+    this.simMessage(t('sim.emulator'), 'info');
+    this.runner.startEmulator(hex, `ardublocks.eeprom.${this.project.id}`);
   }
 
   /** Same number of sprites as the device, which has fewer on small chips. */

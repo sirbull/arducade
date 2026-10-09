@@ -466,6 +466,10 @@
   "diag.textVariable.hint": "Escribe el texto directamente en el bloque que lo muestra, o usa \"unir\" para combinar texto y números.",
   "diag.typeMismatch.hint": "Usa una variable para números y otra para sprites.",
   "diag.unknownBlock.hint": "El bloque puede venir de una versión más nueva de ArduBlocks. Bórralo.",
-  "diag.unknownFunction.hint": "El bloque puede venir de una versión más nueva de ArduBlocks. Bórralo."
+  "diag.unknownFunction.hint": "El bloque puede venir de una versión más nueva de ArduBlocks. Bórralo.",
+  "sim.compilingEmulator": "El juego tiene bloques C++, así que se compila y se ejecuta en un ATmega328P emulado. La primera vez se descarga el compilador (unos 17 MB).",
+  "sim.emulator": "Se ejecuta en un ATmega328P emulado porque el juego tiene bloques C++. Mientras se ejecuta, los problemas no se pueden vincular a bloques.",
+  "runtime.emulatorError": "El dispositivo emulado se paró: {detail}",
+  "runtime.emulatorError.hint": "Revisa el código de los bloques C++."
  }
 }

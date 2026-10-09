@@ -33,6 +33,7 @@ export interface RunnerEvents {
 
 export class Runner {
   private engine: Engine | null = null;
+  private avr: Worker | null = null;
   private raf = 0;
   private keys = 0;
   private touch = 0;
@@ -87,6 +88,7 @@ export class Runner {
 
   private syncInput() {
     if (this.engine) this.engine.input = this.keys | this.touch;
+    this.avr?.postMessage({ type: 'input', bits: this.keys | this.touch });
   }
 
   resumeAudio() {
@@ -191,8 +193,37 @@ export class Runner {
     else this.events.onError('runtime.error', { detail: err instanceof Error ? err.message : String(err) }, block);
   }
 
+  /**
+   * Runs a compiled game (Intel HEX) in the emulated console. Used for games
+   * with C++ blocks, which the JavaScript simulator can not run.
+   */
+  startEmulator(hex: string, storageKey: string) {
+    this.stop();
+    const storage = loadStorage(storageKey);
+    const eeprom = Array.from({ length: 1024 }, (_, i) => storage.data[i] ?? 0xff);
+    const worker = new Worker(new URL('./avr-worker.ts', import.meta.url), { type: 'module' });
+    this.avr = worker;
+    this.running = true;
+    worker.onmessage = (e: MessageEvent<{ type: string; buffer?: Uint8Array; inverted?: boolean; freq?: number; data?: number[]; message?: string }>) => {
+      const m = e.data;
+      if (m.type === 'frame' && m.buffer) this.show(m.buffer, !!m.inverted);
+      else if (m.type === 'tone') this.tone(m.freq ?? 0);
+      else if (m.type === 'eeprom' && m.data) {
+        storage.data.splice(0, m.data.length, ...m.data);
+        storage.save();
+      } else if (m.type === 'error') {
+        this.stop();
+        this.events.onError('runtime.emulatorError', { detail: m.message ?? '' }, undefined);
+      }
+    };
+    worker.postMessage({ type: 'start', hex, eeprom });
+    this.syncInput();
+  }
+
   stop() {
     cancelAnimationFrame(this.raf);
+    this.avr?.terminate();
+    this.avr = null;
     if (this.engine) this.engine.stop();
     this.engine = null;
     this.running = false;

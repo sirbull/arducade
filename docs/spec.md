@@ -115,7 +115,8 @@ En profil består av mikrokontroller, skjerm, buss, pinner for knapper, skjerm o
 
 * Kjører JavaScript generert fra blokkene, så den starter umiddelbart uten kompilering.
 * Etterligner 128x64 skjerm, seks knapper og enkel lyd.
-* Custom-blokker med C++ kan ikke kjøres. Simulatoren hopper over dem og sier tydelig fra.
+* Spill med C++ blokker kompileres og kjøres i en emulert ATmega328P (avr8js) med SSD1306-skjerm, knapper og lyd, slik at også de virker i simulatoren.
+* Feil vises med en forklaring og et hint om hva brukeren kan gjøre, og blokken der feilen er får en farget ramme. Det gjelder feil i blokkene, feil mens spillet kjører og feil fra C++ kompilatoren.
 
 ## 8. Kompilering og plass
 
@@ -324,6 +325,7 @@ Versjon 0.1 (9. oktober 2026) har:
 * Kompilering i nettleseren for ATmega328P, 328PB, 32U4 og 644P, med nøyaktig plassmåler.
 * Opplasting over Web Serial med STK500v1 og AVR109.
 * Nedlasting av sketch for Arduino IDE for alle chiper.
+* Tydelige feilmeldinger med hint og ramme rundt blokken, og C++ blokker i simulatoren via emulator.
 
 Gjenstår: JavaScript og Python (punkt 15), kode tilbake til blokker, flere spill på én enhet, kompilering i nettleseren for flere chiper, maler for Snake og Breakout.
 

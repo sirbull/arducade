@@ -2,7 +2,7 @@
 // can be shown in every language. The meaning of each block is in toIR.ts.
 
 import * as Blockly from 'blockly/core';
-import '@blockly/field-multilineinput';
+import { registerFieldMultilineInput } from '@blockly/field-multilineinput';
 import { registerAssetFields } from './assets';
 import { ICONS, type IconName } from './icons';
 
@@ -295,6 +295,8 @@ export function defineBlocks() {
   if (defined) return;
   defined = true;
   registerAssetFields();
+  // The text field of the C++ block.
+  if (!Blockly.registry.hasItem(Blockly.registry.Type.FIELD, 'field_multilinetext')) registerFieldMultilineInput();
   for (const name of Object.keys(ICONS) as IconName[]) {
     Blockly.Extensions.register(`ab_icon_${name}`, function (this: Blockly.Block) {
       const first = this.inputList[0];

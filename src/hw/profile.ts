@@ -86,6 +86,12 @@ export const BUILTIN_PROFILES: Profile[] = [
 
 export const DEFAULT_PROFILE_ID = 'arduboy';
 
+/**
+ * Hardware of the emulated console in the simulator (used for games with C++
+ * blocks): Nano with SSD1306 over I2C, buttons on D2 to D7, speaker on D9.
+ */
+export const EMULATOR_PROFILE: Profile = BUILTIN_PROFILES.find((p) => p.id === 'nano-ssd1306-i2c')!;
+
 export function cloneProfile(p: Profile, name: string): Profile {
   const copy: Profile = JSON.parse(JSON.stringify(p));
   copy.id = `custom-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;

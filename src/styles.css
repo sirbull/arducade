@@ -893,7 +893,7 @@ select, input[type='text'], input[type='number'], input[type='search'] {
 .project-name { width: 170px; }
 #btn-new { background: var(--accent); color: var(--accent-text); border-color: var(--text); box-shadow: 0 3px 0 var(--text); }
 #btn-settings::before { content: '⚙'; margin-right: 7px; font-size: 17px; vertical-align: -1px; }
-.layout { height: calc(100% - 68px); grid-template-columns: minmax(0, 1fr) 360px; }
+.layout { height: calc(100% - 68px); grid-template-columns: minmax(0, 1fr) 360px; grid-template-rows: minmax(0, 1fr); } /* the panes scroll, not the page */
 .tabs { gap: 6px; padding: 12px; flex-wrap: wrap; }
 .tabs button { border: 1.5px solid transparent; border-radius: 0; padding: 8px 12px; box-shadow: none; color: var(--muted); }
 .tabs button.active { background: var(--accent); color: var(--accent-text); border-color: var(--text); box-shadow: 0 3px 0 var(--text); }
@@ -939,7 +939,22 @@ dialog { border: 2px solid var(--text); border-radius: 0; box-shadow: 8px 8px 0 
 dialog::backdrop { background: #17211980; backdrop-filter: blur(5px); }
 .dialog-head { padding: 20px 24px; background: color-mix(in srgb, var(--accent) 12%, var(--panel)); border-bottom: 1px solid var(--border); }
 .dialog-head h2 { font-size: 23px; letter-spacing: -.6px; }
-.dialog-head .icon-btn { width: 34px; height: 34px; border: 1px solid var(--border); border-radius: 50%; background: var(--panel); color: var(--text); }
+.dialog-head { gap: 16px; }
+.dialog-head h2 { min-width: 0; overflow-wrap: anywhere; }
+/* Every × and icon button is a square box; close buttons are large touch targets. */
+.icon-btn { display: inline-grid; place-items: center; min-width: 32px; min-height: 32px; padding: 0 6px; border: 1.5px solid var(--border); border-radius: 0; background: var(--panel); color: var(--text); }
+.dialog-head .icon-btn { flex-shrink: 0; width: 44px; height: 44px; display: grid; place-items: center; padding: 0; border: 2px solid var(--text); border-radius: 0; background: var(--panel); color: var(--text); font-size: 28px; font-weight: 700; line-height: 1; box-shadow: 0 3px 0 var(--text); }
+.dialog-head .icon-btn { margin-top: 6px; }
+.dialog-head .icon-btn:hover:not(:disabled) { background: color-mix(in srgb, var(--accent) 12%, var(--panel)); border-color: var(--text); }
+/* New variable: the name, then the type as large touch targets. */
+.variable-dialog .form input[type='text'] { width: 100%; font-size: 18px; padding: 10px 12px; }
+.var-types { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 16px 0 0; padding: 0; border: 0; }
+.var-types legend { padding: 0; margin-bottom: 8px; font-weight: 600; }
+.var-type { position: relative; margin: 0; }
+.var-type input { position: absolute; opacity: 0; }
+.var-type span { display: grid; place-items: center; min-height: 44px; padding: 8px; text-align: center; border: 1.5px solid var(--border); background: var(--panel-2); cursor: pointer; }
+.var-type input:checked + span { border-color: var(--text); background: var(--accent); color: var(--accent-text); font-weight: 700; }
+.var-type input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
 .dialog-body { padding: 20px 24px; }
 .dialog-footer { padding: 16px 24px 22px; border-top: 1px solid var(--border); background: color-mix(in srgb, var(--bg) 60%, var(--panel)); }
 .settings-dialog { width: min(580px, calc(100vw - 32px)); }
@@ -1181,7 +1196,7 @@ button.brand:hover:not(:disabled) { background: none; color: var(--text); }
 .home-project-card button:hover:not(:disabled),
 .home-project-card button:active:not(:disabled) { transform: none; }
 
-/* Rectangular actions have sharp corners; console and close buttons stay circular. */
+/* Rectangular actions have sharp corners; console buttons stay circular. */
 button.card,
 .home button.card,
 button.asset-item,
@@ -1341,6 +1356,11 @@ input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='
 .toolbox-delete-overlay[hidden] { display: none; }
 .toolbox-delete-overlay svg { width: 56px; height: 56px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
 .flyout-close { position: absolute; top: 8px; z-index: 75; width: 26px; height: 26px; padding: 0; font-size: 18px; line-height: 1; }
+.blocklyFlyoutButton { cursor: pointer; }
+.blocklyFlyoutButtonBackground { fill: var(--danger); }
+.blocklyFlyoutButton:hover .blocklyFlyoutButtonBackground, .blocklyFlyoutButton:active .blocklyFlyoutButtonBackground { fill: color-mix(in srgb, var(--danger) 85%, #000); }
+.blocklyFlyoutButtonShadow { fill: color-mix(in srgb, var(--danger) 65%, #000); transform: translate(-1px, 2px); } /* a 3px edge under the button */
+.blocklyFlyoutButton .blocklyText { fill: #fff !important; stroke: none; font-weight: 400 !important; }
 .flyout-close[hidden] { display: none; }
 .toolbox-delete-overlay.active { color: #ef4444; border-color: #ef4444; background: color-mix(in srgb, var(--panel) 90%, #ef4444); }
 
@@ -1500,7 +1520,6 @@ input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='
 .catalog-dialog .dialog-footer button { min-height:48px; white-space:normal; }
 .catalog-dialog .dialog-footer .primary { padding:12px 16px; font-size:16px; background:#ff681f; color:#202720; border-color:#202720; box-shadow:0 3px 0 #202720; }
 .catalog-dialog .dialog-footer .primary:hover:not(:disabled) { background:#f05b14; }
-.catalog-dialog .dialog-head .icon-btn { width:44px; height:44px; flex-shrink:0; }
 .catalog-description { line-height:1.6; }
 .catalog-part { display:flex; align-items:center; gap:14px; padding:14px 8px; width:100%; border:0; border-top:1px solid var(--border); background:transparent; text-align:left; white-space:normal; min-height:64px; }
 .catalog-part > span:last-child { display:flex; flex-direction:column; gap:5px; }
@@ -1528,7 +1547,6 @@ input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='
 
 
 .cartridge-simulator-dialog .dialog-footer button { min-height: 44px; }
-.cartridge-simulator-dialog .dialog-head .icon-btn, .save-dialog .dialog-head .icon-btn { width: 44px; height: 44px; flex-shrink: 0; }
 @media (max-width: 480px) {
   .cartridge-simulator .pad { display: grid; grid-template-columns: 132px minmax(0, 1fr); gap: 16px 8px; }
   .cartridge-simulator .dpad { grid-area: 1 / 1; }
@@ -1562,11 +1580,13 @@ dialog.docs-dialog[open] { display: flex; flex-direction: column; }
 .docs-content { overflow: auto; min-height: 0; padding-right: 6px; }
 .docs-content h2 { margin: 0 0 12px; font-size: 22px; }
 .docs-content p { line-height: 1.55; max-width: 70ch; }
-.docs-block { padding: 14px 0 18px; border-bottom: 1px solid var(--border); scroll-margin-top: 8px; }
+.docs-block { padding: 10px 0 14px; border-bottom: 1px solid var(--border); scroll-margin-top: 8px; }
 .docs-block.focus { border-left: 4px solid var(--accent); padding-left: 12px; }
 .docs-block h4 { margin: 14px 0 6px; font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
 /* Pictures only: the page scrolls over them with touch and the wheel. */
-.docs-picture { min-height: 60px; pointer-events: none; }
+.docs-picture { min-height: 48px; pointer-events: none; }
+.docs-picture .blocklyMainBackground { stroke: none; fill: transparent; }
+.docs-picture + p { margin-top: 0; }
 #btn-docs::before { content: '?'; margin-right: 7px; font-weight: 700; }
 @media (max-width: 700px) {
   .dialog-body.docs { grid-template-columns: 1fr; grid-template-rows: auto 1fr; gap: 10px; }

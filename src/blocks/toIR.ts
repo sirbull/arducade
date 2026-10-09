@@ -1,6 +1,7 @@
 // Blockly workspace to IR.
 
 import * as Blockly from 'blockly/core';
+import { varType } from './var-types';
 import type { BinOp, Diagnostic, Event, Expr, Func, Program, Stmt } from '../ir/ir';
 
 type Block = Blockly.Block;
@@ -17,7 +18,7 @@ class Converter {
 
   run(): ToIrResult {
     const program: Program = { vars: [], funcs: [], events: [] };
-    for (const v of this.ws.getVariableMap().getAllVariables()) program.vars.push({ name: v.getName(), ty: 'num' });
+    for (const v of this.ws.getVariableMap().getAllVariables()) program.vars.push({ name: v.getName(), ty: varType(this.ws, v.getId()) ?? 'num' });
     const tops = this.ws.getTopBlocks(true);
     for (const b of tops) {
       if (!b.isEnabled()) continue;

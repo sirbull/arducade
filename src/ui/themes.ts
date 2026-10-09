@@ -42,7 +42,7 @@ const THEMES: Record<ThemeId, ThemeDef> = {
     page: { '--bg': '#0b0b0c', '--panel': '#2a2a2d', '--panel-2': '#38383c', '--text': '#e8e4dc', '--muted': '#a9a39a', '--accent': '#c9a36b', '--accent-text': '#1b1612', '--border': '#45454a', '--danger': '#d9705f', '--ok': '#8fbf7a' },
     blocks: {
       game: '#8a6f4e', sprites: '#7a6a8a', controller: '#9a5f4f', scene: '#5f7a6a', info: '#a08048', graphics: '#6a7f8f',
-      music: '#8f5f73', logic: '#6f7f55', loops: '#7f8a5a', math: '#5a6f8a', variables: '#a0704a', functions: '#7a5a5a', text: '#6f6a5a', custom: '#555555',
+      music: '#8f5f73', logic: '#6f7f55', loops: '#7f8a5a', math: '#5a6f8a', variables: '#a84f4f', functions: '#7a5a5a', text: '#6f6a5a', custom: '#555555',
     },
     workspace: '#141415',
     toolbox: '#2a2a2d',
@@ -54,7 +54,7 @@ const THEMES: Record<ThemeId, ThemeDef> = {
     page: { '--bg': '#e8e8e2', '--panel': '#f5f5ef', '--panel-2': '#e2e5d9', '--text': '#202720', '--muted': '#62655d', '--accent': '#ff681f', '--accent-text': '#202720', '--border': '#b9bcb2', '--danger': '#b83232', '--ok': '#28784b' },
     blocks: {
       game: '#ed984c', sprites: '#7895e4', controller: '#ec785b', scene: '#52b49e', info: '#d685ce', graphics: '#65b1dc',
-      music: '#df6ba7', logic: '#85c168', loops: '#4dbd8b', math: '#a886db', variables: '#ed885e', functions: '#7f8fe0', text: '#d5b052', custom: '#a3ad9e',
+      music: '#df6ba7', logic: '#85c168', loops: '#4dbd8b', math: '#a886db', variables: '#e25b5b', functions: '#7f8fe0', text: '#d5b052', custom: '#a3ad9e',
     },
     workspace: '#f5f5ef',
     toolbox: '#e8e8e2',

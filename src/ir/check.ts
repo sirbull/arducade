@@ -146,7 +146,7 @@ export function checkProgram(p: Program): { info: TypeInfo; diagnostics: Diagnos
   // A few rounds are enough for types to flow through variables and calls.
   for (let round = 0; round < 4; round++) {
     for (const v of p.vars) {
-      if (!info.vars.has(v.name)) info.vars.set(v.name, fixed.get(v.name) ?? 'num');
+      if (!info.vars.has(v.name)) info.vars.set(v.name, fixed.get(v.name) ?? v.ty);
     }
     for (const { body, func } of bodies(p)) {
       const locals = func ? new Map(func.params.map((pr, i) => [pr.name, info.funcs.get(func.name)!.params[i]])) : undefined;

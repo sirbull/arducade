@@ -77,7 +77,7 @@ export class ToolboxDeleteOverlay extends Blockly.DeleteArea {
   private placeClose() {
     const flyout = this.ws.getFlyout() as Blockly.Flyout | null;
     this.closeButton.hidden = !flyout?.isVisible();
-    this.closeButton.style.left = `${this.width() + (flyout?.getWidth() ?? 0) - 34}px`;
+    this.closeButton.style.left = `${this.width() + (flyout?.getWidth() ?? 0) - 48}px`; // clear of the scrollbar
   }
 
   override getClientRect() {

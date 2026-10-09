@@ -2,6 +2,7 @@
 // the simulator and the device panel.
 
 import * as Blockly from 'blockly/core';
+import { varType } from '../blocks/var-types';
 import 'blockly/blocks';
 import '../blocks/category';
 import { setAssetLabels, setAssetProject } from '../blocks/assets';
@@ -153,6 +154,10 @@ export class App {
   // Workspace -------------------------------------------------------------
 
   private injectWorkspace() {
+    // Square palette buttons ("Create variable"), large enough for touch.
+    Blockly.FlyoutButton.BORDER_RADIUS = 0;
+    Blockly.FlyoutButton.TEXT_MARGIN_X = 16;
+    Blockly.FlyoutButton.TEXT_MARGIN_Y = 14;
     this.ws = Blockly.inject($('#blockly'), {
       toolbox: buildToolbox() as unknown as Blockly.utils.toolbox.ToolboxDefinition,
       theme: blocklyTheme(this.settings.theme as ThemeId),
@@ -170,7 +175,26 @@ export class App {
     // Keep toolbox blocks at a fixed size instead of following workspace zoom
     // (browser zoom still scales the whole UI).
     const flyout = this.ws.getFlyout() as Blockly.Flyout | null;
-    if (flyout) flyout.getFlyoutScale = () => 0.8;
+    if (flyout) {
+      flyout.getFlyoutScale = () => 0.8;
+      // Every palette starts below its close button.
+      const show = flyout.show.bind(flyout);
+      flyout.show = (def) => {
+        const contents = typeof def === 'string' ? this.ws.getToolboxCategoryCallback(def)!(this.ws) : def;
+        show([{ kind: 'sep', gap: '44' }, ...Blockly.utils.toolbox.convertFlyoutDefToJsonArray(contents)]);
+      };
+    }
+    // "set" comes with a value of the variable's type that can be pulled off.
+    this.ws.registerToolboxCategoryCallback('VARIABLE', (ws) =>
+      Blockly.Variables.flyoutCategory(ws).map((item) => {
+        if (!('type' in item) || item.type !== 'variables_set') return item;
+        const v = ws.getVariableMap().getVariable((item.fields as { VAR: { name: string } }).VAR.name);
+        const ty = v && varType(ws, v.getId());
+        const value = ty === 'bool' ? { type: 'logic_boolean', fields: { BOOL: 'TRUE' } }
+          : ty === 'str' ? { type: 'text', fields: { TEXT: '' } }
+          : { type: 'math_number', fields: { NUM: 0 } };
+        return { ...item, inputs: { VALUE: { block: value } } };
+      }));
     this.deleteOverlay?.dispose();
     this.deleteOverlay = new ToolboxDeleteOverlay(this.ws);
     this.comments?.dispose();

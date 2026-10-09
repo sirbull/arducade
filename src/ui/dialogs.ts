@@ -67,7 +67,7 @@ export function promptDialog(title: string, label: string, value = ''): Promise<
     let result: string | null = null;
     const d = openDialog(title, { onClose: () => resolve(result) });
     const input = h('input', { type: 'text', value, 'aria-label': label });
-    const form = h('form', { class: 'form' }, h('label', {}, label, input));
+    const form = h('form', { class: 'form' }, label ? h('label', {}, label, input) : input);
     form.addEventListener('submit', (e) => {
       e.preventDefault();
       result = input.value.trim() || null;

@@ -94,6 +94,13 @@ function tooltip(type: string): string {
   }
 }
 
+/** The longer text for a block (docs.more.<type>), or its tooltip. */
+function more(type: string): string[] {
+  const key = `docs.more.${type}`;
+  const text = t(key);
+  return (text === key ? tooltip(type) : text).split('\n\n');
+}
+
 /** Opens the documentation, at the block of this type if one is given. */
 export function openDocs(theme: ThemeId, blockType?: string) {
   const all = sections();
@@ -163,7 +170,7 @@ export function openDocs(theme: ThemeId, blockType?: string) {
           'article',
           { class: 'docs-block', 'data-type': type },
           picture([state]),
-          h('p', {}, tooltip(type)),
+          ...more(type).map((p) => h('p', {}, p)),
           example && h('h4', {}, t('docs.example')),
           example && picture(example),
           example && h('p', {}, t(`docs.ex.${type}`)),

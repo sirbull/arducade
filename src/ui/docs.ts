@@ -74,8 +74,8 @@ function subject(state: Json): string {
   return inner?.startsWith('ab_') ? inner : state.type;
 }
 
-function sections(): Section[] {
-  const list: Section[] = GUIDE.map((id) => ({ id, title: t(`docs.${id}.title`) }));
+function sections(secretTiny: boolean): Section[] {
+  const list: Section[] = GUIDE.filter(id => id !== 'attiny' || secretTiny).map((id) => ({ id, title: t(`docs.${id}.title`) }));
   const seen = new Set<string>();
   for (const cat of buildToolbox().contents as Json[]) {
     const key = String(cat.name).replace(/^%\{BKY_AB_CAT_|\}$/g, '');
@@ -106,8 +106,9 @@ function more(type: string): string[] {
 }
 
 /** Opens the documentation, at the block of this type if one is given. */
-export function openDocs(theme: ThemeId, blockType?: string) {
-  const all = sections();
+export function openDocs(theme: ThemeId, blockType?: string, secretTiny = false) {
+  const all = sections(secretTiny);
+  const guideCount = all.filter(sec => !sec.blocks).length;
   const dlg = openDialog(t('docs.title'), { wide: true, onClose: () => disposePictures() });
   dlg.el.classList.add('docs-dialog');
   const nav = h('nav', { class: 'docs-nav', 'aria-label': t('docs.title') });
@@ -137,9 +138,9 @@ export function openDocs(theme: ThemeId, blockType?: string) {
   );
   nav.append(
     h('h3', {}, t('docs.guide')),
-    ...buttons.slice(0, GUIDE.length),
+    ...buttons.slice(0, guideCount),
     h('h3', {}, t('docs.blocks')),
-    ...buttons.slice(GUIDE.length),
+    ...buttons.slice(guideCount),
   );
 
   let target: HTMLElement | null = null;

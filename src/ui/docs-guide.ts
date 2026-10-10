@@ -40,7 +40,7 @@ export function illustratedGuide(id: string, picture: (blocks: Json[], overview?
   } else if (id === 'device') {
     el.append(figure('arduboy-front-back.jpg', 'docs.visual.arduboy.caption', 'Foto: Drummyfish · CC0'), step('export'));
   } else if (id === 'homemade') {
-    el.append(step('parts'), step('profile'), figure('pro-micro-wiring.svg', 'docs.visual.wiring.caption'),
+    el.append(step('parts'), billOfMaterials('pro'), step('profile'), figure('pro-micro-wiring.svg', 'docs.visual.wiring.caption'),
       figure('pro-micro-schematic.svg', 'docs.visual.schematic.caption'), wiringTable(),
       step('power'), step('supply'), step('screen'), step('buttons'), step('sound'), step('reset'), step('upload'), step('trouble'),
       h('details', {}, h('summary', {}, t('docs.visual.references.title')),
@@ -52,7 +52,7 @@ export function illustratedGuide(id: string, picture: (blocks: Json[], overview?
       h('p', {}, h('a', { href: 'https://cdn.sparkfun.com/datasheets/Dev/Arduino/Boards/Pro_Micro_v13b.pdf', target: '_blank', rel: 'noopener' }, 'SparkFun · Pro Micro schematic')),
       h('p', {}, h('a', { href: 'https://github.com/MrBlinky/Arduboy', target: '_blank', rel: 'noopener' }, 'MrBlinky · Arduboy')));
   } else if (id === 'attiny') {
-    el.append(step('tiny-parts'), figure('attiny85-components.svg', 'docs.visual.tiny-components.caption'),
+    el.append(step('tiny-parts'), billOfMaterials('tiny'), figure('attiny85-components.svg', 'docs.visual.tiny-components.caption'),
       step('tiny-profile'), figure('attiny85-schematic.svg', 'docs.visual.tiny-schematic.caption'), tinyWiringTable(),
       ...['tiny-power', 'tiny-screen', 'tiny-buttons', 'tiny-program', 'tiny-clock', 'tiny-assemble'].map(id => step(id)),
       h('details', {}, h('summary', {}, t('docs.visual.tiny-reference.title')),
@@ -104,4 +104,30 @@ function tinyWiringTable() {
       h('th', { scope: 'col' }, 'ATtiny85'), h('th', { scope: 'col' }, t('docs.visual.tiny-pin')))),
     h('tbody', {}, ...rows.map(([label, port, physical]) => h('tr', {},
       h('th', { scope: 'row' }, label), h('td', {}, port), h('td', {}, physical))))));
+}
+
+
+/** Purchasing specifications describe modules; no unverified manufacturer part numbers. */
+function billOfMaterials(console: 'pro' | 'tiny') {
+  const common = ['wire', 'board'];
+  const parts = console === 'pro'
+    ? ['pro-board', 'pro-display', 'pro-buttons', 'reset', 'piezo', 'usb', ...common]
+    : ['tiny-chip', 'socket', 'tiny-display', 'tiny-buttons', 'piezo', 'cell', 'holder', 'switch', 'capacitor', ...common];
+  const quantities: Record<string, string> = { 'pro-buttons': '6', 'tiny-buttons': '2', wire: t('docs.bom.quantity.wire'), 'isp-wire': t('docs.bom.quantity.wire'), mounting: t('docs.bom.quantity.wire'), board: '1' };
+  const group = (ids: string[], label: string) => h('div', { class: 'docs-table-wrap' },
+    h('table', { class: 'docs-wiring docs-bom' },
+      h('caption', {}, t(label)),
+      h('thead', {}, h('tr', {}, ...['quantity', 'component', 'specification'].map(key => h('th', { scope: 'col' }, t(`docs.bom.${key}`))))),
+      h('tbody', {}, ...ids.map(id => h('tr', {},
+        h('td', {}, quantities[id] ?? '1'),
+        h('th', { scope: 'row' }, t(`docs.bom.${id}.name`)),
+        h('td', {}, t(`docs.bom.${id}.spec`)))))));
+  return h('section', { class: 'docs-step docs-bom-section' },
+    h('h3', {}, t('docs.bom.title')),
+    h('p', {}, t(`docs.bom.${console}.intro`)),
+    group(parts, 'docs.bom.console'),
+    group(console === 'pro' ? ['solder', 'iron', 'meter', 'cutters'] : ['programmer', 'isp-wire', 'solder', 'iron', 'meter', 'cutters'], 'docs.bom.tools'),
+    group(['case', 'mounting'], 'docs.bom.optional'),
+    console === 'pro' && h('p', {}, t('docs.bom.pro.battery')),
+    console === 'tiny' && h('p', {}, t('docs.bom.tiny.resistors')));
 }

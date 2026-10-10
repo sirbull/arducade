@@ -835,8 +835,8 @@ export class App {
     $('#btn-import').addEventListener('click', () => this.importProject());
     $('#btn-export').addEventListener('click', () => this.exportProject());
     this.bindSettingsButton();
-    $('#btn-docs').addEventListener('click', () => openDocs(this.settings.theme as ThemeId));
-    setBlockInfoHandler((type) => openDocs(this.settings.theme as ThemeId, type));
+    $('#btn-docs').addEventListener('click', () => openDocs(this.settings.theme as ThemeId, undefined, !!this.settings.secretTiny));
+    setBlockInfoHandler((type) => openDocs(this.settings.theme as ThemeId, type, !!this.settings.secretTiny));
     const languageTrigger = $('#lang');
     const languageMenu = $('#language-menu');
     const closeLanguageMenu = (restoreFocus = false) => {

@@ -300,8 +300,8 @@ input[type='number'] {
 .confetti.circle { border-radius: 50%; }
 .secret-found { margin: 0 0 8px; color: var(--accent); font-weight: 700; }
 .secret-settings.found {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 1px var(--accent);
+  /* A real fieldset border leaves the legend clear; box-shadow crosses its text. */
+  border: 2px solid var(--accent);
 }
 .dpad {
   display: grid;

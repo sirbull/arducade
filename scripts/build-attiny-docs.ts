@@ -31,7 +31,7 @@ let v=start('ATtiny85 · components and connections','Top-view vector ATtiny85, 
 v+=text(40,131,'Matching pin names mean the same connection. Numbers after / are physical DIP pins, viewed from above.',18,C.ink);
 v+=panel(40,156,570,552,'01','Chip and socket','The dot marks pin 1. Check the chip orientation.');
 v+=dip(315,412)+text(64,597,'1 = PB5 / RESET. Keep this pin for ISP.',18,C.muted)+text(64,626,'8 = VCC. 4 = GND. No USB or RAW pin.',18,C.muted)+text(64,655,'PB0–PB4 differ from physical DIP pin numbers.',17,C.muted)+text(64,683,'Use a DIP-8 socket to swap or program the chip.',17,C.muted);
-v+=panel(638,156,722,552,'02','OLED · 4-pin I2C','SSD1306 · 128 × 64 · address 0x'+p.display.i2cAddress.toString(16).toUpperCase());
+v+=panel(638,156,722,552,'02','OLED · 4-pin I2C','SSD1306 · onboard I2C pull-ups · address 0x'+p.display.i2cAddress.toString(16).toUpperCase());
 const pins=[['GND','GND',C.ground],['VCC','VCC / 8',C.power],['SCL',pinLabel(chip.bus.scl!),C.scl],['SDA',pinLabel(chip.bus.sda!),C.sda]];
 v+=rect(720,348,554,262,'#147d9b','#10546d',3)+rect(753,404,488,164,'#09171e','#b5c3cb',3)+text(997,470,'ArduCade',35,'#d9f1e8','middle',700);
 for(const x of [739,1255])for(const y of [370,588])v+=circle(x,y,10,'#c4d1d8')+circle(x,y,5,'#f2f6f8');
@@ -72,7 +72,7 @@ for(let i=0;i<4;i++){const y=686+i*64;
  }
 }
 s+=text(64,966,'PB3 / PB4 provide software I2C in ArduCade.',17,C.muted);
-s+=panel(690,456,670,539,'03','Display and sound','SSD1306 I2C · address 0x'+p.display.i2cAddress.toString(16).toUpperCase());
+s+=panel(690,456,670,539,'03','Display and sound','SSD1306 · onboard I2C pull-ups · address 0x'+p.display.i2cAddress.toString(16).toUpperCase());
 s+=rect(939,585,372,263,'#eef3f6',C.ink,2)+text(1125,624,'OLED · 128 × 64',23,C.ink,'middle',700);
 for(const [i,[port,net,color]] of [['VCC','VCC',C.power],['GND','GND',C.ground],['SCL','OLED_SCL',C.scl],['SDA','OLED_SDA',C.sda]].entries()){const y=670+i*46;s+=tag(714,y-18,net,color,152)+wire([[866,y],[939,y]],color)+text(958,y+7,port,18,C.ink,'start',700);}
 s+=tag(714,910,'SOUND',C.sound,126)+wire([[840,928],[947,928]],C.sound)+rect(947,910,34,36,'#fff',C.ink,2)+`<path d="M981 910L1013 893V963L981 946Z" fill="#eef3f6" stroke="${C.ink}" stroke-width="2"/>`+wire([[1013,928],[1133,928]],C.ground)+tag(1133,910,'GND',C.ground,102)+text(927,983,'Passive piezo · not a low-impedance speaker',17,C.muted);

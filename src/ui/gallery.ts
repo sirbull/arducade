@@ -3,6 +3,7 @@
 
 import { currentLanguage, t } from '../i18n/i18n';
 import { localized, parseProject, type Project } from '../project/model';
+import { readCartridge } from '../project/cartridge';
 import { projects as projectStore } from '../project/store';
 import { gameThumbnail } from './build';
 import type { PixelColor } from '../sim/runner';
@@ -21,7 +22,7 @@ export async function loadTemplates(): Promise<Project[]> {
     for (const file of list) {
       try {
         const r = await fetch(`templates/${file}`, { cache: 'no-cache' });
-        if (r.ok) out.push(parseProject(await r.text()));
+        if (r.ok) out.push(file.endsWith('.png') ? readCartridge(new Uint8Array(await r.arrayBuffer())) : parseProject(await r.text()));
       } catch {
         // Skip broken templates.
       }

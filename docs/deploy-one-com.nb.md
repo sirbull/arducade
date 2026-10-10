@@ -53,7 +53,7 @@ sørger for at `.wasm`-filene sendes med riktig filtype.
 
 Du kan legge til innhold uten å bygge nettsiden på nytt:
 
-* **Maler:** lagre et prosjekt fra editoren (Last ned), legg `.abproject`-filen
+* **Maler:** lagre et spill fra editoren (Lagre → Last ned spill), legg `.png`-filen
   i mappen `templates/` på serveren, og legg filnavnet til i
   `templates/index.json`.
 * **Maskinvareprofiler:** lagre profilen fra editoren (Lagre som fil), legg

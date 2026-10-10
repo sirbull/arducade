@@ -1326,7 +1326,11 @@ input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='
 .blocks-content { display: flex; flex: 1; min-height: 0; min-width: 0; }
 .blocks-content #blockly { min-width: 0; }
 .tabs #btn-comments { margin-left: auto; border: 1.5px solid var(--border); }
-.tabs #btn-comments::before { content: '☷'; }
+.tabs #btn-comments::before { content: ''; display: inline-block; width: 1em; height: 1em; vertical-align: -0.15em; background: currentColor; -webkit-mask: var(--icon-bubble) center / contain no-repeat; mask: var(--icon-bubble) center / contain no-repeat; }
+:root { --icon-bubble: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M2.5 3.5h15v10h-9l-4 3.5v-3.5h-2z' fill='none' stroke='%23000' stroke-width='2'/%3E%3C/svg%3E"); }
+/* Collapsed workspace notes are just their speech-bubble icon. */
+.blocklyCollapsed.blocklyComment .blocklyCommentPreview, .blocklyCollapsed.blocklyComment .blocklyDeleteIcon { display: none; }
+.blocklyCollapsed.blocklyComment .blocklyFoldoutIcon { transform: none; }
 .tabs #btn-comments[aria-pressed='true'] { background: var(--panel-2); color: var(--text); border-color: var(--text); }
 #comments-panel { width: clamp(220px, 25%, 300px); flex-shrink: 0; padding: 16px; border-left: 2px solid var(--border); background: var(--bg); overflow-y: auto; }
 #comments-panel[hidden] { display: none; }
@@ -1436,6 +1440,7 @@ input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='
 .save-dialog { width: min(620px, calc(100vw - 32px)); }
 .cartridge-preview { display: flex; justify-content: center; margin: 16px 0; }
 .cartridge-preview canvas { width: 240px; max-width: 100%; height: auto; }
+.cartridge-play { display: block; margin: 0 auto; }
 
 
 .text-pane.active { display: flex; flex-direction: column; }

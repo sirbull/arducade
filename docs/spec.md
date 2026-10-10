@@ -134,7 +134,7 @@ En profil består av mikrokontroller, skjerm, buss, pinner for knapper, skjerm o
 ## 10. Prosjekter og filer
 
 * Prosjekter lagres automatisk i nettleseren (IndexedDB).
-* Et prosjekt kan lastes ned som én fil (`.abproject`, JSON) og lastes opp igjen, også på en annen maskin eller i en annen nettleser.
+* Et prosjekt lastes ned som et spill (**Last ned spill**): én PNG-fil som ser ut som en spillkassett. Hele prosjektet ligger lagret inne i bildet, så bildet fungerer som en kassett som kan åpnes igjen med Importer, også på en annen maskin eller i en annen nettleser. Eldre `.abproject`-filer (JSON) kan fortsatt importeres.
 * Prosjektfilen inneholder blokker, sprites, lyder, innstillinger og en kopi av maskinvareprofilen.
 * Når et prosjekt lastes opp med en profil man ikke har fra før, tilbys det å legge profilen i profilbiblioteket.
 * Filene har et formatnummer, slik at eldre filer kan oppgraderes når formatet endres.
@@ -182,7 +182,7 @@ Editoren skal være like enkel og forståelig som MakeCode Arcade. Derfor har de
 * Ved "Nytt prosjekt" vises et galleri med kort for hver mal: navn, en linje om spillet, og et bilde fra simulatoren.
 * Når en mal åpnes, starter spillet med en gang i simulatoren, slik at man kan prøve før man endrer noe.
 * En mal åpnes alltid som en kopi. Originalen endres aldri.
-* Malene er vanlige prosjektfiler (`.abproject`) i mappen `templates/` på webserveren. Nye maler kan legges til ved å laste opp en fil.
+* Malene er spillkassetter (`.png`) eller eldre prosjektfiler (`.abproject`) i mappen `templates/` på webserveren. Nye maler kan legges til ved å laste opp en fil.
 * Egne prosjekter kan lastes ned og legges i `templates/`, slik at for eksempel en lærer kan lage maler til en klasse.
 
 **Malene i versjon 1.0**

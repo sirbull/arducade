@@ -84,8 +84,8 @@ The simulator engine in `src/sim/engine.ts` must behave exactly like
 * **Language:** add `public/locales/<code>.json` (copy `en.json`) and add the
   language to `LANGUAGES` in `src/i18n/i18n.ts`. `npm run check-locales`
   lists missing texts.
-* **Template:** download a project from the editor, put the `.abproject` file
-  in `templates/` on the server and add its name to `templates/index.json`.
+* **Template:** download a game from the editor (**Save → Download game**), put
+  the `.png` file in `templates/` on the server and add its name to `templates/index.json`.
 * **Hardware profile:** save a profile from the editor, put the `.abprofile`
   file in `profiles/` and add its name to `profiles/index.json`. A link like
   `https://example.com/arducade/?profile=profiles/my-nano.abprofile` loads
@@ -121,11 +121,11 @@ and is GCC and GNU binutils (GPL v3). The sysroot contains avr-libc (BSD
 style license), libgcc (GPL with the GCC runtime exception) and the Arduino
 AVR core (LGPL). See `public/compiler/tools/THIRD_PARTY_NOTICES.md`.
 
-Projects can also be saved as PNG game cartridges with **Save → Download PNG**.
+Projects can also be saved as PNG game cartridges with **Save → Download game**.
 The image includes the full project in a private PNG chunk and can be reopened
-with **Import**. Choose the automatic game thumbnail or play and capture a
+with **Open file**. Choose the automatic game thumbnail or play and capture a
 screenshot in the compact simulator opened from the save dialog. The simulator
 supports touch D-pad and A/B buttons, including simultaneous presses. Press B on
 the keyboard or use the screenshot button to capture the current frame. Keep the original downloaded PNG: editing or
-re-encoding it in an image tool may remove the embedded project. The save dialog
-also offers the legacy `.abproject` file for templates and JSON workflows.
+re-encoding it in an image tool may remove the embedded project. Older
+`.abproject` (JSON) files can still be imported and used as templates.

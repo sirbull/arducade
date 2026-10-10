@@ -1,6 +1,9 @@
 import * as Blockly from 'blockly/core';
 import { t } from '../i18n/i18n';
 
+/** Square speech bubble shown when a workspace note is collapsed. */
+const BUBBLE = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M2.5 3.5h15v10h-9l-4 3.5v-3.5h-2z" fill="#fff" stroke="#333" stroke-width="1.5"/></svg>');
+
 /** Comments are edited in a reserved column, never over the program. */
 export class CommentsPanel {
   private panel = document.getElementById('comments-panel')!;
@@ -20,12 +23,15 @@ export class CommentsPanel {
     clearTimeout(this.timer);
     this.timer = setTimeout(() => {
       this.syncBubbles();
+      this.iconifyNotes();
       // Preserve the current edit and cursor until the field loses focus.
       if (!this.panel.contains(document.activeElement)) this.render();
     }, 0);
   };
 
   constructor(private ws: Blockly.WorkspaceSvg) {
+    // Right-click (or long-press) on the background adds a free note.
+    if (!Blockly.ContextMenuRegistry.registry.getItem('commentCreate')) Blockly.ContextMenuItems.registerCommentOptions();
     this.toggle.addEventListener('click', this.click);
     this.ws.addChangeListener(this.change);
     this.show(this.toggle.getAttribute('aria-pressed') === 'true');
@@ -37,13 +43,22 @@ export class CommentsPanel {
     this.ws.removeChangeListener(this.change);
   }
 
-  /** Bubbles stay hidden unless the user asked to see every comment in the editor. */
-  private syncBubbles() {
-    for (const c of this.ws.getTopComments(false)) {
-      const svg = c.getSvgRoot();
-      if (this.showAll) svg?.removeAttribute('display');
-      else svg?.setAttribute('display', 'none');
+  /** Collapsed notes shrink to a speech-bubble icon; tapping it opens the note again. */
+  private iconifyNotes() {
+    for (const c of this.ws.getTopComments(false) as Blockly.comments.RenderedWorkspaceComment[]) {
+      const root = c.getSvgRoot();
+      const icon = root.querySelector<SVGImageElement>('.blocklyFoldoutIcon');
+      const bar = root.querySelector('.blocklyCommentTopbarBackground');
+      if (!icon || !bar) continue;
+      icon.dataset.href ??= icon.getAttribute('href') ?? '';
+      icon.setAttribute('href', c.isCollapsed() ? BUBBLE : icon.dataset.href);
+      // ponytail: Blockly resets this width itself when the note is expanded.
+      if (c.isCollapsed()) bar.setAttribute('width', '24');
     }
+  }
+
+  /** Block comment bubbles stay hidden unless the user asked to see every comment in the editor. */
+  private syncBubbles() {
     for (const block of this.ws.getAllBlocks(false)) {
       const icon = block.getIcon(Blockly.icons.CommentIcon.TYPE) as Blockly.icons.CommentIcon | null;
       if (icon && icon.bubbleIsVisible() !== this.showAll) void icon.setBubbleVisible(this.showAll);

@@ -14,7 +14,7 @@ import { getChip } from '../hw/chips';
 import { BUILTIN_PROFILES, DEFAULT_PROFILE_ID, type Profile } from '../hw/profile';
 import { currentLanguage, kindName, LANGUAGES, loadLanguage, t, translatePage } from '../i18n/i18n';
 import type { Diagnostic } from '../ir/ir';
-import { instantiateTemplate, localized, newProject, parseProject, type Project } from '../project/model';
+import { instantiateTemplate, localized, newProject, parseProject, upgradeProject, type Project } from '../project/model';
 import { sketchZip } from '../project/sketch';
 import { downloadFile, loadSettings, pickProjectFile, profiles as profileStore, projects as projectStore, safeFileName, saveSettings, type Settings } from '../project/store';
 import { readCartridge } from '../project/cartridge';
@@ -267,6 +267,7 @@ export class App {
   }
 
   loadProject(p: Project, opts: { fromTemplate?: boolean } = {}) {
+    p = upgradeProject(p);
     this.homeVisible = false;
     this.hasProject = true;
     this.homeRender++;

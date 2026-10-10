@@ -34,6 +34,8 @@ describe.skipIf(!haveTools)('WebAssembly compiler', () => {
       { k: 'expr' as const, e: { k: 'api' as const, fn: 'info.timerSetMillis', args: [num(1), { k: 'api' as const, fn: 'info.timerMillis', args: [num(0)] }] } },
       { k: 'expr' as const, e: { k: 'api' as const, fn: 'info.timerFormat', args: [1, 7].map(num) } },
       { k: 'expr' as const, e: { k: 'api' as const, fn: 'info.timerPosition', args: [1, 10, 30].map(num) } },
+      { k: 'expr' as const, e: { k: 'api' as const, fn: 'info.setLife', args: [3].map(num) } },
+      { k: 'expr' as const, e: { k: 'api' as const, fn: 'info.setLifePosition', args: [20, 40].map(num) } },
     ] }] };
     const profile = BUILTIN_PROFILES.find(p => p.id === 'nano-sh1106-i2c')!;
     const out = await compileGame(src, { mcu: profile.chip, game: generateCpp(program, project).code, config: profileToConfigH(profile), headers });

@@ -99,6 +99,8 @@ export interface Project {
   startLevelId?: string;
   /** Sprite kinds added by the user, after the built in kinds. */
   kinds: string[];
+  /** Number of explicitly created timers, including the default timer. */
+  timerCount?: number;
   template?: TemplateInfo;
   /** Set when the project belongs to a guide level. */
   guide?: GuideState;
@@ -148,7 +150,7 @@ export function parseProject(text: string): Project {
   return upgradeProject(p);
 }
 
-function upgradeProject(p: Partial<Project>): Project {
+export function upgradeProject(p: Partial<Project>): Project {
   const base = newProject(typeof p.name === 'string' ? p.name : 'Project');
   return {
     ...base,
@@ -161,6 +163,7 @@ function upgradeProject(p: Partial<Project>): Project {
     tiles: Array.isArray(p.tiles) ? p.tiles : [],
     tilemaps: Array.isArray(p.tilemaps) ? p.tilemaps : [],
     kinds: Array.isArray(p.kinds) ? p.kinds : [],
+    timerCount: typeof p.timerCount === 'number' && Number.isInteger(p.timerCount) ? Math.max(1, Math.min(8, p.timerCount)) : 1,
     pixelColor: p.pixelColor === 'blue' || p.pixelColor === 'yellow' ? p.pixelColor : 'white',
     source: p.source && ['javascript', 'python'].includes(p.source.language) && typeof p.source.code === 'string' ? p.source : undefined,
   };

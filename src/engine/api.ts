@@ -120,6 +120,7 @@ export const API = api({
   'info.setScorePosition': { ret: 'void', args: ['num', 'num'], cpp: 'ab::setScorePosition($0, $1)', js: 'E.setScorePosition($0, $1)', name: 'info.setScorePosition' },
   'info.changeScore': { ret: 'void', args: ['num'], cpp: 'ab::changeScore($0)', js: 'E.changeScore($0)', name: 'info.changeScoreBy' },
   'info.life': { ret: 'num', args: [], cpp: 'ab::life', js: 'E.life', name: 'info.life' },
+  'info.setLifePosition': { ret: 'void', args: ['num', 'num'], cpp: 'ab::setLifePosition($0, $1)', js: 'E.setLifePosition($0, $1)', name: 'info.setLifePosition' },
   'info.setLife': { ret: 'void', args: ['num'], cpp: 'ab::setLife($0)', js: 'await E.setLife($0)', async: true, name: 'info.setLife' },
   'info.changeLife': { ret: 'void', args: ['num'], cpp: 'ab::changeLife($0)', js: 'await E.changeLife($0)', async: true, name: 'info.changeLifeBy' },
   'info.highScore': { ret: 'num', args: [], cpp: 'ab::hiscore', js: 'E.hiscore', name: 'info.highScore' },

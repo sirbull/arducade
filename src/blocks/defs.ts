@@ -28,7 +28,7 @@ const dropdown = (name: string, keys: [string, string][]): Arg => ({
   options: keys.map(([label, value]) => [`%{BKY_${label}}`, value]),
 });
 
-const TIMER = { type: 'field_dropdown', name: 'TIMER', options: Array.from({ length: 8 }, (_, i) => [i ? `timer${i + 1}` : 'timer', String(i)]) };
+const TIMER = { type: 'field_ab_timer', name: 'TIMER' };
 
 const COLOR = dropdown('COLOR', [
   ['AB_COLOR_WHITE', 'white'],
@@ -256,6 +256,7 @@ export const DEFS: Def[] = [
   { type: 'ab_timer_run', ...INFO, msg: 'AB_TIMER_RUN', args: [TIMER, dropdown('MODE', [['AB_TIMER_UP', '1'], ['AB_TIMER_DOWN', '-1'], ['AB_TIMER_STOP', '0']])], statement: true },
   { type: 'ab_timer_format', ...INFO, msg: 'AB_TIMER_FORMAT', args: [TIMER, dropdown('FORMAT', [['AB_TIMER_SECONDS', '0'], ['AB_TIMER_MINUTES', '1'], ['AB_TIMER_HOURS', '2'], ['AB_TIMER_MS', '3'], ['AB_TIMER_HMS', '4'], ['AB_TIMER_MS_MILLIS', '6'], ['AB_TIMER_HMS_MILLIS', '7'], ['AB_TIMER_HIDE', '5']])], statement: true },
   { type: 'ab_timer_position', ...INFO, msg: 'AB_TIMER_POSITION', args: [TIMER, num('X'), num('Y')], statement: true, inline: true },
+  { type: 'ab_info_position', ...INFO, msg: 'AB_INFO_POSITION', args: [{ type: 'field_ab_hud', name: 'DISPLAY' }, num('X'), num('Y')], statement: true, inline: true },
   { type: 'ab_timer', ...INFO, msg: 'AB_TIMER_VALUE', args: [TIMER], output: ['Number', 'Timer'] },
   { type: 'ab_score_set', ...INFO, msg: 'AB_SCORE_SET', args: [num('VALUE')], statement: true },
   { type: 'ab_score_change', ...INFO, msg: 'AB_SCORE_CHANGE', args: [num('VALUE')], statement: true },

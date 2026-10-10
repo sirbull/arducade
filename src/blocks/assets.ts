@@ -80,6 +80,37 @@ function kindOptions(): Option[] {
   return [...BUILTIN_KINDS, ...(current?.kinds ?? [])].map((k) => [kindLabel(k), k]);
 }
 
+/** Only created timers appear; serialized selections also recover older projects. */
+function timerOptions(includeHud = false): Option[] {
+  const count = current?.timerCount ?? 1;
+  const options: Option[] = includeHud ? [['score', 'score'], ['health', 'health']] : [];
+  for (let i = 0; i < count; i++) options.push([i ? `timer${i + 1}` : 'timer', String(i)]);
+  if (count < 8) options.push([String(Blockly.Msg.AB_TIMER_NEW || '+ New timer'), '__new_timer__']);
+  return options;
+}
+
+class TimerField extends Blockly.FieldDropdown {
+  constructor(includeHud = false) { super(() => timerOptions(includeHud)); }
+  static fromJson() { return new TimerField(); }
+  protected override doClassValidation_(newValue?: string): string | null {
+    if (newValue === '__new_timer__') {
+      if (!current || this.getSourceBlock()?.workspace.isFlyout) return null;
+      const count = current.timerCount ?? 1;
+      if (count >= 8) return null;
+      current.timerCount = count + 1;
+      newValue = String(count);
+    } else if (newValue && /^[0-7]$/.test(newValue) && current) {
+      current.timerCount = Math.max(current.timerCount ?? 1, Number(newValue) + 1);
+    }
+    this.getOptions(false);
+    return super.doClassValidation_(newValue);
+  }
+}
+class HudField extends TimerField {
+  constructor() { super(true); }
+  static override fromJson() { return new HudField(); }
+}
+
 /** A dropdown with options from the open project. */
 class AssetDropdown extends Blockly.FieldDropdown {}
 
@@ -137,4 +168,6 @@ export function registerAssetFields() {
   Blockly.fieldRegistry.register('field_ab_tile', TileField);
   Blockly.fieldRegistry.register('field_ab_tilemap', TilemapField);
   Blockly.fieldRegistry.register('field_ab_kind', KindField);
+  Blockly.fieldRegistry.register('field_ab_timer', TimerField);
+  Blockly.fieldRegistry.register('field_ab_hud', HudField);
 }

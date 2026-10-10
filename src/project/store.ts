@@ -2,7 +2,7 @@
 // settings in localStorage. Nothing is sent to a server.
 
 import type { Profile } from '../hw/profile';
-import type { Project } from './model';
+import { upgradeProject, type Project } from './model';
 
 const DB_NAME = 'ardublocks';
 const DB_VERSION = 1;
@@ -38,11 +38,14 @@ function tx<T>(store: string, mode: IDBTransactionMode, fn: (s: IDBObjectStore) 
 
 export const projects = {
   save: (p: Project) => tx('projects', 'readwrite', (s) => s.put(p)),
-  get: (id: string) => tx<Project | undefined>('projects', 'readonly', (s) => s.get(id)),
+  async get(id: string): Promise<Project | undefined> {
+    const project = await tx<Project | undefined>('projects', 'readonly', (s) => s.get(id));
+    return project ? upgradeProject(project) : undefined;
+  },
   remove: (id: string) => tx('projects', 'readwrite', (s) => s.delete(id)),
   async list(): Promise<Project[]> {
     const all = await tx<Project[]>('projects', 'readonly', (s) => s.getAll());
-    return all.sort((a, b) => Number(!!b.starred) - Number(!!a.starred) || b.modified - a.modified);
+    return all.map(upgradeProject).sort((a, b) => Number(!!b.starred) - Number(!!a.starred) || b.modified - a.modified);
   },
 };
 

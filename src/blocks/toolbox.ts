@@ -98,7 +98,7 @@ export function buildToolbox(): Json {
         block('ab_timer_millis'),
         block('ab_timer_run'),
         block('ab_timer_format'),
-        block('ab_timer_position', { X: n(0), Y: n(10) }),
+        block('ab_info_position', { X: n(0), Y: n(10) }),
         block('ab_timer'),
         block('ab_score_set', { VALUE: n(0) }),
         block('ab_score_change', { VALUE: n(1) }),

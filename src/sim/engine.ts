@@ -132,6 +132,8 @@ export class Engine {
   scoreX = -1; // -1: top right corner
   scoreY = 0;
   showLife = false;
+  lifeX = 1;
+  lifeY = 1;
   gameOverPending = false;
   gameOverWin = false;
   camX = 0;
@@ -1169,7 +1171,7 @@ export class Engine {
     if (this.showLife) {
       const heart = [0x06, 0x0f, 0x1e, 0x0f, 0x06];
       for (let i = 0; i < this.life && i < 8; i++) {
-        for (let c = 0; c < 5; c++) for (let r = 0; r < 5; r++) if (heart[c] & (1 << r)) this.drawPixel(1 + i * 7 + c, 1 + r, 1);
+        for (let c = 0; c < 5; c++) for (let r = 0; r < 5; r++) if (heart[c] & (1 << r)) this.drawPixel(this.lifeX + i * 7 + c, this.lifeY + r, 1);
       }
     }
     if (this.showScore) {
@@ -1194,6 +1196,8 @@ export class Engine {
   changeScore(by: number) {
     this.setScore(this.score + by);
   }
+
+  setLifePosition(x: number, y: number) { this.lifeX = Math.trunc(x); this.lifeY = Math.trunc(y); }
 
   async setLife(v: number) {
     this.life = w16(v);
@@ -1254,6 +1258,7 @@ export class Engine {
     this.timers.forEach((t, i) => Object.assign(t, { seconds: 0, mode: 0, format: 3, visible: false, x: 0, y: 10 + i * 9, last: this.millis(), remainder: 0 }));
     this.score = this.life = 0;
     this.showScore = this.showLife = this.gameOverPending = false;
+    this.lifeX = this.lifeY = 1;
     this.scoreX = -1;
     this.scoreY = 0;
     this.soundOff();

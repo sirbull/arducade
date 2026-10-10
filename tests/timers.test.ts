@@ -1,7 +1,9 @@
 // @vitest-environment jsdom
 import { expect, it, vi } from 'vitest';
 import { Engine } from '../src/sim/engine';
-import { newProject } from '../src/project/model';
+import * as Blockly from 'blockly/core';
+import { setAssetProject } from '../src/blocks/assets';
+import { newProject, parseProject } from '../src/project/model';
 import { compileProject } from './helpers';
 
 const engine = () => new Engine({ show() {}, tone() {}, storage: { read: () => 0, write() {} }, onSkippedCpp() {}, maxSprites: 4, hiscoreMagic: 0 });
@@ -73,4 +75,34 @@ it('generates millisecond operations and reporter for both engines', () => {
   expect(cpp.code).toContain('ab::timerChangeMillis(2, ab::timerMillis(1))');
   expect(js.code).toContain('E.timerSetMillis(2, 125)');
   expect(js.code).toContain('E.timerChangeMillis(2, E.timerMillis(1))');
+});
+
+it('lists score, health and only created timers, with creation and persistence', () => {
+  const p = newProject('Created timers'); setAssetProject(p);
+  const ws = new Blockly.Workspace();
+  try {
+    const position = ws.newBlock('ab_info_position');
+    const field = position.getField('DISPLAY') as Blockly.FieldDropdown;
+    expect(field.getOptions(false).map(([label]) => label)).toEqual(['score', 'health', 'timer', '+ New timer']);
+    field.setValue('__new_timer__');
+    expect(field.getValue()).toBe('1'); expect(p.timerCount).toBe(2);
+    expect(field.getOptions(false).map(([label]) => label)).toEqual(['score', 'health', 'timer', 'timer2', '+ New timer']);
+    const timer = ws.newBlock('ab_timer_set');
+    expect((timer.getField('TIMER') as Blockly.FieldDropdown).getOptions(false).map(([label]) => label)).toEqual(['timer', 'timer2', '+ New timer']);
+    expect(parseProject(JSON.stringify(p)).timerCount).toBe(2);
+    field.setValue('health'); expect(field.getValue()).toBe('health');
+  } finally { ws.dispose(); setAssetProject(null); }
+});
+it.each([['score', 'setScorePosition'], ['health', 'setLifePosition'], ['0', 'timerPosition']])('moves %s through the shared position block', (display, method) => {
+  const p = newProject('HUD position');
+  const n = (v: number) => ({ shadow: { type: 'math_number', fields: { NUM: v } } });
+  p.blocks = { blocks: { languageVersion: 0, blocks: [{ type: 'ab_on_start', inputs: { DO: { block: {
+    type: 'ab_info_position', fields: { DISPLAY: display }, inputs: { X: n(20), Y: n(30) },
+  } } } }] } };
+  const { ir, cpp, js } = compileProject(p);
+  expect(ir.diagnostics).toEqual([]);
+  const args = display === '0' ? '0, 20, 30' : '20, 30';
+  expect(cpp.code).toContain(`ab::${method}(${args})`);
+  expect(js.code).toContain(`E.${method}(${args})`);
+  if (display === 'health') expect(cpp.code).toContain('#define AB_LIFE_POS 1');
 });

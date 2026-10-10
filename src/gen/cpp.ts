@@ -101,6 +101,7 @@ class CppGen {
       ['AB_NO_HUD', /ab::(setScore|changeScore|setLife|changeLife)\(/],
     ].filter(([, used]) => !(used as RegExp).test(body)).map(([name]) => `#define ${name} 1`);
     if (/ab::timer/.test(body)) unused.push('#define AB_HAS_TIMERS 1');
+    if (/ab::setLifePosition\(/.test(body)) unused.push('#define AB_LIFE_POS 1');
     if (/ab::setScorePosition\(/.test(body)) unused.push('#define AB_SCORE_POS 1');
     this.w.lines.splice(at, 0, ...unused);
     for (const [id, [a, b]] of this.w.ranges) if (a >= at) this.w.ranges.set(id, [a + unused.length, b + unused.length]);

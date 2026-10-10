@@ -308,7 +308,10 @@
     "AB_TIMER_HMS_MILLIS": "tt:mm:ss.mmm",
     "AB_TIMER_SET_MILLIS_TOOLTIP": "Setter millisekunddelen (0–999). Sett sekunder til 94 og denne til 125 for 01:34.125.",
     "AB_TIMER_CHANGE_MILLIS_TOOLTIP": "Legger til millisekunder og overfører til sekunder. Negative tall trekker fra.",
-    "AB_TIMER_MILLIS_TOOLTIP": "Millisekunddelen (0–999), sammen med sekundblokken. Viser ikke totalt antall millisekunder."
+    "AB_TIMER_MILLIS_TOOLTIP": "Millisekunddelen (0–999), sammen med sekundblokken. Viser ikke totalt antall millisekunder.",
+    "AB_TIMER_NEW": "+ Ny timer",
+    "AB_INFO_POSITION": "sett %1 posisjon x %2 y %3",
+    "AB_INFO_POSITION_TOOLTIP": "Flytter score, health eller en opprettet timer. Velg Ny timer for å opprette en ny, uavhengig timer."
   },
   "ui": {
     "blocks.dropToDelete": "Slipp her for å slette",

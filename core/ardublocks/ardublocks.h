@@ -142,6 +142,11 @@ static int16_t scoreX = -1, scoreY; // scoreX -1: top right corner
 #else
 static const int16_t scoreX = -1, scoreY = 0; // folded away when unused
 #endif
+#ifdef AB_LIFE_POS
+static int16_t lifeX = 1, lifeY = 1;
+#else
+static const int16_t lifeX = 1, lifeY = 1;
+#endif
 static int16_t camX, camY;
 static uint8_t cameraSprite = NONE;
 static uint16_t rng = 0xACE1;
@@ -1288,12 +1293,12 @@ static void drawHud() {
 #ifdef AB_NO_HUD
   return;
 #endif
-  if (showLife && onPage(1, 5)) {
+  if (showLife && onPage(lifeY, 5)) {
     for (int16_t i = 0; i < life && i < 8; i++) {
       for (uint8_t c = 0; c < 5; c++) {
         uint8_t bits = pgm_read_byte(&heart[c]);
         for (uint8_t r = 0; r < 5; r++) {
-          if (bits & (1 << r)) drawPixel(1 + i * 7 + c, 1 + r, 1);
+          if (bits & (1 << r)) drawPixel(lifeX + i * 7 + c, lifeY + r, 1);
         }
       }
     }
@@ -1313,6 +1318,9 @@ static void setScore(int16_t v) { score = v; showScore = true; }
 static void setScorePosition(int16_t x, int16_t y) { scoreX = x < 0 ? 0 : x; scoreY = y; }
 #endif
 static void changeScore(int16_t by) { setScore(score + by); }
+#ifdef AB_LIFE_POS
+static void setLifePosition(int16_t x, int16_t y) { lifeX = x; lifeY = y; }
+#endif
 static void setLife(int16_t v) {
   life = v;
   showLife = true;
@@ -1408,6 +1416,9 @@ static void restart() {
 #ifdef AB_HAS_TIMERS
   memset(gameTimers, 0, sizeof(gameTimers));
   for (uint8_t i = 0; i < 8; i++) { gameTimers[i].format = 3; gameTimers[i].y = 10 + i * 9; gameTimers[i].last = millis(); }
+#endif
+#ifdef AB_LIFE_POS
+  lifeX = lifeY = 1;
 #endif
   score = life = 0;
   showScore = showLife = gameOverPending = false;

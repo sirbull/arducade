@@ -326,6 +326,10 @@ class Converter {
         return this.api('info.timerRun', [{ k: 'num', v: Number(f('TIMER')) }, { k: 'num', v: Number(f('MODE')) }], id);
       case 'ab_timer_format':
         return this.api('info.timerFormat', [{ k: 'num', v: Number(f('TIMER')) }, { k: 'num', v: Number(f('FORMAT')) }], id);
+      case 'ab_info_position':
+        if (f('DISPLAY') === 'score') return this.api('info.setScorePosition', [this.input(b, 'X'), this.input(b, 'Y')], id);
+        if (f('DISPLAY') === 'health') return this.api('info.setLifePosition', [this.input(b, 'X'), this.input(b, 'Y')], id);
+        return this.api('info.timerPosition', [{ k: 'num', v: Number(f('DISPLAY')) }, this.input(b, 'X'), this.input(b, 'Y')], id);
       case 'ab_timer_position':
         return this.api('info.timerPosition', [{ k: 'num', v: Number(f('TIMER')) }, this.input(b, 'X'), this.input(b, 'Y')], id);
       case 'ab_score_set':

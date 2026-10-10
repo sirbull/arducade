@@ -308,7 +308,10 @@
     "AB_TIMER_HMS_MILLIS": "hh:mm:ss.mmm",
     "AB_TIMER_SET_MILLIS_TOOLTIP": "Sets the fractional second (0–999). Set seconds to 94 and this to 125 for 01:34.125.",
     "AB_TIMER_CHANGE_MILLIS_TOOLTIP": "Adds milliseconds, carrying into seconds. Negative values subtract.",
-    "AB_TIMER_MILLIS_TOOLTIP": "The millisecond part (0–999), alongside the seconds block. Not total milliseconds."
+    "AB_TIMER_MILLIS_TOOLTIP": "The millisecond part (0–999), alongside the seconds block. Not total milliseconds.",
+    "AB_TIMER_NEW": "+ Nouveau minuteur",
+    "AB_INFO_POSITION": "mettre %1 position x %2 y %3",
+    "AB_INFO_POSITION_TOOLTIP": "Déplace score, health ou un minuteur créé. Nouveau minuteur crée un autre minuteur indépendant."
   },
   "ui": {
     "blocks.dropToDelete": "Déposez ici pour supprimer",

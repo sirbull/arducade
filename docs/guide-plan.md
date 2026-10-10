@@ -180,9 +180,9 @@ De nye prosjektene er en egen progresjon, inspirert av MakeCode Arcades prosjekt
 
 Alle tekster, inkludert kapitteltitler, karttekster og navn på ny grafikk, finnes på norsk, engelsk, spansk, fransk og tysk. Original 8×8-grafikk ligger i `src/project/guide-art.ts`, er tilgjengelig i Biblioteket og kopieres inn i hvert prosjekt. Labyrint- og bombekartene er også ferdige og redigerbare. Nye guider ligger i `src/guides/courses/`; kartet ligger i `src/ui/guide-catalog.ts`.
 
-Tre på rad lagrer ni felt som ett tall i tretallsystemet (0 tom, 1 kryss, 2 sirkel). Dette holder seg innenfor enhetens 16-bits heltall og begrenser spritebruken til ti. Poengfeltet viser hvilken spiller som skal trekke; null og «=» betyr uavgjort. Det er et spill for to lokale spillere, uten datamotstander.
+Tre på rad lagrer ni felt som ett tall i tretallsystemet (0 tom, 1 kryss, 2 sirkel). Dette holder seg innenfor enhetens 16-bits heltall og begrenser spritebruken til ti. Poengfeltet viser hvilken spiller som skal trekke; null og «=» betyr uavgjort. Det er et spill for to lokale spillere, uten datamotstander. Seier vises med meldingen «X WINS!» eller «O WINS!», etterfulgt av «spillet er slutt: tapt», fordi motorens seiersskjerm alltid sier YOU WIN!
 
-Bombespillet er en liten variant med én bombe om gangen og eksplosjonsradius én rute. Både spilleren og roboten rammes av eksplosjonen. Steinvegger fjernes aldri, kasser gir poeng, og utgangen krever at roboten er slått. De mer omfattende plattform-, rom- og eventyrverdenene fra det opprinnelige utkastet er fortsatt senere arbeid.
+Bombespillet er en liten variant med én bombe om gangen og eksplosjonsradius én rute. Både spilleren og robotene rammes av eksplosjonen. Steinvegger fjernes aldri, starthjørnet er stengt inne av kasser, kasser gir poeng, og utgangen krever at alle tre robotene er slått. De mer omfattende plattform-, rom- og eventyrverdenene fra det opprinnelige utkastet er fortsatt senere arbeid.
 
 Verifikasjon: alle trinns fasiter og kodebilder, tekster på fem språk, kjøretester, alle åtte vinnerlinjer i tre på rad, andre spiller som vinner, uavgjort, opptatte felt, eget bombetap, metere som ikke kan vokse over maks, kapitteltilgang og tastaturnavigasjon. Alle fem endelige spill kompileres også til AVR med prosjektets standardprofil.
 

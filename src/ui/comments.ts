@@ -10,6 +10,8 @@ export class CommentsPanel {
   private toggle = document.getElementById('btn-comments')!;
   private visible = false;
   private showAll = false;
+  /** Notes that were collapsed before "show all", so unticking folds them again. */
+  private folded = new Set<string>();
   private timer?: ReturnType<typeof setTimeout>;
   private click = () => this.show(!this.visible);
   private change = (event: Blockly.Events.Abstract) => {
@@ -41,6 +43,16 @@ export class CommentsPanel {
     clearTimeout(this.timer);
     this.toggle.removeEventListener('click', this.click);
     this.ws.removeChangeListener(this.change);
+  }
+
+  private unfoldNotes() {
+    for (const c of this.ws.getTopComments(false) as Blockly.comments.RenderedWorkspaceComment[]) {
+      if (this.showAll && c.isCollapsed()) {
+        this.folded.add(c.id);
+        c.setCollapsed(false);
+      } else if (!this.showAll && this.folded.has(c.id)) c.setCollapsed(true);
+    }
+    if (!this.showAll) this.folded.clear();
   }
 
   /** Collapsed notes shrink to a speech-bubble icon; tapping it opens the note again. */
@@ -94,7 +106,7 @@ export class CommentsPanel {
     const box = document.createElement('input');
     box.type = 'checkbox';
     box.checked = this.showAll;
-    box.onchange = () => { this.showAll = box.checked; this.syncBubbles(); };
+    box.onchange = () => { this.showAll = box.checked; this.syncBubbles(); this.unfoldNotes(); };
     all.append(box, t('comments.showAll'));
     this.panel.append(heading, all, add);
     let count = 0;

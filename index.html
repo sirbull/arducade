@@ -70,7 +70,10 @@
         <div class="side-content">
         <div id="sim-shell" class="sim-shell">
         <div class="sim" id="sim" tabindex="0" data-i18n-title="sim.focus">
-          <button id="btn-sim-size" class="sim-control sim-size" data-i18n-title="sim.sizeSmall" hidden></button>
+          <div id="sim-top" class="sim-top" hidden>
+            <button id="btn-sim-size" class="sim-control sim-size" data-i18n-title="sim.sizeSmall"></button>
+            <button id="btn-sim-close" class="sim-control sim-size" data-i18n-title="sim.backToEditor"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
+          </div>
           <div class="screen-frame"><canvas id="screen" width="128" height="64"></canvas></div>
           <div class="pad" aria-hidden="false">
             <div class="dpad">

@@ -367,7 +367,7 @@ export class App {
     view.innerHTML = `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${corners}"/></svg>`;
     view.setAttribute('aria-expanded', String(this.simStandalone));
     const size = $('#btn-sim-size');
-    size.hidden = !this.simStandalone;
+    $('#sim-top').hidden = !this.simStandalone;
     size.dataset.i18nTitle = ['sim.sizeSmall', 'sim.sizeMedium', 'sim.sizeLarge'][this.simSize];
     size.title = t(size.dataset.i18nTitle);
     size.setAttribute('aria-label', size.title);
@@ -866,6 +866,11 @@ export class App {
       this.simStandalone = !this.simStandalone;
       this.renderSimView();
       $('#sim').focus();
+    });
+    $('#btn-sim-close').addEventListener('click', () => {
+      this.simStandalone = false;
+      this.renderSimView();
+      $('#btn-sim-view').focus();
     });
     $('#btn-sim-size').addEventListener('click', () => {
       this.simSize = (this.simSize + 1) % 3;

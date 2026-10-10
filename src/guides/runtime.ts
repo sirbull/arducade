@@ -10,6 +10,8 @@ class GuideEngine extends Engine {
   time = 0;
   override millis() { return this.time; }
   override gameOver(win: boolean) { super.gameOver(win); this.stop(); }
+  // Splash messages wait for A; checks have no one to press it.
+  override async splash() {}
   override async setLife(value: number) {
     await super.setLife(value);
     if (this.gameOverPending) this.stop();

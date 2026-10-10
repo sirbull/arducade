@@ -44,7 +44,7 @@ describe('progressive courses',()=>{
         while(at<target){await tap(8);at++;}while(at>target){await tap(4);at--;}
         await tap(16);
       }
-      return e.gameOverPending&&e.gameOverWin&&e.score===1;
+      return e.gameOverPending&&!e.gameOverWin&&e.score===1;
     })).toBe(true);
   });
   it('recognises a full-board draw and refuses occupied cells without changing turn',async()=>{
@@ -66,7 +66,7 @@ describe('progressive courses',()=>{
         while(at<target){await tap(8);at++;}while(at>target){await tap(4);at--;}
         await tap(16);
       }
-      return e.gameOverPending&&e.gameOverWin&&e.score===2;
+      return e.gameOverPending&&!e.gameOverWin&&e.score===2;
     })).toBe(true);
   });
   it('the bomb blast also defeats its owner if they fail to escape',async()=>{

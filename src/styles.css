@@ -1076,9 +1076,10 @@ button.brand:hover:not(:disabled) { background: none; color: var(--text); }
   padding: 16px;
 }
 .sim.standalone .sim-view-bar { width: 100%; }
-.sim.standalone .screen-frame { width: min(100%, 320px); margin-top: auto; flex-shrink: 0; }
-.sim.standalone[data-size="medium"] .screen-frame { width: min(100%, 640px, max(240px, calc((100dvh - 290px) * 2))); }
-.sim.standalone[data-size="large"] .screen-frame { width: min(100%, 1200px, max(240px, calc((100dvh - 290px) * 2))); }
+.sim.standalone :is(.screen-frame, .sim-top) { width: min(100%, 320px); flex-shrink: 0; }
+.sim.standalone .sim-top { margin-top: auto; }
+.sim.standalone[data-size="medium"] :is(.screen-frame, .sim-top) { width: min(100%, 640px, max(240px, calc((100dvh - 290px) * 2))); }
+.sim.standalone[data-size="large"] :is(.screen-frame, .sim-top) { width: min(100%, 1200px, max(240px, calc((100dvh - 290px) * 2))); }
 .sim.standalone .pad { width: min(100%, 420px); flex-shrink: 0; }
 .sim.standalone .keys { margin-bottom: auto; }
 
@@ -1123,7 +1124,6 @@ button.brand:hover:not(:disabled) { background: none; color: var(--text); }
   box-shadow: none;
   background: transparent;
 }
-.sim.standalone .screen-frame { margin-top: auto; }
 .sim.standalone .pad { margin-bottom: auto; }
 .sim-shell.standalone > .keys { width: min(100%, 640px); text-align: center; flex-shrink: 0; }
 .side-device-bar {
@@ -1320,7 +1320,9 @@ input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='
 
 .level-pick-exit { padding: 10px 0; color: var(--accent); }
 
-.sim-size { align-self: flex-end; width: 28px; height: 28px; padding: 2px; margin-bottom: 6px; }
+.sim-top { display: flex; justify-content: flex-end; gap: 6px; margin-bottom: 6px; }
+.sim-top[hidden] { display: none; }
+.sim-size { width: 28px; height: 28px; padding: 2px; }
 
 /* Keep the program and its notes in separate, independently scrollable areas. */
 .blocks-content { display: flex; flex: 1; min-height: 0; min-width: 0; }

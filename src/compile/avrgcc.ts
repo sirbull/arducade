@@ -5,7 +5,14 @@
 // cc1plus (C++ to assembly), avr-as, avr-ld and avr-objcopy.
 
 export interface SysrootManifest {
-  mcus: Record<string, { define: string; board: string; extra: string[]; headers: string; core: string; crt: string; deviceLib: string; dataStart: string }>;
+  mcus: Record<string, {
+    define: string; board: string; extra: string[]; headers: string;
+    /** Arduino core archive, empty when the chip has none. */
+    core: string;
+    crt: string; deviceLib: string; dataStart: string;
+    /** Only for chips that do not use avr5 at 16 MHz. */
+    arch?: string; fCpu?: number; libs?: string[]; ldscript?: string; extraLd?: string[];
+  }>;
   libs: string[];
   ldscript: string;
 }
@@ -133,16 +140,19 @@ export async function compileGame(src: FileSource, input: CompileInput): Promise
   if (!m) throw new CompileError(`No compiler files for ${input.mcu}`, []);
   const headers = await cached(`headers:${input.mcu}`, async () => JSON.parse(await src.text(`sysroot/${m.headers}`)) as Record<string, string>);
   const log: string[] = [];
+  const arch = m.arch ?? 'avr5';
+  const libs = m.libs ?? manifest.libs;
+  const ldscript = m.ldscript ?? manifest.ldscript;
 
   const asm = await runTool(
     src,
     'cc1plus',
     [
       '-quiet',
-      '-imultilib', 'avr5',
+      '-imultilib', arch,
       `-D${m.define}`,
       `-D__AVR_DEVICE_NAME__=${input.mcu}`,
-      '-DF_CPU=16000000L',
+      `-DF_CPU=${m.fCpu ?? 16000000}L`,
       '-DARDUINO=10819',
       `-D${m.board}`,
       '-DARDUINO_ARCH_AVR',
@@ -159,7 +169,7 @@ export async function compileGame(src: FileSource, input: CompileInput): Promise
       '-mn-flash=1',
       '-mno-skip-bug',
       '-dumpbase', 'game.cpp',
-      '-mmcu=avr5',
+      `-mmcu=${arch}`,
       '-auxbase-strip', '/build/game.s',
       '-Os',
       '-std=gnu++11',
@@ -187,29 +197,31 @@ export async function compileGame(src: FileSource, input: CompileInput): Promise
     log,
   );
 
-  const obj = await runTool(src, 'avr-as', ['--mlink-relax', '-mmcu=avr5', '-o', '/build/game.o', '/build/game.s'], (fs) => write(fs, '/build/game.s', asm), '/build/game.o', log);
+  const obj = await runTool(src, 'avr-as', ['--mlink-relax', `-mmcu=${arch}`, '-o', '/build/game.o', '/build/game.s'], (fs) => write(fs, '/build/game.s', asm), '/build/game.o', log);
 
   const files = await Promise.all(
-    [m.crt, m.core, m.deviceLib, ...manifest.libs, manifest.ldscript].map((f) => cached(`file:${f}`, () => src.bytes(`sysroot/${f}`)).then((data) => [f, data] as const)),
+    [m.crt, m.core, m.deviceLib, ...libs, ldscript].filter(Boolean).map((f) => cached(`file:${f}`, () => src.bytes(`sysroot/${f}`)).then((data) => [f, data] as const)),
   );
   const elf = await runTool(
     src,
     'avr-ld',
     [
-      '-m', 'avr5',
+      '-m', arch,
       `-Tdata=${m.dataStart}`,
+      ...(m.extraLd ?? []),
       '--gc-sections',
       '--relax',
       '-o', '/build/game.elf',
       `/libs/${m.crt}`,
       '/build/game.o',
-      `/libs/${m.core}`,
+      ...(m.core ? [`/libs/${m.core}`] : []),
       '-L/libs',
       '--start-group', '-lgcc', '-lm', '-lc', `-l${m.deviceLib.replace(/^lib|\.a$/g, '')}`, '--end-group',
     ],
     (fs) => {
       write(fs, '/build/game.o', obj);
-      for (const [f, data] of files) write(fs, f === manifest.ldscript ? `/ldscripts/${f}` : `/libs/${f}`, data);
+      // Libraries by file name, so -lc finds avr25/libc.a too.
+      for (const [f, data] of files) write(fs, f === ldscript ? `/ldscripts/${f}` : `/libs/${f.slice(f.lastIndexOf('/') + 1)}`, data);
     },
     '/build/game.elf',
     log,

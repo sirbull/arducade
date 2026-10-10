@@ -25,25 +25,52 @@ export interface GuideHost {
 }
 
 /** A small read only workspace that shows blocks as a picture. */
-export function blockPicture(el: HTMLElement, blocks: Json[], theme: ThemeId, maxHeight: number): Blockly.WorkspaceSvg {
+export function blockPicture(el: HTMLElement, blocks: Json[], theme: ThemeId, maxHeight: number, overview = false): Blockly.WorkspaceSvg {
   const ws = Blockly.inject(el, {
     readOnly: true,
     theme: blocklyTheme(theme),
     renderer: 'geras',
     rendererOverrides: BLOCK_RENDERER,
     move: { scrollbars: false, drag: true, wheel: true },
-    zoom: { controls: false, wheel: false, startScale: 0.8 },
+    zoom: { controls: false, wheel: false, startScale: 0.8, minScale: overview ? 0.05 : 0.3 },
     sounds: false,
     media: 'blockly-media/',
   });
-  Blockly.serialization.workspaces.load({ blocks: { languageVersion: 0, blocks } }, ws);
-  ws.cleanUp();
-  const box = ws.getBlocksBoundingBox();
-  // Shrink wide blocks to fit the width, but never above the normal size.
-  ws.setScale(Math.max(0.4, Math.min(0.8, (el.clientWidth - 24) / Math.max(1, box.right - box.left))));
-  el.style.height = `${Math.min(maxHeight, Math.max(60, (box.bottom - box.top) * ws.scale + 28))}px`;
-  Blockly.svgResize(ws);
-  ws.scroll(12 - box.left * ws.scale, 12 - box.top * ws.scale);
+  if (overview) Blockly.Events.disable();
+  try {
+    Blockly.serialization.workspaces.load({ blocks: { languageVersion: 0, blocks } }, ws);
+    ws.cleanUp();
+  } finally {
+    if (overview) Blockly.Events.enable();
+  }
+  const fit = async () => {
+    if (!el.isConnected) return;
+    if (overview) {
+      const tops = ws.getTopBlocks(true);
+      const widths = tops.map(block => block.getHeightWidth().width);
+      const columnWidth = Math.max(...widths) + 48;
+      const rows = Math.ceil(tops.length / 3);
+      const heights = Array.from({ length: rows }, (_, row) => Math.max(...tops.slice(row * 3, row * 3 + 3).map(block => block.getHeightWidth().height)) + 48);
+      Blockly.Events.disable();
+      try {
+        tops.forEach((block, i) => {
+          const pos = block.getRelativeToSurfaceXY();
+          block.moveBy((i % 3) * columnWidth - pos.x, heights.slice(0, Math.floor(i / 3)).reduce((a, b) => a + b, 0) - pos.y);
+        });
+      } finally { Blockly.Events.enable(); }
+    }
+    if (overview) await Blockly.renderManagement.finishQueuedRenders();
+    if (!el.isConnected) return;
+    const bounds = overview ? ws.getCanvas().getBBox() : undefined;
+    const box = bounds ? { left: bounds.x, top: bounds.y, right: bounds.x + bounds.width, bottom: bounds.y + bounds.height } : ws.getBlocksBoundingBox();
+    // Shrink wide blocks to fit the width, but never above the normal size.
+    ws.setScale(Math.max(overview ? 0.05 : 0.4, Math.min(0.8, (el.clientWidth - 24) / Math.max(1, box.right - box.left), ...(overview ? [(maxHeight - 28) / Math.max(1, box.bottom - box.top)] : []))));
+    el.style.height = `${Math.min(maxHeight, Math.max(60, (box.bottom - box.top) * ws.scale + 28))}px`;
+    Blockly.svgResize(ws);
+    ws.scroll(12 - box.left * ws.scale, 12 - box.top * ws.scale);
+  };
+  if (overview) void Blockly.renderManagement.finishQueuedRenders().then(fit);
+  else void fit();
   return ws;
 }
 

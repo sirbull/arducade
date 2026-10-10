@@ -265,6 +265,44 @@ input[type='number'] {
   margin: 24px 0 16px;
   padding: 0 4px;
 }
+/* The ATtiny85 console has only left and right. Both together are A. */
+.pad.tiny [data-btn='up'],
+.pad.tiny [data-btn='down'],
+.pad.tiny [data-btn='a'],
+.pad.tiny [data-btn='b'] {
+  visibility: hidden;
+}
+/* Held for 5 seconds to show the secret settings, also on touch screens. */
+#btn-settings {
+  -webkit-touch-callout: none;
+  user-select: none;
+}
+/* Confetti when the secret settings are found. */
+.confetti-layer {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  overflow: hidden;
+  pointer-events: none;
+}
+.confetti {
+  position: absolute;
+  width: 11px;
+  height: 11px;
+  margin: -5px 0 0 -5px;
+  border-radius: 0;
+}
+.confetti.circle { border-radius: 50%; }
+.secret-found { margin: 0 0 8px; color: var(--accent); font-weight: 700; }
+.secret-settings.found {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
 .dpad {
   display: grid;
   grid-template-columns: repeat(3, 34px);
@@ -1632,3 +1670,27 @@ dialog.docs-dialog[open] { display: flex; flex-direction: column; }
   .sim-shell > .keys { display: none; }
   .pane.assets.active { grid-template-columns: 200px minmax(0, 1fr); }
 }
+
+/* Illustrated documentation: image links also work with touch. */
+.docs-figure { margin: 20px 0 28px; padding: 12px; border: 1px solid var(--border); border-radius: 0; background: var(--panel-2); }
+.docs-figure a { display: block; }
+.docs-figure img { display: block; width: 100%; max-height: 520px; object-fit: contain; border-radius: 0; }
+.docs-figure figcaption { margin-top: 10px; color: var(--muted); font-size: 13px; line-height: 1.5; }
+.docs-credit { display: block; margin-top: 6px; color: var(--muted); font-size: 11px; }
+.docs-step { margin: 24px 0; }
+.docs-step h3 { font-size: 18px; margin-bottom: 8px; }
+.docs-overview { border: 1px solid var(--border); background: var(--panel-2); border-radius: 0; }
+.docs-illustrated details { margin: 24px 0; border: 1px solid var(--border); border-radius: 0; padding: 12px; }
+.docs-illustrated summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; font-weight: 600; }
+.docs-table-wrap { overflow-x: auto; }
+.docs-wiring { width: 100%; border-collapse: collapse; font-size: 14px; }
+.docs-wiring caption { text-align: left; font-weight: 600; padding: 12px 0; }
+.docs-wiring th, .docs-wiring td { border: 1px solid var(--border); padding: 10px; text-align: left; }
+.docs-wiring thead { background: var(--panel-2); }
+.docs-figure a:focus-visible, .docs-illustrated summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+/* Let the detailed vector wiring guide stay readable in the scrolling document. */
+.docs-figure img[src$='/pro-micro-wiring.svg'] { max-height: none; }
+.docs-figure img[src$='/attiny85-components.svg'],
+.docs-figure img[src$='/attiny85-schematic.svg'] { max-height: none; }
+
+.docs-figure img[src$='/pro-micro-schematic.svg'] { max-height: none; }

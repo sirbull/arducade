@@ -63,6 +63,7 @@ class CppGen {
     const cells = Math.max(8, ...this.project.tilemaps.map((m) => m.width * m.height));
     w.line(`#define AB_TILE_CELLS ${cells}`);
     w.line(`#define AB_HISCORE_MAGIC 0x${hash16(this.project.id).toString(16).toUpperCase()}`);
+    const unusedAt = w.lines.length;
     w.line('#include "ardublocks.h"');
     w.line();
 
@@ -78,7 +79,21 @@ class CppGen {
     w.line('void loop() {');
     w.line('  ab::frame();');
     w.line('}');
+    this.leaveOut(unusedAt);
     return { code: w.toString(), ranges: w.ranges, diagnostics: this.diagnostics };
+  }
+
+  /** Tells the engine which parts the game never uses, so they are left out of flash. */
+  private leaveOut(at: number) {
+    const body = this.w.lines.slice(at).join('\n');
+    const unused = [
+      ['AB_NO_SPRITES', /ab::(create|createProjectile|spawnOnTiles)\(/],
+      ['AB_NO_MAP', /ab::setMap\(/],
+      ['AB_NO_OUTLINE', /ab::setOutline/],
+      ['AB_NO_HUD', /ab::(setScore|changeScore|setLife|changeLife)\(/],
+    ].filter(([, used]) => !(used as RegExp).test(body)).map(([name]) => `#define ${name} 1`);
+    this.w.lines.splice(at, 0, ...unused);
+    for (const [id, [a, b]] of this.w.ranges) if (a >= at) this.w.ranges.set(id, [a + unused.length, b + unused.length]);
   }
 
   assets() {

@@ -11,6 +11,7 @@ import {
   hasErrors,
   parseProfile,
   PROFILE_EXTENSION,
+  SECRET_PROFILES,
   serializeProfile,
   validateProfile,
   type Profile,
@@ -23,7 +24,14 @@ import { clear, h, select, toast } from './dom';
 /** Built in profiles, profiles in the profiles/ folder on the server, and the user's own. */
 export async function allProfiles(): Promise<Profile[]> {
   const own = await profileStore.list().catch(() => [] as Profile[]);
-  return [...BUILTIN_PROFILES, ...serverProfiles, ...own];
+  return [...BUILTIN_PROFILES, ...(secretOn ? SECRET_PROFILES : []), ...serverProfiles, ...own];
+}
+
+let secretOn = false;
+
+/** Shows the ATtiny85 Pico profile and chip, from the secret setting. */
+export function setSecretProfiles(on: boolean) {
+  secretOn = on;
 }
 
 let serverProfiles: Profile[] = [];
@@ -192,7 +200,7 @@ function profileForm(p: Profile, readonly: boolean, onChange: () => void): HTMLE
   const pinSelect = (value: string | undefined, set: (v: string | undefined) => void, label: string) =>
     h('label', { class: 'field' }, label, select(value && !pinOptions.some((x) => x.value === value) ? [...pinOptions, { value, label: value }] : pinOptions, value ?? '', (v) => (set(v || undefined), changed()), { disabled: readonly }));
 
-  const chipOptions = CHIPS.map((c) => ({ value: c.id, label: `${c.name} (${c.boards[0]})${c.browserCompile ? '' : ' *'}` }));
+  const chipOptions = CHIPS.filter((c) => !c.tiny || secretOn || c.id === p.chip).map((c) => ({ value: c.id, label: `${c.name} (${c.boards[0]})${c.browserCompile ? '' : ' *'}` }));
   const form = h(
     'div',
     { class: 'profile-form' },

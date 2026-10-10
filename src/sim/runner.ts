@@ -201,7 +201,7 @@ export class Runner {
   }
 
   /** Starts a game from generated JavaScript. */
-  async start(game: JsResult, storageKey: string, maxSprites = 16) {
+  async start(game: JsResult, storageKey: string, maxSprites = 16, tiny = false) {
     this.stop();
     let hooksFactory: (E: Engine, ...helpers: unknown[]) => GameHooks;
     try {
@@ -225,6 +225,7 @@ export class Runner {
       onSkippedCpp: () => this.events.onSkippedCpp(),
       maxSprites,
       hiscoreMagic: game.hiscoreKey,
+      tiny,
     });
     this.engine = engine;
     this.syncInput();

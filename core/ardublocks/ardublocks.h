@@ -8,7 +8,11 @@
 // this file. Keep the two in sync: same integer math, same order of updates.
 #pragma once
 
+#if defined(AB_CHIP_ATTINY85)
+#include "ab_tiny.h"
+#else
 #include <Arduino.h>
+#endif
 #if defined(__AVR__)
 #include <avr/pgmspace.h>
 #include <avr/eeprom.h>
@@ -18,6 +22,22 @@
 
 #include "ab_display.h"
 #include "ab_font.h"
+
+// Too little RAM for a whole screen (ATtiny85): each frame is drawn 8 times,
+// one page of 8 rows at a time, into a 128 byte buffer.
+#if defined(RAMEND) && RAMEND < 0x0400
+#define AB_PAGED 1
+#ifndef AB_MAX_SPRITES
+#define AB_MAX_SPRITES 5
+#endif
+#ifndef AB_MAX_PARTICLES
+#define AB_MAX_PARTICLES 4
+#endif
+#ifndef AB_TILE_OVERLAY
+#define AB_TILE_OVERLAY 4
+#endif
+#define AB_TEXT_LEN 22
+#endif
 
 // Fewer sprites on chips with little RAM, to leave room for the stack.
 #ifndef AB_MAX_SPRITES
@@ -38,6 +58,9 @@
 #endif
 #ifndef AB_HISCORE_MAGIC
 #define AB_HISCORE_MAGIC 0xAB01
+#endif
+#ifndef AB_TEXT_LEN
+#define AB_TEXT_LEN 32
 #endif
 #define AB_STORAGE_ADDR 64
 
@@ -102,7 +125,12 @@ struct Sprite {
   uint8_t alive;
 };
 
+#ifdef AB_PAGED
+static uint8_t buffer[128];
+static uint8_t drawPage; // page being drawn
+#else
 static uint8_t buffer[1024];
+#endif
 static Sprite sprites[AB_MAX_SPRITES];
 static uint8_t buttons, buttonsPrev;
 static uint32_t nextFrame;
@@ -123,9 +151,17 @@ static uint16_t overlayIndex[AB_TILE_OVERLAY];
 static uint8_t overlayTile[AB_TILE_OVERLAY];
 static uint8_t overlayCount;
 
+// The generator defines AB_NO_MAP, AB_NO_SPRITES, AB_NO_OUTLINE and AB_NO_HUD
+// for games that never use them, so the code for them is left out.
+#ifdef AB_NO_MAP
+static bool hasMap() { return false; }
+#else
+static bool hasMap() { return map; }
+#endif
+
 // Text ------------------------------------------------------------------
 
-static char textBuf[32];
+static char textBuf[AB_TEXT_LEN];
 static uint8_t textLen;
 
 // Sound -----------------------------------------------------------------
@@ -173,9 +209,31 @@ static int16_t clamp16(int32_t v) {
 
 static void clear() { memset(buffer, 0, sizeof(buffer)); }
 
+// The buffer byte for a column of a page, or 0 when the page is not in the buffer.
+static uint8_t *at(int16_t page, int16_t x) {
+  if ((uint16_t)page >= 8) return 0;
+#ifdef AB_PAGED
+  return page == drawPage ? &buffer[x] : 0;
+#else
+  return &buffer[page * 128 + x];
+#endif
+}
+
+// True when rows y to y + h - 1 touch the page being drawn. Lets AB_PAGED skip
+// what is on other pages early. Always true otherwise.
+static bool onPage(int16_t y, int16_t h) {
+#ifdef AB_PAGED
+  return y < (drawPage + 1) * 8 && y + h > drawPage * 8;
+#else
+  (void)y; (void)h;
+  return true;
+#endif
+}
+
 static void drawPixel(int16_t x, int16_t y, uint8_t color) {
   if ((uint16_t)x >= 128 || (uint16_t)y >= 64) return;
-  uint8_t *b = &buffer[(y >> 3) * 128 + x];
+  uint8_t *b = at(y >> 3, x);
+  if (!b) return;
   uint8_t bit = 1 << (y & 7);
   if (color == 1) *b |= bit;
   else if (color == 0) *b &= ~bit;
@@ -184,7 +242,9 @@ static void drawPixel(int16_t x, int16_t y, uint8_t color) {
 
 static uint8_t getPixel(int16_t x, int16_t y) {
   if ((uint16_t)x >= 128 || (uint16_t)y >= 64) return 0;
-  return (buffer[(y >> 3) * 128 + x] >> (y & 7)) & 1;
+  // ponytail: with AB_PAGED only pixels on the page being drawn can be read.
+  uint8_t *b = at(y >> 3, x);
+  return b ? (*b >> (y & 7)) & 1 : 0;
 }
 
 // Same pixels as drawPixel for every point, but clipped first and written a
@@ -199,7 +259,8 @@ static void fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint8_t color) 
     int16_t last = row | 7;
     if (last >= y1) last = y1 - 1;
     uint8_t mask = (uint8_t)(0xff << (row & 7)) & (uint8_t)(0xff >> (7 - (last & 7)));
-    uint8_t *b = &buffer[(row >> 3) * 128 + x0];
+    uint8_t *b = at(row >> 3, x0);
+    if (!b) continue;
     for (int16_t i = x0; i < x1; i++, b++) {
       if (color == 1) *b |= mask;
       else if (color == 0) *b &= ~mask;
@@ -275,7 +336,7 @@ static void drawImage(int16_t x, int16_t y, const uint8_t *img, uint8_t frame, i
   uint8_t h = pgm_read_byte(img + 1);
   uint8_t frames = pgm_read_byte(img + 2);
   uint8_t hasMask = pgm_read_byte(img + 3) & 1;
-  if (x + w <= 0 || x >= 128 || y + h <= 0 || y >= 64) return;
+  if (x + w <= 0 || x >= 128 || y + h <= 0 || y >= 64 || !onPage(y, h)) return;
   uint8_t pages = (h + 7) >> 3;
   uint16_t frameSize = (uint16_t)pages * w;
   if (frame >= frames) frame = 0;
@@ -291,19 +352,15 @@ static void drawImage(int16_t x, int16_t y, const uint8_t *img, uint8_t frame, i
       uint16_t d = pgm_read_byte(data + src) << shift;
       uint16_t m = hasMask ? (uint16_t)pgm_read_byte(mask + src) << shift : d;
       if (tint >= 0) d = tint ? m : 0;
-      if (page >= 0 && page < 8) {
-        uint8_t *b = &buffer[page * 128 + col];
-        *b = (*b & ~(uint8_t)m) | (uint8_t)d;
-      }
-      if (shift && page + 1 >= 0 && page + 1 < 8) {
-        uint8_t *b = &buffer[(page + 1) * 128 + col];
-        *b = (*b & ~(uint8_t)(m >> 8)) | (uint8_t)(d >> 8);
-      }
+      if (uint8_t *b = at(page, col)) *b = (*b & ~(uint8_t)m) | (uint8_t)d;
+      if (!shift) continue;
+      if (uint8_t *b = at(page + 1, col)) *b = (*b & ~(uint8_t)(m >> 8)) | (uint8_t)(d >> 8);
     }
   }
 }
 
 static void drawChar(int16_t x, int16_t y, char c, uint8_t color) {
+  if (!onPage(y, 7)) return;
   if (c < 32 || c > 126) c = '?';
   const uint8_t *g = &font5x7[(c - 32) * 5];
   for (uint8_t i = 0; i < 5; i++) {
@@ -493,6 +550,10 @@ static void readButtons() {
   for (uint8_t i = 0; i < BTN_COUNT; i++) {
     if (buttonPins[i] >= 0 && digitalRead(buttonPins[i]) == LOW) buttons |= 1 << i;
   }
+#ifdef AB_TWO_BUTTONS
+  // Consoles with only left and right: both together are A.
+  if ((buttons & (1 << BTN_LEFT)) && (buttons & (1 << BTN_RIGHT))) buttons |= 1 << BTN_A;
+#endif
 }
 
 static bool isPressed(uint8_t b) { return buttons & (1 << b); }
@@ -552,8 +613,8 @@ static void saveHiscore() {
 
 // Tile map --------------------------------------------------------------
 
-static int16_t mapW() { return map ? pgm_read_byte(map) : 0; }
-static int16_t mapH() { return map ? pgm_read_byte(map + 1) : 0; }
+static int16_t mapW() { return hasMap() ? pgm_read_byte(map) : 0; }
+static int16_t mapH() { return hasMap() ? pgm_read_byte(map + 1) : 0; }
 
 static void setMap(const uint8_t *m, const uint8_t *const *images, uint32_t solid) {
   map = m;
@@ -565,7 +626,7 @@ static void setMap(const uint8_t *m, const uint8_t *const *images, uint32_t soli
 }
 
 static uint8_t tileAt(int16_t col, int16_t row) {
-  if (!map || col < 0 || row < 0 || col >= mapW() || row >= mapH()) return 0;
+  if (!hasMap() || col < 0 || row < 0 || col >= mapW() || row >= mapH()) return 0;
   uint16_t idx = (uint16_t)row * mapW() + col;
   for (uint8_t i = overlayCount; i-- > 0;) {
     if (overlayIndex[i] == idx) return overlayTile[i];
@@ -575,7 +636,7 @@ static uint8_t tileAt(int16_t col, int16_t row) {
 }
 
 static void setTile(int16_t col, int16_t row, uint8_t tile) {
-  if (!map || col < 0 || row < 0 || col >= mapW() || row >= mapH()) return;
+  if (!hasMap() || col < 0 || row < 0 || col >= mapW() || row >= mapH()) return;
   uint16_t idx = (uint16_t)row * mapW() + col;
   // Forget earlier changes of the same cell.
   for (uint8_t i = 0; i < overlayCount; i++) {
@@ -608,7 +669,7 @@ static void setTile(int16_t col, int16_t row, uint8_t tile) {
 }
 
 static bool isSolid(int16_t col, int16_t row, bool edgeWalls) {
-  if (!map) return false;
+  if (!hasMap()) return false;
   // Outside the left and right side of the map is a wall only for sprites that stay in the map.
   if (col < 0 || col >= mapW()) return edgeWalls;
   if (row < 0 || row >= mapH()) return false;
@@ -616,7 +677,7 @@ static bool isSolid(int16_t col, int16_t row, bool edgeWalls) {
 }
 
 static void drawMap() {
-  if (!map) return;
+  if (!hasMap()) return;
   int16_t c0 = camX >> 3, r0 = camY >> 3;
   for (int16_t r = r0; r <= r0 + 8; r++) {
     for (int16_t c = c0; c <= c0 + 16; c++) {
@@ -800,7 +861,7 @@ static void moveAxis(Sprite &sp, bool horizontal, int32_t delta) {
   int16_t w = imgW(sp.img), h = imgH(sp.img);
   if (horizontal) sp.x += delta;
   else sp.y += delta;
-  if (!map || (sp.flags & FLAG_GHOST) || delta == 0) return;
+  if (!hasMap() || (sp.flags & FLAG_GHOST) || delta == 0) return;
   int16_t left = px(sp.x) - w / 2, top = px(sp.y) - h / 2;
   int16_t right = left + w - 1, bottom = top + h - 1;
   bool bounce = sp.flags & FLAG_BOUNCE_ON_WALL;
@@ -831,6 +892,7 @@ static void moveAxis(Sprite &sp, bool horizontal, int32_t delta) {
 }
 
 static void updateSprites() {
+#ifndef AB_NO_SPRITES
   if (exists(controlled)) {
     Sprite &sp = sprites[controlled];
     if (controlVx) {
@@ -875,13 +937,17 @@ static void updateSprites() {
       }
     }
   }
+#endif
 }
 
 static void updateCamera() {
+#ifdef AB_NO_SPRITES
+  return;
+#endif
   if (!exists(cameraSprite)) return;
   camX = px(sprites[cameraSprite].x) - 64;
   camY = px(sprites[cameraSprite].y) - 32;
-  if (map) {
+  if (hasMap()) {
     int16_t maxX = mapW() * 8 - 128, maxY = mapH() * 8 - 64;
     if (camX > maxX) camX = maxX;
     if (camY > maxY) camY = maxY;
@@ -901,7 +967,7 @@ static void checkOverlaps() {
   }
 #endif
 #if defined(AB_HAS_TILE_OVERLAP)
-  if (!map) return;
+  if (!hasMap()) return;
   for (uint8_t i = 0; i < AB_MAX_SPRITES; i++) {
     Sprite &sp = sprites[i];
     if (!sp.alive) continue;
@@ -924,6 +990,7 @@ static void drawSprite(Sprite &sp) {
   if (sp.flags & FLAG_INVISIBLE) return;
   int16_t w = imgW(sp.img), h = imgH(sp.img);
   int16_t x = px(sp.x) - w / 2 - camX, y = px(sp.y) - h / 2 - camY;
+#ifndef AB_NO_OUTLINE
   if (sp.outline && sp.img) {
     int16_t radius = sp.outlineWidth ? sp.outlineWidth : 1;
     uint16_t size = ((h + 7) >> 3) * w;
@@ -942,11 +1009,13 @@ static void drawSprite(Sprite &sp) {
       }
     }
   }
+#endif
   drawImage(x, y, sp.img, sp.frame);
 }
 
 // Lowest layer first; sprites on the same layer are drawn in pool order.
 static void drawSprites() {
+#ifndef AB_NO_SPRITES
   int16_t layer = -129;
   for (;;) {
     int16_t next = 128;
@@ -957,6 +1026,7 @@ static void drawSprites() {
       if (sprites[i].alive && sprites[i].z == next) drawSprite(sprites[i]);
     layer = next;
   }
+#endif
 }
 
 // Visual particles, independent of the sprite pool. 27 bytes each on AVR.
@@ -1102,7 +1172,10 @@ static void drawParticles() {
 static const uint8_t heart[] PROGMEM = {0x06, 0x0F, 0x1E, 0x0F, 0x06};
 
 static void drawHud() {
-  if (showLife) {
+#ifdef AB_NO_HUD
+  return;
+#endif
+  if (showLife && onPage(1, 5)) {
     for (int16_t i = 0; i < life && i < 8; i++) {
       for (uint8_t c = 0; c < 5; c++) {
         uint8_t bits = pgm_read_byte(&heart[c]);
@@ -1112,7 +1185,7 @@ static void drawHud() {
       }
     }
   }
-  if (showScore) {
+  if (showScore && onPage(0, 9)) {
     tbClear();
     tbNum(score);
     int16_t w = textWidth(textBuf);
@@ -1152,15 +1225,44 @@ static void centerP(int16_t y, const char *progmemText) {
   drawText(64 - textWidth(textBuf) / 2, y, textBuf, 1);
 }
 
+// Clears the screen, draws it and shows it. With AB_PAGED draw runs once per page.
+static void render(void (*draw)()) {
+#ifdef AB_PAGED
+  for (drawPage = 0; drawPage < 8; drawPage++) {
+    clear();
+    draw();
+    displayPage(drawPage, buffer);
+  }
+#else
+  clear();
+  draw();
+  displayShow(buffer);
+#endif
+}
+
 // Shows what has been drawn so far and waits until A is pressed.
 static void showAndWait() {
+  // ponytail: with AB_PAGED nothing is kept between frames, so this only waits.
+#ifndef AB_PAGED
   displayShow(buffer);
+#endif
   waitForA();
   nextFrame = millis();
 }
 
+#ifdef AB_PAGED
+static const char *splashText;
+static void drawSplash() { messageBox(splashText); }
+#endif
+
 static void splash(const char *text) {
+#ifdef AB_PAGED
+  // The text is drawn on a black screen, since the last frame is not kept.
+  splashText = text;
+  render(drawSplash);
+#else
   messageBox(text);
+#endif
   showAndWait();
 }
 
@@ -1189,11 +1291,7 @@ static void restart() {
   ab_on_start();
 }
 
-static void showGameOver() {
-  saveHiscore();
-  musicPos = 0;
-  playEffect(gameOverWin ? 5 : 6);
-  clear();
+static void drawGameOver() {
   if (gameOverWin) centerP(8, PSTR("YOU WIN!"));
   else centerP(8, PSTR("GAME OVER"));
   if (showScore) {
@@ -1203,7 +1301,13 @@ static void showGameOver() {
     drawText(64 - textWidth(textBuf) / 2, 34, textBuf, 1);
   }
   centerP(52, PSTR("PRESS A"));
-  displayShow(buffer);
+}
+
+static void showGameOver() {
+  saveHiscore();
+  musicPos = 0;
+  playEffect(gameOverWin ? 5 : 6);
+  render(drawGameOver);
   waitForA();
   restart();
   nextFrame = millis();
@@ -1234,6 +1338,16 @@ static void begin() {
   nextFrame = millis();
 }
 
+static void drawFrame() {
+  drawMap();
+  drawSprites();
+#ifdef AB_HAS_PARTICLES
+  drawParticles();
+#endif
+  ab_on_draw();
+  drawHud();
+}
+
 static void frame() {
   uint32_t now = millis();
   if ((int32_t)(now - nextFrame) < 0) return;
@@ -1259,15 +1373,7 @@ static void frame() {
   updateCamera();
   updateSound();
 
-  clear();
-  drawMap();
-  drawSprites();
-#ifdef AB_HAS_PARTICLES
-  drawParticles();
-#endif
-  ab_on_draw();
-  drawHud();
-  displayShow(buffer);
+  render(drawFrame);
 
   if (gameOverPending) showGameOver();
 }

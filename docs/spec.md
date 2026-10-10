@@ -78,7 +78,8 @@ En profil består av mikrokontroller, skjerm, buss, pinner for knapper, skjerm o
 * Mikrokontroller: alle chiper med nok minne for en Arduboy-skjerm (minst 2 KB RAM og 32 KB flash):
   * Kompileres og lastes opp i nettleseren: ATmega328P, ATmega328PB, ATmega32U4 og ATmega644P.
   * Lastes ned som sketch til Arduino IDE: ATmega1284P, ATmega2560, ATmega4809, LGT8F328P, RP2040, ESP32, ESP8266, SAMD21 og STM32F103.
-  * Chiper med for lite RAM (ATmega168, ATmega8, ATtiny85) vises med en forklaring.
+  * Chiper med for lite RAM (ATmega168, ATmega8) vises med en forklaring.
+  * ATtiny85 er skjult (se «Hemmelig: ATtiny85 Pico» under).
 * Skjerm: SSD1306, SH1106 eller SSD1309. Buss: I2C eller SPI.
 * I2C: adresse 0x3C eller 0x3D.
 * SPI: valgfri pinne for CS, DC og RST.
@@ -94,6 +95,16 @@ En profil består av mikrokontroller, skjerm, buss, pinner for knapper, skjerm o
 * D0 og D1 bør holdes fri for opplasting.
 * Varsel når samme pinne er valgt to ganger.
 * Merknad om at I2C gir lavere bildefrekvens enn SPI (rundt 25 ms per full skjermoppdatering).
+
+**Hemmelig: ATtiny85 Pico**
+
+* Hold innstillinger-knappen inne i 5 sekunder (mus, berøring eller mellomrom). Da vises en hemmelig seksjon der man kan slå på ATtiny85 Pico: en liten konsoll med SSD1306 over I2C, to knapper og buzzer.
+* Pinner: venstre PB0, høyre PB2, buzzer PB1, skjerm SDA PB3 og SCL PB4. PB5 er reset.
+* 8 KB flash og 512 byte RAM. Motoren tegner skjermen én side (8 rader) om gangen i et buffer på 128 byte, og kjører tegningen 8 ganger per bilde. Det gir maks 5 sprites, 4 partikler og 21 tegn tekst.
+* Venstre og høyre samtidig er A. Splash vises på svart bakgrunn, og «vis og vent» viser ikke det som er tegnet.
+* Ingen Arduino-kjerne: `ab_tiny.h` har millis, pinner og tone. Programvare-I2C i `ab_display.h`.
+* Generatoren definerer `AB_NO_SPRITES`, `AB_NO_MAP`, `AB_NO_OUTLINE` og `AB_NO_HUD` når spillet ikke bruker dem, så koden blir mindre på alle chiper.
+* Ingen USB: last ned .hex og brenn med en ISP-programmerer. Spillet setter klokka til 8 MHz selv, så sikringene kan stå som fra fabrikk.
 
 **Profiler som mal**
 

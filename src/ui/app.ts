@@ -30,7 +30,7 @@ import { confirmDialog } from './dialogs';
 import { openDocs } from './docs';
 import { $, clear, h, toast } from './dom';
 import { loadTemplates, openGallery, openProjectsDialog, starButton, thumbnail } from './gallery';
-import { allProfiles, loadServerProfiles, openProfileDialog, profileFromUrl } from './profile-editor';
+import { allProfiles, loadServerProfiles, openProfileDialog, profileFromUrl, setSecretProfiles } from './profile-editor';
 import { openFirstRun, openSettings } from './settings-dialog';
 import { CommentsPanel } from './comments';
 import { ToolboxDeleteOverlay } from './toolbox-delete-overlay';
@@ -131,6 +131,7 @@ export class App {
 
     this.injectWorkspace();
     this.bindUi();
+    setSecretProfiles(!!this.settings.secretTiny);
     await loadServerProfiles();
 
     const profilePath = params.get('profile');
@@ -407,6 +408,8 @@ export class App {
     colorButton.title = `${t('sim.color')}: ${t(`pixel.${this.runner.pixelColor}Color`)}`;
     colorButton.setAttribute('aria-label', colorButton.title);
     $('#btn-mute').setAttribute('aria-pressed', String(!this.runner.muted));
+    // Only left and right on an ATtiny85 console. Both together are A.
+    document.querySelectorAll('.pad').forEach((pad) => pad.classList.toggle('tiny', this.isTiny()));
   }
 
   restartSim() {
@@ -419,16 +422,26 @@ export class App {
       this.simMessage(t('sim.fixErrors'), 'error');
       return;
     }
-    void this.runner.start(this.build.js, `ardublocks.eeprom.${this.project.id}`, this.maxSprites());
+    void this.runner.start(this.build.js, `ardublocks.eeprom.${this.project.id}`, this.maxSprites(), this.isTiny());
     this.guide.onPlay();
   }
 
   /** Same number of sprites as the device, which has fewer on small chips. */
   maxSprites(): number {
     try {
-      return getChip(this.project.profile.chip).ram < 2560 ? 12 : 16;
+      const chip = getChip(this.project.profile.chip);
+      return chip.tiny ? 5 : chip.ram < 2560 ? 12 : 16;
     } catch {
       return 16;
+    }
+  }
+
+  /** The project is for an ATtiny85 console with two buttons. */
+  isTiny(): boolean {
+    try {
+      return !!getChip(this.project.profile.chip).tiny;
+    } catch {
+      return false;
     }
   }
 
@@ -545,6 +558,7 @@ export class App {
     const profileChanged = next.profileId !== this.settings.profileId;
     this.settings = { ...next };
     saveSettings(this.settings);
+    setSecretProfiles(!!this.settings.secretTiny);
     applyPageTheme(this.settings.theme as ThemeId);
     this.runner.pixelColor = this.settings.pixelColor as PixelColor;
     if (this.hasProject && this.project.pixelColor !== this.runner.pixelColor) {
@@ -784,6 +798,34 @@ export class App {
 
   // Events ----------------------------------------------------------------
 
+  /** A click opens the settings. Holding the button for 5 seconds also shows the secret ones. */
+  private bindSettingsButton() {
+    const button = $('#btn-settings');
+    let timer = 0;
+    let held = false;
+    const start = () => {
+      held = false;
+      clearTimeout(timer);
+      timer = window.setTimeout(() => {
+        held = true;
+        void openSettings(this, true);
+      }, 5000);
+    };
+    const end = () => clearTimeout(timer);
+    button.addEventListener('pointerdown', start);
+    for (const type of ['pointerup', 'pointerleave', 'pointercancel']) button.addEventListener(type, end);
+    // Space clicks when it is let go, so holding it works like holding the pointer.
+    button.addEventListener('keydown', (e) => { if (e.key === ' ' && !e.repeat) start(); });
+    button.addEventListener('keyup', end);
+    button.addEventListener('blur', end);
+    // A long press on a touch screen must not open a menu.
+    button.addEventListener('contextmenu', (e) => e.preventDefault());
+    button.addEventListener('click', () => {
+      if (held) held = false;
+      else void openSettings(this);
+    });
+  }
+
   private bindUi() {
     document.querySelectorAll<HTMLElement>('.tabs [data-tab]').forEach((b) => b.addEventListener('click', () => this.selectTab(b.dataset.tab!)));
     $('#btn-home').addEventListener('click', () => this.showHome());
@@ -792,7 +834,7 @@ export class App {
     $('#btn-open').addEventListener('click', () => openProjectsDialog(this.project, (p) => this.loadProject(p)));
     $('#btn-import').addEventListener('click', () => this.importProject());
     $('#btn-export').addEventListener('click', () => this.exportProject());
-    $('#btn-settings').addEventListener('click', () => openSettings(this));
+    this.bindSettingsButton();
     $('#btn-docs').addEventListener('click', () => openDocs(this.settings.theme as ThemeId));
     setBlockInfoHandler((type) => openDocs(this.settings.theme as ThemeId, type));
     const languageTrigger = $('#lang');

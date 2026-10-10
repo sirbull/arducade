@@ -7,7 +7,7 @@ import { compileGame, type FileSource } from '../src/compile/avrgcc';
 import { generateCpp } from '../src/gen/cpp';
 import { defaultEffect, emptyProgram } from '../src/ir/ir';
 import { newProject } from '../src/project/model';
-import { BUILTIN_PROFILES, cloneProfile, profileToConfigH } from '../src/hw/profile';
+import { BUILTIN_PROFILES, cloneProfile, profileToConfigH, SECRET_PROFILES } from '../src/hw/profile';
 
 const base = join(__dirname, '../public/compiler');
 const haveTools = existsSync(join(base, 'tools/cc1plus.wasm'));
@@ -19,7 +19,7 @@ const src: FileSource = {
   wasm: async (name) => new Uint8Array(readFileSync(join(base, 'tools', `${name}.wasm`))),
 };
 
-const headers = Object.fromEntries(['ardublocks.h', 'ab_display.h', 'ab_font.h'].map((f) => [f, readFileSync(join(__dirname, '../core/ardublocks', f), 'utf8')]));
+const headers = Object.fromEntries(['ardublocks.h', 'ab_display.h', 'ab_font.h', 'ab_tiny.h'].map((f) => [f, readFileSync(join(__dirname, '../core/ardublocks', f), 'utf8')]));
 
 describe.skipIf(!haveTools)('WebAssembly compiler', () => {
   it('compiles adjustable sprite outlines for a 2 KB RAM device', async () => {
@@ -114,6 +114,16 @@ describe.skipIf(!haveTools)('WebAssembly compiler', () => {
       expect(out.flash).toBeLessThan(28000);
       expect(out.ram).toBeLessThan(2048);
       console.log(template, mcu, 'flash', out.flash, 'ram', out.ram);
+    }, 120000);
+  }
+  for (const template of ['empty', 'shooter']) {
+    it(`compiles the ${template} for the ATtiny85 Pico`, async () => {
+      const game = readFileSync(join(__dirname, `../.cache/gen/${template}.ino`), 'utf8');
+      const out = await compileGame(src, { mcu: 'attiny85', game, config: profileToConfigH(SECRET_PROFILES[0]), headers });
+      expect(out.hex.startsWith(':')).toBe(true);
+      expect(out.flash).toBeLessThanOrEqual(8192);
+      expect(out.ram).toBeLessThanOrEqual(400); // Leave at least 112 bytes for the stack.
+      console.log(template, 'attiny85', 'flash', out.flash, 'ram', out.ram);
     }, 120000);
   }
   for (const bus of ['i2c', 'spi'] as const) {

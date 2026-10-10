@@ -7,13 +7,17 @@ import { t } from '../i18n/i18n';
 import { buildToolbox } from '../blocks/toolbox';
 import { openDialog } from './dialogs';
 import { clear, h } from './dom';
+import { getAssetProject, setAssetProject } from '../blocks/assets';
+import { templateToProject } from '../templates';
+import { platformer } from '../templates/platformer';
+import { illustratedGuide } from './docs-guide';
 import { blockPicture } from './guide-panel';
 import type { ThemeId } from './themes';
 
 type Json = Record<string, any>;
 
 /** Sections about the editor. Texts are docs.<id>.title and docs.<id>.body. */
-const GUIDE = ['start', 'blocks', 'assets', 'sim', 'device'];
+const GUIDE = ['start', 'blocks', 'assets', 'sim', 'device', 'homemade', 'attiny'];
 
 const n = (v: number): Json => ({ shadow: { type: 'math_number', fields: { NUM: v } } });
 const s = (v: string): Json => ({ shadow: { type: 'text', fields: { TEXT: v } } });
@@ -121,8 +125,8 @@ export function openDocs(theme: ThemeId, blockType?: string) {
 
   // Blockly pictures are drawn when they scroll into view: a category can
   // have twenty of them.
-  const picture = (blocks: Json[]) => {
-    const el = h('div', { class: 'docs-picture' });
+  const picture = (blocks: Json[], overview = false) => {
+    const el = h('div', { class: overview ? 'docs-picture docs-overview' : 'docs-picture' });
     (el as HTMLElement & { blocks?: Json[] }).blocks = blocks;
     observer?.observe(el);
     return el;
@@ -151,7 +155,14 @@ export function openDocs(theme: ThemeId, blockType?: string) {
       for (const e of seen) {
         if (!e.isIntersecting) continue;
         observer!.unobserve(e.target);
-        pictures.push(blockPicture(e.target as HTMLElement, (e.target as HTMLElement & { blocks: Json[] }).blocks, theme, 420));
+        const overview = e.target.classList.contains('docs-overview');
+        const project = getAssetProject();
+        try {
+          if (overview) setAssetProject(templateToProject(platformer));
+          pictures.push(blockPicture(e.target as HTMLElement, (e.target as HTMLElement & { blocks: Json[] }).blocks, theme, overview ? 700 : 420, overview));
+        } finally {
+          if (overview) setAssetProject(project);
+        }
       }
       // Pictures above the block change height as they are drawn.
       if (target && performance.now() - shown < 1000) target.scrollIntoView({ block: 'start' });
@@ -160,6 +171,7 @@ export function openDocs(theme: ThemeId, blockType?: string) {
     content.append(h('h2', {}, sec.title));
     if (!sec.blocks) {
       for (const p of t(`docs.${sec.id}.body`).split('\n\n')) content.append(h('p', {}, p));
+      content.append(illustratedGuide(sec.id, picture));
       return;
     }
     for (const state of sec.blocks) {

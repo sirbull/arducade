@@ -91,6 +91,12 @@ export interface EngineOptions {
   seed?: number;
   /** Do not wait for A or for pauses, for pictures made without a player. */
   noWaits?: boolean;
+  /**
+   * ATtiny85 console (AB_PAGED in ardublocks.h): fewer particles, changed
+   * tiles and characters, A is left and right together, and nothing drawn
+   * is kept between frames.
+   */
+  tiny?: boolean;
 }
 
 export class Engine {
@@ -170,7 +176,10 @@ export class Engine {
 
   get particles(): Particle[] { return this.slots.filter(p => p.remaining > 0); }
 
-  get maxParticles() { return this.maxSprites <= 12 ? 12 : 16; }
+  get maxParticles() { return this.opts.tiny ? 4 : this.maxSprites <= 12 ? 12 : 16; }
+
+  /** Characters that fit in the device text buffer. */
+  private get textMax() { return this.opts.tiny ? 21 : 31; }
 
   clearParticles() { this.slots = []; }
 
@@ -439,7 +448,7 @@ export class Engine {
   }
 
   drawText(x: number, y: number, s: string, color: number) {
-    for (const c of s.slice(0, 31)) {
+    for (const c of s.slice(0, this.textMax)) {
       this.drawChar(x, y, c, color);
       x += 6;
     }
@@ -525,10 +534,17 @@ export class Engine {
     this.buttonsPrev = this.buttons;
     // Consume each edge on a separate frame, even for a tap between frames.
     for (let b = 0; b < BUTTON_IDS.length; b++) {
+      if (this.opts.tiny && b !== BTN_LEFT && b !== BTN_RIGHT) {
+        // The console has no such button.
+        this.inputTransitions[b].length = 0;
+        this.buttons &= ~(1 << b);
+        continue;
+      }
       const down = this.inputTransitions[b].shift() ?? !!(this.input & (1 << b));
       if (down) this.buttons |= 1 << b;
       else this.buttons &= ~(1 << b);
     }
+    if (this.opts.tiny && this.isPressed(BTN_LEFT) && this.isPressed(BTN_RIGHT)) this.buttons |= 1 << BTN_A;
   }
 
   isPressed(b: number): boolean {
@@ -640,7 +656,7 @@ export class Engine {
     }
     this.cleared.delete(idx);
     if (this.map[2 + idx] === tile) return;
-    if (this.overlay.length === 8) this.overlay.shift();
+    if (this.overlay.length === (this.opts.tiny ? 4 : 8)) this.overlay.shift();
     this.overlay.push({ idx, tile });
   }
 
@@ -1111,13 +1127,15 @@ export class Engine {
 
   /** Shows what has been drawn so far and waits until A is pressed. */
   async showAndWait() {
-    this.opts.show(this.buffer, this.inverted);
+    if (!this.opts.tiny) this.opts.show(this.buffer, this.inverted);
     await this.waitForA();
     this.nextFrame = this.millis();
   }
 
   async splash(text: string) {
-    this.messageBox(text.slice(0, 31));
+    if (this.opts.tiny) this.buffer.fill(0);
+    this.messageBox(text.slice(0, this.textMax));
+    if (this.opts.tiny) this.opts.show(this.buffer, this.inverted);
     await this.showAndWait();
   }
 

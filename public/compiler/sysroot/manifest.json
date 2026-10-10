@@ -44,6 +44,27 @@
       "crt": "crtatmega644p.o",
       "deviceLib": "libatmega644p.a",
       "dataStart": "0x800100"
+    },
+    "attiny85": {
+      "define": "__AVR_ATtiny85__",
+      "board": "ARDUINO_AVR_ATTINYX5",
+      "extra": [],
+      "headers": "headers-attiny85.json",
+      "core": "",
+      "crt": "crtattiny85.o",
+      "deviceLib": "libattiny85.a",
+      "dataStart": "0x800060",
+      "arch": "avr25",
+      "fCpu": 8000000,
+      "libs": [
+        "avr25/libc.a",
+        "avr25/libm.a",
+        "avr25/libgcc.a"
+      ],
+      "ldscript": "avr25.xn",
+      "extraLd": [
+        "--pmem-wrap-around=8k"
+      ]
     }
   },
   "libs": [

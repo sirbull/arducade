@@ -3,6 +3,7 @@
 
 import abDisplay from '../../core/ardublocks/ab_display.h?raw';
 import abFont from '../../core/ardublocks/ab_font.h?raw';
+import abTiny from '../../core/ardublocks/ab_tiny.h?raw';
 import ardublocks from '../../core/ardublocks/ardublocks.h?raw';
 import { profileToConfigH } from '../hw/profile';
 import { sanitize } from '../gen/names';
@@ -13,6 +14,7 @@ export const CORE_HEADERS: Record<string, string> = {
   'ardublocks.h': ardublocks,
   'ab_display.h': abDisplay,
   'ab_font.h': abFont,
+  'ab_tiny.h': abTiny,
 };
 
 export function sketchName(project: Project): string {

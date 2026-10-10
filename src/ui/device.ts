@@ -198,6 +198,10 @@ export class DeviceTools {
     const chip = this.chip();
     if (!chip) return;
     const serial = serialApi();
+    if (chip.tiny) {
+      toast(t('device.ispOnly'), 'info');
+      return;
+    }
     if (chip.upload === 'none' || !chip.browserCompile) {
       toast(t('device.exportOnly', { chip: chip.name }), 'info');
       return;

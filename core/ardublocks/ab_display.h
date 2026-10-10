@@ -1,6 +1,6 @@
 // ArduCade display drivers: SSD1306, SH1106 and SSD1309 over I2C or SPI.
-// Uses the hardware registers directly on classic AVR chips, and the Arduino
-// Wire and SPI libraries everywhere else.
+// Uses the hardware registers directly on classic AVR chips, software I2C on
+// the ATtiny85, and the Arduino Wire and SPI libraries everywhere else.
 #pragma once
 
 // The ATmega328PB has two I2C and two SPI units. Use the first of each.
@@ -18,7 +18,7 @@
 #define AB_AVR_DIRECT 1
 #endif
 
-#if defined(AB_BUS_I2C) && !defined(AB_AVR_DIRECT)
+#if defined(AB_BUS_I2C) && !defined(AB_AVR_DIRECT) && !defined(AB_PIN_SDA)
 #include <Wire.h>
 #endif
 #if defined(AB_BUS_SPI) && !defined(AB_AVR_DIRECT)
@@ -29,7 +29,52 @@ namespace ab {
 
 #if defined(AB_BUS_I2C)
 
-#if defined(AB_AVR_DIRECT)
+#if defined(AB_PIN_SDA)
+// Software I2C on port B. SCL is always driven: the screen never stretches the
+// clock. SDA is driven for data and let go for the acknowledge bit, which is
+// ignored. Define AB_I2C_DELAY_US if a screen needs a slower clock.
+#if defined(AB_I2C_DELAY_US)
+#include <util/delay.h>
+#define AB_I2C_WAIT() _delay_us(AB_I2C_DELAY_US)
+#else
+#define AB_I2C_WAIT()
+#endif
+// Inlined: a call per bit would make the bus three times slower.
+#define AB_INLINE inline __attribute__((always_inline))
+static AB_INLINE void sclHigh() { PORTB |= _BV(AB_PIN_SCL); AB_I2C_WAIT(); }
+static AB_INLINE void sclLow() { PORTB &= ~_BV(AB_PIN_SCL); }
+static AB_INLINE void sda(bool high) {
+  if (high) PORTB |= _BV(AB_PIN_SDA);
+  else PORTB &= ~_BV(AB_PIN_SDA);
+}
+static void i2cWrite(uint8_t b) {
+  for (uint8_t m = 0x80; m; m >>= 1) {
+    sda(b & m);
+    sclHigh();
+    sclLow();
+  }
+  DDRB &= ~_BV(AB_PIN_SDA);
+  sclHigh();
+  sclLow();
+  DDRB |= _BV(AB_PIN_SDA);
+}
+static void i2cStart() {
+  sda(true);
+  sclHigh();
+  sda(false);
+  sclLow();
+  i2cWrite(AB_I2C_ADDRESS << 1);
+}
+static void i2cStop() {
+  sda(false);
+  sclHigh();
+  sda(true);
+}
+static void busBegin() {
+  PORTB |= _BV(AB_PIN_SDA) | _BV(AB_PIN_SCL);
+  DDRB |= _BV(AB_PIN_SDA) | _BV(AB_PIN_SCL);
+}
+#elif defined(AB_AVR_DIRECT)
 static void i2cWait() { while (!(TWCR & _BV(TWINT))) {} }
 static void i2cStart() {
   TWCR = _BV(TWINT) | _BV(TWSTA) | _BV(TWEN);
@@ -57,7 +102,7 @@ static void busBegin() { Wire.begin(); Wire.setClock(400000); }
 
 static void displayCommand(uint8_t c) {
   i2cStart();
-#if defined(AB_AVR_DIRECT)
+#if defined(AB_AVR_DIRECT) || defined(AB_PIN_SDA)
   i2cWrite(0x00);
   i2cWrite(c);
 #else
@@ -69,7 +114,7 @@ static void displayCommand(uint8_t c) {
 
 // Sends len bytes of screen data.
 static void displayData(const uint8_t *data, uint16_t len) {
-#if defined(AB_AVR_DIRECT)
+#if defined(AB_AVR_DIRECT) || defined(AB_PIN_SDA)
   i2cStart();
   i2cWrite(0x40);
   while (len--) i2cWrite(*data++);
@@ -203,6 +248,19 @@ static void displayShow(const uint8_t *buffer) {
   displayCommand(0x22); displayCommand(0); displayCommand(7);
   displayData(buffer, 1024);
 #endif
+}
+
+// Sends one page (8 rows, 128 bytes) to the screen.
+static void displayPage(uint8_t page, const uint8_t *data) {
+#if defined(AB_DISPLAY_SH1106)
+  displayCommand(0xB0 + page);
+  displayCommand(0x02);
+  displayCommand(0x10);
+#else
+  displayCommand(0x21); displayCommand(0); displayCommand(127);
+  displayCommand(0x22); displayCommand(page); displayCommand(7);
+#endif
+  displayData(data, 128);
 }
 
 } // namespace ab

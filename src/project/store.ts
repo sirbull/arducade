@@ -67,6 +67,8 @@ export interface Settings {
   guideStars?: Record<string, number>;
   /** Let the user open guide levels in any order. */
   guideFree?: boolean;
+  /** Secret setting: the ATtiny85 Pico console (hold the settings button for 5 seconds). */
+  secretTiny?: boolean;
 }
 
 const SETTINGS_KEY = 'ardublocks.settings';

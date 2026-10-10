@@ -61,6 +61,12 @@ export interface Chip {
   /** Fixed pins for the hardware buses. */
   bus: BusPins;
   pins: PinInfo[];
+  /**
+   * Tiny console (ATtiny85): no Arduino core, software I2C on the bus pins,
+   * only the left and right buttons, and the screen drawn a page at a time.
+   * Hidden until the secret setting is turned on.
+   */
+  tiny?: boolean;
 }
 
 function digital(from: number, to: number, prefix = 'D', cppPrefix = ''): PinInfo[] {
@@ -113,6 +119,27 @@ function stm32Pins(): PinInfo[] {
 }
 
 export const CHIPS: Chip[] = [
+  {
+    id: 'attiny85',
+    name: 'ATtiny85',
+    family: 'avr',
+    mmcu: 'attiny85',
+    arch: 'avr25',
+    fCpu: 8000000,
+    flash: 8192,
+    ram: 512,
+    eeprom: 512,
+    // Programmed over ISP, so there is no bootloader.
+    bootloader: 0,
+    boards: ['ATtiny85 Pico'],
+    fqbn: 'ATTinyCore:avr:attinyx5',
+    signature: [0x1e, 0x93, 0x0b],
+    upload: 'none',
+    browserCompile: true,
+    bus: { sda: 'PB3', scl: 'PB4' },
+    pins: [...gpio(0, 4, 'PB'), { id: 'PB5', cpp: '5', reserved: true }],
+    tiny: true,
+  },
   {
     id: 'atmega328p',
     name: 'ATmega328P',
@@ -367,7 +394,6 @@ export const CHIPS: Chip[] = [
 export const UNSUPPORTED_CHIPS = [
   { name: 'ATmega168', reason: 'unsupported.ram' },
   { name: 'ATmega8', reason: 'unsupported.ram' },
-  { name: 'ATtiny85', reason: 'unsupported.ram' },
 ];
 
 export function getChip(id: string): Chip {

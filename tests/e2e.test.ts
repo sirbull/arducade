@@ -5,11 +5,12 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { AVREEPROM, AVRIOPort, AVRTimer, AVRTWI, avrInstruction, CPU, EEPROMMemoryBackend, portBConfig, portCConfig, portDConfig, timer0Config, timer1Config, timer2Config, twiConfig } from 'avr8js';
+import { AVREEPROM, AVRIOPort, AVRTimer, AVRTWI, avrInstruction, CPU, EEPROMMemoryBackend, PinState, portBConfig, portCConfig, portDConfig, timer0Config, timer1Config, timer2Config, twiConfig } from 'avr8js';
 import { describe, expect, it } from 'vitest';
 import { compileGame, type FileSource } from '../src/compile/avrgcc';
 import type { GameHooks } from '../src/gen/js';
-import { BUILTIN_PROFILES, profileToConfigH } from '../src/hw/profile';
+import { BUILTIN_PROFILES, profileToConfigH, SECRET_PROFILES } from '../src/hw/profile';
+import { FRAME_MS } from '../src/engine/enums';
 import { Engine } from '../src/sim/engine';
 import { div16, mod16 } from '../src/sim/intmath';
 import { TEMPLATE_SOURCES, templateToProject } from '../src/templates';
@@ -25,7 +26,7 @@ const src: FileSource = {
   tool: async (name) => (await import(pathToFileURL(join(base, 'tools', `${name}.mjs`)).href)).default,
   wasm: async (name) => new Uint8Array(readFileSync(join(base, 'tools', `${name}.wasm`))),
 };
-const headers = Object.fromEntries(['ardublocks.h', 'ab_display.h', 'ab_font.h'].map((f) => [f, readFileSync(join(__dirname, '../core/ardublocks', f), 'utf8')]));
+const headers = Object.fromEntries(['ardublocks.h', 'ab_display.h', 'ab_font.h', 'ab_tiny.h'].map((f) => [f, readFileSync(join(__dirname, '../core/ardublocks', f), 'utf8')]));
 
 const ARG_COUNT: Record<number, number> = { 0x20: 1, 0x21: 2, 0x22: 2, 0x81: 1, 0x8d: 1, 0xa8: 1, 0xd3: 1, 0xd5: 1, 0xd9: 1, 0xda: 1, 0xdb: 1 };
 
@@ -43,26 +44,27 @@ class Ssd1306 {
   private page1 = 7;
   private written = 0;
 
-  constructor(private twi: AVRTWI) {}
+  /** Without a TWI unit the bytes come from SoftI2c. */
+  constructor(private twi?: AVRTWI) {}
 
   start() {
     this.control = -1;
-    this.twi.completeStart();
+    this.twi?.completeStart();
   }
   stop() {
-    this.twi.completeStop();
+    this.twi?.completeStop();
   }
   connectToSlave(addr: number) {
-    this.twi.completeConnect(addr === 0x3c);
+    this.twi?.completeConnect(addr === 0x3c);
   }
   readByte() {
-    this.twi.completeRead(0xff);
+    this.twi?.completeRead(0xff);
   }
   writeByte(v: number) {
     if (this.control < 0) this.control = v;
     else if (this.control === 0x40) this.data(v);
     else this.command(v);
-    this.twi.completeWrite(true);
+    this.twi?.completeWrite(true);
   }
   private command(v: number) {
     this.cmd.push(v);
@@ -81,6 +83,92 @@ class Ssd1306 {
     }
     if (++this.written % 1024 === 0) this.frames.push(this.buffer.slice());
   }
+}
+
+/** Reads I2C from two port pins, as the bit banged bus of the ATtiny85. */
+class SoftI2c {
+  private scl = true;
+  private sda = true;
+  private bits = -1; // -1: no transfer, else bits of the byte so far (9th is the ack)
+  private byte = 0;
+  private first = false;
+
+  constructor(private port: AVRIOPort, private sdaPin: number, private sclPin: number, private screen: Ssd1306) {
+    port.addListener(() => this.update());
+  }
+
+  /** The screen module has pull up resistors, so a pin that is let go is high. */
+  private level(pin: number) {
+    return this.port.pinState(pin) !== PinState.Low;
+  }
+
+  private update() {
+    const scl = this.level(this.sclPin), sda = this.level(this.sdaPin);
+    if (scl && this.scl && sda !== this.sda) {
+      if (!sda) { this.screen.start(); this.bits = 0; this.byte = 0; this.first = true; }
+      else { this.screen.stop(); this.bits = -1; }
+    } else if (scl && !this.scl && this.bits >= 0) {
+      if (this.bits < 8) this.byte = (this.byte << 1) | (sda ? 1 : 0);
+      if (++this.bits === 9) {
+        if (this.first) this.screen.connectToSlave(this.byte >> 1);
+        else this.screen.writeByte(this.byte);
+        this.first = false;
+        this.bits = 0;
+        this.byte = 0;
+      }
+    }
+    this.scl = scl;
+    this.sda = sda;
+  }
+}
+
+// ATtiny85 registers (data addresses) and vectors (word addresses) for avr8js.
+const tinyPortB = { PIN: 0x36, DDR: 0x37, PORT: 0x38, externalInterrupts: [] };
+const tinyTimer0 = {
+  ...timer0Config, compAInterrupt: 10, compBInterrupt: 11, ovfInterrupt: 5, TIFR: 0x58, OCRA: 0x49, OCRB: 0x48, TCNT: 0x52, TCCRA: 0x4a, TCCRB: 0x53, TIMSK: 0x59,
+  TOV: 2, OCFA: 16, OCFB: 8, TOIE: 2, OCIEA: 16, OCIEB: 8, compPortA: 0x38, compPinA: 0, compPortB: 0x38, compPinB: 1, externalClockPort: 0x38, externalClockPin: 2,
+};
+
+/**
+ * Runs an ATtiny85 Pico game: left on PB0, right on PB2, screen on PB3 and PB4.
+ * Also returns the random seed: the timer count micros() read at start.
+ */
+function runOnTiny(hex: string, frames: number, input: (k: number) => number): { frames: Uint8Array[]; seed: number } {
+  const program = new Uint16Array(0x1000);
+  new Uint8Array(program.buffer).set(parseHex(hex));
+  const cpu = new CPU(program, 512);
+  new AVRTimer(cpu, tinyTimer0);
+  let tcnt: number | undefined;
+  const readTimer = cpu.readHooks[tinyTimer0.TCNT];
+  cpu.readHooks[tinyTimer0.TCNT] = (addr) => {
+    const v = readTimer(addr);
+    tcnt ??= v ?? cpu.data[addr];
+    return v;
+  };
+  const port = new AVRIOPort(cpu, tinyPortB);
+  const setButtons = (bits: number) => {
+    port.setPin(0, !(bits & (1 << 2)));
+    port.setPin(2, !(bits & (1 << 3)));
+  };
+  setButtons(input(1));
+  const screen = new Ssd1306();
+  new SoftI2c(port, 3, 4, screen);
+  const limit = 8e6 * (frames * 0.1 + 2);
+  let shown = 0;
+  frameCycles = [];
+  while (screen.frames.length < frames && cpu.cycles < limit) {
+    avrInstruction(cpu);
+    // The program counter has 12 bits, so rjmp and rcall wrap around the 8 KB
+    // (the linker uses that with --pmem-wrap-around=8k). avr8js does not.
+    cpu.pc &= 0xfff;
+    cpu.tick();
+    if (screen.frames.length !== shown) {
+      shown = screen.frames.length;
+      frameCycles.push(cpu.cycles);
+      setButtons(input(shown + 1));
+    }
+  }
+  return { frames: screen.frames, seed: (0xace1 ^ (tcnt ?? 0)) || 0xace1 };
 }
 
 /** Buttons held in frame k (1 based): bit 3 right, bit 4 A, as in BUTTON_IDS. */
@@ -133,20 +221,24 @@ function runOnAvr(hex: string, frames: number): Uint8Array[] {
   return screen.frames;
 }
 
-async function runInSimulator(js: { code: string; hiscoreKey: number }, frames: number): Promise<Uint8Array[]> {
+/** With tiny, runs as the ATtiny85 with its seed, and time follows the frames. */
+async function runInSimulator(js: { code: string; hiscoreKey: number }, frames: number, input = inputFor, tiny?: { seed: number }): Promise<Uint8Array[]> {
   const out: Uint8Array[] = [];
   const engine = new Engine({
     show: (b) => out.push(b.slice()),
     tone: () => {},
     storage: { read: () => 0xff, write: () => {} },
     onSkippedCpp: () => {},
-    maxSprites: 12,
+    maxSprites: tiny ? 5 : 12,
     hiscoreMagic: js.hiscoreKey,
+    tiny: !!tiny,
+    seed: tiny?.seed,
   });
+  if (tiny) engine.millis = () => engine.frameCount * FRAME_MS;
   const factory = new Function('E', '$w', '$div', '$mod', '$lg', js.code) as (...a: unknown[]) => GameHooks;
   await engine.begin(factory(engine, (v: number) => (v << 16) >> 16, div16, mod16, engine.loopGuard));
   while (out.length < frames) {
-    engine.input = inputFor(out.length + 1);
+    engine.input = input(out.length + 1);
     await engine.frame(true);
   }
   return out;
@@ -182,5 +274,32 @@ describe.skipIf(!haveTools)('device code matches the simulator', () => {
     expect(diff(device[5], device[frames - 1])).toBeGreaterThan(20);
     const ms = frameCycles.slice(1).map((c, i) => (c - frameCycles[i]) / 16000);
     console.log(id, 'ms per frame: max', Math.max(...ms).toFixed(1), 'mean', (ms.reduce((a, b) => a + b, 0) / ms.length).toFixed(1));
+  }, 180000);
+});
+
+/** Right held in frames 10 to 40, and left too in 20 to 24: that is A on two buttons. */
+function tinyInput(k: number): number {
+  let bits = 0;
+  if (k >= 10 && k <= 40) bits |= 1 << 3;
+  if (k >= 20 && k <= 24) bits |= 1 << 2;
+  return bits;
+}
+
+describe.skipIf(!haveTools)('ATtiny85 device code matches the simulator', () => {
+  it('shooter on the ATtiny85 Pico, drawn a page at a time', async () => {
+    const project = templateToProject(TEMPLATE_SOURCES.find((t) => t.id === 'shooter')!);
+    project.profile = SECRET_PROFILES[0];
+    const { cpp, js } = compileProject(project);
+    const out = await compileGame(src, { mcu: 'attiny85', game: cpp.code, config: profileToConfigH(project.profile), headers });
+    expect(out.flash).toBeLessThanOrEqual(8192);
+    const frames = 60;
+    const { frames: device, seed } = runOnTiny(out.hex, frames, tinyInput);
+    const sim = await runInSimulator(js, frames, tinyInput, { seed });
+    expect(device.length).toBe(frames);
+    expect(device[frames - 1].some((b) => b !== 0)).toBe(true);
+    expect(device.map((f, i) => diff(f, sim[i]))).toEqual(Array(frames).fill(0));
+    expect(diff(device[5], device[frames - 1])).toBeGreaterThan(20);
+    const ms = frameCycles.slice(1).map((c, i) => (c - frameCycles[i]) / 8000);
+    console.log('attiny85 shooter ms per frame: max', Math.max(...ms).toFixed(1), 'mean', (ms.reduce((a, b) => a + b, 0) / ms.length).toFixed(1));
   }, 180000);
 });

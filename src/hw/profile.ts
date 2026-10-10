@@ -84,6 +84,19 @@ export const BUILTIN_PROFILES: Profile[] = [
   }),
 ];
 
+/** Shown only when the secret setting is on. */
+export const SECRET_PROFILES: Profile[] = [
+  profile({
+    id: 'attiny85-pico',
+    name: 'ATtiny85 Pico',
+    builtin: true,
+    chip: 'attiny85',
+    display: { driver: 'ssd1306', bus: 'i2c', i2cAddress: 0x3c, rotate180: false, mirror: false, contrast: 0xcf },
+    buttons: { up: '', down: '', left: 'PB0', right: 'PB2', a: '', b: '' },
+    sound: { pin1: 'PB1' },
+  }),
+];
+
 export const DEFAULT_PROFILE_ID = 'arduboy';
 
 export function cloneProfile(p: Profile, name: string): Profile {
@@ -159,8 +172,10 @@ export function validateProfile(p: Profile): ProfileIssue[] {
   }
 
   for (const b of BUTTONS) {
+    if (chip.tiny && b !== 'left' && b !== 'right') continue;
     if (!p.buttons[b]) issues.push({ level: 'error', key: 'profile.buttonMissing', params: { role: `button.${b}` } });
   }
+  if (chip.tiny && p.display.bus !== 'i2c') issues.push({ level: 'error', key: 'profile.tinyI2cOnly' });
   if (p.display.bus === 'spi' && !p.display.dc) {
     issues.push({ level: 'error', key: 'profile.dcMissing' });
   }
@@ -277,6 +292,11 @@ export function profileToConfigH(p: Profile): string {
     `#define AB_DISPLAY_${p.display.driver.toUpperCase()} 1`,
     `#define AB_BUS_${p.display.bus.toUpperCase()} 1`,
   ];
+  if (chip.tiny) {
+    lines.push(`#define AB_PIN_SDA ${pinCpp(chip, chip.bus.sda)}`);
+    lines.push(`#define AB_PIN_SCL ${pinCpp(chip, chip.bus.scl)}`);
+    lines.push('#define AB_TWO_BUTTONS 1');
+  }
   if (p.display.bus === 'i2c') {
     lines.push(`#define AB_I2C_ADDRESS 0x${p.display.i2cAddress.toString(16).toUpperCase()}`);
   } else {

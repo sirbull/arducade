@@ -5,7 +5,7 @@ import { pathToFileURL } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { compileGame, type FileSource } from '../src/compile/avrgcc';
 import { generateCpp } from '../src/gen/cpp';
-import { emptyProgram } from '../src/ir/ir';
+import { defaultEffect, emptyProgram } from '../src/ir/ir';
 import { newProject } from '../src/project/model';
 import { BUILTIN_PROFILES, cloneProfile, profileToConfigH } from '../src/hw/profile';
 
@@ -47,6 +47,25 @@ describe.skipIf(!haveTools)('WebAssembly compiler', () => {
     ] }] };
     const profile = BUILTIN_PROFILES.find(p => p.id === 'nano-sh1106-i2c')!;
     const out = await compileGame(src, { mcu: profile.chip, game: generateCpp(program, project).code, config: profileToConfigH(profile), headers });
+    expect(out.hex.startsWith(':')).toBe(true);
+    expect(out.ram).toBeLessThan(2048);
+  }, 120000);
+  it('compiles particle effects for a 2 KB RAM device', async () => {
+    const project = newProject('Effects');
+    project.images = [{ id: 'puff', name: 'puff', width: 2, height: 2, frames: [['11', '11'], ['10', '01']] }];
+    const fx = { k: 'enum' as const, type: 'effect' as const, v: 'smoke' };
+    const num = (v: number) => ({ k: 'num' as const, v });
+    const sprite = { k: 'api' as const, fn: 'sprites.create', args: [{ k: 'enum' as const, type: 'image' as const, v: 'puff' }, { k: 'enum' as const, type: 'kind' as const, v: 'Player' }] };
+    const program = { ...emptyProgram(), effects: [{ ...defaultEffect('smoke'), image: 'puff', accel: [0, -20] as [number, number], drag: 30, wobble: 3, blink: 30 }, defaultEffect('spray')], events: [{ k: 'start' as const, body: [
+      { k: 'expr' as const, e: { k: 'api' as const, fn: 'particles.burst', args: [fx, num(5), num(64), num(32), num(-90)] } },
+      { k: 'expr' as const, e: { k: 'api' as const, fn: 'particles.burstFrom', args: [{ ...fx, v: 'spray' }, num(3), sprite, num(0)] } },
+      { k: 'expr' as const, e: { k: 'api' as const, fn: 'particles.clearEffect', args: [fx] } },
+      { k: 'expr' as const, e: { k: 'api' as const, fn: 'particles.pixel', args: [64, 32, 30, -30, 500].map(num) } },
+    ] }] };
+    const profile = BUILTIN_PROFILES.find(p => p.id === 'nano-sh1106-i2c')!;
+    const gen = generateCpp(program, project);
+    expect(gen.diagnostics.filter(d => d.level === 'error')).toEqual([]);
+    const out = await compileGame(src, { mcu: profile.chip, game: gen.code, config: profileToConfigH(profile), headers });
     expect(out.hex.startsWith(':')).toBe(true);
     expect(out.ram).toBeLessThan(2048);
   }, 120000);

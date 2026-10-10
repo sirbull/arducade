@@ -7,6 +7,7 @@ import { registerAssetFields } from './assets';
 import { registerPointPicker } from './point-picker';
 import { registerAltDrag } from './alt-drag';
 import { registerBlockInfo } from './info-icon';
+import { registerEffectBlocks } from './effects';
 import { ICONS, type IconName } from './icons';
 import { NOTE_CHOICES } from '../engine/melody';
 
@@ -17,6 +18,8 @@ const text = (name: string): Arg => ({ type: 'input_value', name, check: ['Strin
 const sprite = (name: string): Arg => ({ type: 'input_value', name, check: 'Sprite' });
 const image = (name = 'IMAGE'): Arg => ({ type: 'field_ab_image', name });
 const kind = (name = 'KIND'): Arg => ({ type: 'field_ab_kind', name });
+const effect = (name = 'EFFECT'): Arg => ({ type: 'field_ab_effect', name });
+const fnum = (name: string, value: number, min: number, max: number): Arg => ({ type: 'field_number', name, value, min, max, precision: 1 });
 const tile = (name = 'TILE'): Arg => ({ type: 'field_ab_tile', name });
 const variable = (name: string, def: string): Arg => ({ type: 'field_variable', name, variable: def });
 const dropdown = (name: string, keys: [string, string][]): Arg => ({
@@ -85,6 +88,11 @@ interface Def {
   inline?: boolean;
   /** Inputs that start a new row, so long inline blocks stay narrow. */
   rows?: string[];
+  /** Only blocks with this statement check fit in the body. */
+  bodyCheck?: string;
+  /** Statement that only fits in a body with this check. */
+  part?: string;
+  extensions?: string[];
 }
 
 const GAME = { icon: 'game', style: 'ab_game' } as const;
@@ -96,11 +104,28 @@ const GRAPHICS = { icon: 'graphics', style: 'ab_graphics' } as const;
 const MUSIC = { icon: 'music', style: 'ab_music' } as const;
 const MATH = { icon: 'math', style: 'ab_math' } as const;
 const CUSTOM = { icon: 'custom', style: 'ab_custom' } as const;
+const PARTICLES = { icon: 'particles', style: 'ab_particles' } as const;
+const FX_PART = { ...PARTICLES, part: 'EffectPart' } as const;
 
 export const DEFS: Def[] = [
   { type: 'ab_particle_pixel', ...GRAPHICS, msg: 'AB_PARTICLE_PIXEL', args: [num('X'), num('Y'), num('VX'), num('VY'), num('MS'), num('END_VX'), num('END_VY'), PARTICLE_COLOR], statement: true, inline: true, rows: ['VX', 'MS'] },
   { type: 'ab_particle_image', ...GRAPHICS, msg: 'AB_PARTICLE_IMAGE', args: [image(), num('X'), num('Y'), num('VX'), num('VY'), num('MS'), num('END_VX'), num('END_VY'), PARTICLE_COLOR], statement: true, inline: true, rows: ['VX', 'MS'] },
-  { type: 'ab_particles_clear', ...GRAPHICS, msg: 'AB_PARTICLES_CLEAR', statement: true },
+  { type: 'ab_particles_clear', ...PARTICLES, msg: 'AB_PARTICLES_CLEAR', statement: true },
+  // Particle effects: a recipe made of parts, and blocks that send particles out.
+  { type: 'ab_effect', ...PARTICLES, msg: 'AB_EFFECT', args: [{ type: 'field_input', name: 'NAME', text: 'spray' }], hat: true, body: true, bodyCheck: 'EffectPart', extensions: ['ab_effect_name'] },
+  { type: 'ab_fx_pixel', ...FX_PART, msg: 'AB_FX_PIXEL', args: [PARTICLE_COLOR] },
+  { type: 'ab_fx_image', ...FX_PART, msg: 'AB_FX_IMAGE', args: [image(), PARTICLE_COLOR] },
+  { type: 'ab_fx_life', ...FX_PART, msg: 'AB_FX_LIFE', args: [fnum('MIN', 400, 0, 32767), fnum('MAX', 800, 0, 32767)] },
+  { type: 'ab_fx_direction', ...FX_PART, msg: 'AB_FX_DIRECTION', args: [fnum('DIR', 0, -360, 360), fnum('SPREAD', 30, 0, 180)] },
+  { type: 'ab_fx_speed', ...FX_PART, msg: 'AB_FX_SPEED', args: [fnum('MIN', 20, 0, 2000), fnum('MAX', 40, 0, 2000)] },
+  { type: 'ab_fx_area', ...FX_PART, msg: 'AB_FX_AREA', args: [fnum('W', 8, 0, 255), fnum('H', 0, 0, 255)] },
+  { type: 'ab_fx_accel', ...FX_PART, msg: 'AB_FX_ACCEL', args: [fnum('AX', 0, -2000, 2000), fnum('AY', 50, -2000, 2000)] },
+  { type: 'ab_fx_drag', ...FX_PART, msg: 'AB_FX_DRAG', args: [fnum('DRAG', 40, 0, 100)] },
+  { type: 'ab_fx_wobble', ...FX_PART, msg: 'AB_FX_WOBBLE', args: [fnum('WOBBLE', 3, 0, 100)] },
+  { type: 'ab_fx_blink', ...FX_PART, msg: 'AB_FX_BLINK', args: [fnum('BLINK', 30, 0, 100)] },
+  { type: 'ab_fx_burst', ...PARTICLES, msg: 'AB_FX_BURST', args: [num('COUNT'), effect(), num('X'), num('Y'), num('ROT')], statement: true, inline: true, rows: ['X'] },
+  { type: 'ab_fx_burst_from', ...PARTICLES, msg: 'AB_FX_BURST_FROM', args: [num('COUNT'), effect(), sprite('SPRITE'), num('ROT')], statement: true, inline: true },
+  { type: 'ab_fx_clear', ...PARTICLES, msg: 'AB_FX_CLEAR', args: [effect()], statement: true },
   // Game
   { type: 'ab_on_start', ...GAME, msg: 'AB_ON_START', hat: true, body: true },
   { type: 'ab_on_update', ...GAME, msg: 'AB_ON_UPDATE', hat: true, body: true },
@@ -317,15 +342,16 @@ function toJson(d: Def): Record<string, unknown> {
     tooltip: `%{BKY_${d.msg}_TOOLTIP}`,
   };
   if (d.output !== undefined) json.output = d.output;
-  if (d.statement) {
-    json.previousStatement = null;
-    json.nextStatement = null;
+  if (d.statement || d.part) {
+    json.previousStatement = d.part ?? null;
+    json.nextStatement = d.part ?? null;
   }
   if (d.hat) json.hat = 'cap';
   if (d.body) {
     json.message1 = '%1';
-    json.args1 = [{ type: 'input_statement', name: 'DO' }];
+    json.args1 = [{ type: 'input_statement', name: 'DO', ...(d.bodyCheck && { check: d.bodyCheck }) }];
   }
+  if (d.extensions) (json.extensions as string[]).push(...d.extensions);
   if (d.inline) json.inputsInline = true;
   if (d.rows) (json.extensions as string[]).push('ab_rows');
   return json;
@@ -341,6 +367,7 @@ export function defineBlocks() {
   registerPointPicker();
   registerAltDrag();
   registerBlockInfo();
+  registerEffectBlocks();
   for (const name of Object.keys(ICONS) as IconName[]) {
     Blockly.Extensions.register(`ab_icon_${name}`, function (this: Blockly.Block) {
       const first = this.inputList[0];

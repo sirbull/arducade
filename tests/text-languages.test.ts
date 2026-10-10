@@ -49,6 +49,23 @@ for (const language of ["javascript", "python"] as TextLanguage[]) {
           ),
         ).toBe(again);
       });
+    it("keeps particle effects through translation", () => {
+      const project = newProject("Effects");
+      project.images = [{ id: "puff", name: "puff", width: 1, height: 1, frames: [["1"]] }];
+      const program = {
+        vars: [],
+        funcs: [],
+        events: [{ k: "start" as const, body: [{ k: "expr" as const, e: { k: "api" as const, fn: "particles.burst", args: [{ k: "enum" as const, type: "effect" as const, v: "røyk" }, ...[5, 64, 32, -90].map((v) => ({ k: "num" as const, v }))] } }] }],
+        effects: [{ name: "røyk", image: "puff", color: 2, life: [400, 900] as [number, number], dir: -90, spread: 20, speed: [5, 15] as [number, number], area: [4, 2] as [number, number], accel: [0, -20] as [number, number], drag: 30, wobble: 3, blink: 25 }],
+      };
+      const source = generateSource(program, project, language);
+      expect(source).toContain('effects.define("røyk")');
+      const back = parseSource(source, language, project);
+      expect(back.effects).toEqual(program.effects);
+      const again = generateSource(back, project, language);
+      expect(generateSource(parseSource(again, language, project), project, language)).toBe(again);
+      expect(() => parseSource(source.replace(/effect\("røyk"\)/, 'effect("nope")'), language, project)).toThrow(/Unknown effect/);
+    });
     it("keeps C++ and comments through translation", () => {
       const project = newProject("Test");
       const source =

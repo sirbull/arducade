@@ -1,3 +1,4 @@
+import * as Blockly from 'blockly/core';
 import { expect, it } from 'vitest';
 import { Engine } from '../src/sim/engine';
 import { FRAME_MS } from '../src/engine/enums';
@@ -142,4 +143,124 @@ it('chooses random black or white once per particle', async () => {
   expect(new Set(colors)).toEqual(new Set([0, 1]));
   await e.frame(true);
   expect(e.particles.map(p => p.color)).toEqual(colors);
+});
+
+// Effects: [color, blink, lifeMin, lifeMax, dir, spread, speedMin, speedMax, areaW, areaH, ax, ay, drag, wobble]
+const fxFields = (o: Partial<Record<'color' | 'blink' | 'life' | 'dir' | 'spread' | 'speed' | 'w' | 'h' | 'ax' | 'ay' | 'drag' | 'wobble', number>> = {}) =>
+  [o.color ?? 1, o.blink ?? 0, o.life ?? 1000, o.life ?? 1000, o.dir ?? 0, o.spread ?? 0, o.speed ?? 32, o.speed ?? 32, o.w ?? 0, o.h ?? 0, o.ax ?? 0, o.ay ?? 0, o.drag ?? 0, o.wobble ?? 0];
+
+it('sends effect particles in the effect direction, turned by the rotation', async () => {
+  const { e } = await engine();
+  const up = e.effect(null, fxFields({ dir: 0 }));
+  e.burst(up, 1, 40, 30, 0);
+  e.burst(up, 1, 40, 30, 90);
+  const [a, b] = e.particles;
+  expect([a.vx, a.vy]).toEqual([0, -512]);
+  expect([b.vx, b.vy]).toEqual([512, 0]);
+  await e.frame(true);
+  expect(Math.floor(a.y / 256)).toBeLessThan(30);
+  expect(Math.floor(b.x / 256)).toBeGreaterThan(40);
+});
+
+it('applies acceleration and drag, and caps bursts to the free slots', async () => {
+  const { e } = await engine();
+  const fall = e.effect(null, fxFields({ speed: 0, ay: 100 }));
+  const slow = e.effect(null, fxFields({ dir: 90, speed: 100, drag: 50 }));
+  e.burst(fall, 1, 0, 0, 0);
+  e.burst(slow, 1, 0, 0, 0);
+  const [f, s] = e.particles;
+  await e.frame(true);
+  await e.frame(true);
+  expect(f.vy).toBeGreaterThan(0);
+  expect(s.vx).toBeLessThan(1600);
+  expect(s.vx).toBeGreaterThan(0);
+  e.burst(fall, 100, 0, 0, 0);
+  expect(e.particles).toHaveLength(e.maxParticles);
+  e.clearEffect(slow);
+  expect(e.particles).toHaveLength(e.maxParticles - 1);
+  expect(e.particles.every(p => p.fx === fall)).toBe(true);
+  e.clearEffect(null);
+  expect(e.particles).toHaveLength(e.maxParticles - 1);
+});
+
+it('blinks at the end of the lifetime and plays image frames over the lifetime', async () => {
+  const { e } = await engine();
+  const blink = e.effect(null, fxFields({ speed: 0, blink: 100, life: 3000 }));
+  e.burst(blink, 1, 10, 10, 0);
+  const seen = new Set<number>();
+  for (let i = 0; i < 6; i++) {
+    await e.frame(true);
+    seen.add(e.getPixel(10, 10));
+  }
+  expect(seen).toEqual(new Set([0, 1]));
+  e.clearParticles();
+  // Two 1x1 frames: lit, then dark.
+  const frames = e.effect(e.image([1, 1, 2, 0, 1, 0]), fxFields({ speed: 0, life: 200 }));
+  e.burst(frames, 1, 20, 20, 0);
+  await e.frame(true);
+  expect(e.getPixel(20, 20)).toBe(1);
+  for (let i = 0; i < 3; i++) await e.frame(true);
+  expect(e.getPixel(20, 20)).toBe(0);
+});
+
+it('sends effect particles from the middle of a sprite', async () => {
+  const { e } = await engine();
+  const s = e.create(e.image([2, 2, 1, 0, 3, 3]), 0);
+  e.setPosition(s, 50, 20);
+  const fx = e.effect(null, fxFields({ speed: 0 }));
+  e.burstFrom(fx, 2, s, 0);
+  e.burstFrom(fx, 2, 99, 0);
+  expect(e.particles.map(p => [p.x / 256, p.y / 256])).toEqual([[50, 20], [50, 20]]);
+});
+
+const smoke = (extra: object[] = []) => ({
+  type: 'ab_effect', x: 300, y: 20, fields: { NAME: 'røyk' },
+  inputs: { DO: { block: { type: 'ab_fx_life', fields: { MIN: 400, MAX: 900 }, next: { block: { type: 'ab_fx_direction', fields: { DIR: -90, SPREAD: 20 }, next: { block: { type: 'ab_fx_blink', fields: { BLINK: 30 } } } } } } } },
+  ...extra,
+});
+const burst = (name: string) => ({
+  type: 'ab_on_start',
+  inputs: { DO: { block: { type: 'ab_fx_burst', fields: { EFFECT: name }, inputs: { COUNT: { shadow: { type: 'math_number', fields: { NUM: 4 } } }, X: { shadow: { type: 'math_number', fields: { NUM: 64 } } }, Y: { shadow: { type: 'math_number', fields: { NUM: 32 } } } } } } },
+});
+
+it('compiles effect recipes to flash constants and bursts for both targets', () => {
+  const project = newProject('Effects');
+  project.blocks = { blocks: { languageVersion: 0, blocks: [burst('røyk'), smoke()] } };
+  const { cpp, js, ir } = compileProject(project);
+  expect(ir.diagnostics).toEqual([]);
+  expect(cpp.diagnostics.filter(d => d.level === 'error')).toEqual([]);
+  expect(cpp.code).toContain('#define AB_HAS_PARTICLES 1');
+  expect(cpp.code).toContain('static const ab::Effect fx_royk PROGMEM = {0, 1, 30, 400, 900, -90, 20, 20, 40, 0, 0, 0, 0, 0, 0};');
+  expect(cpp.code).toContain('ab::burst(&fx_royk, 4, 64, 32, 0)');
+  expect(js.code).toContain('const fx_royk = E.effect(null, [1,30,400,900,-90,20,20,40,0,0,0,0,0,0]);');
+  expect(js.code).toContain('E.burst(fx_royk, 4, 64, 32, 0)');
+});
+
+it('reports unknown and duplicate effect names', () => {
+  const project = newProject('Effects');
+  project.blocks = { blocks: { languageVersion: 0, blocks: [burst('nope'), smoke(), { ...smoke(), x: 600 }] } };
+  const { cpp, ir } = compileProject(project);
+  expect(ir.diagnostics.map(d => d.key)).toEqual(['diag.duplicateEffect']);
+  expect(cpp.diagnostics.map(d => d.key)).toContain('diag.noEffect');
+});
+
+it('keeps effect parts inside effects and renames effects where they are used', async () => {
+  const ws = new Blockly.Workspace();
+  try {
+    Blockly.serialization.workspaces.load({ blocks: { languageVersion: 0, blocks: [burst('røyk'), smoke()] } }, ws);
+    const start = ws.getBlocksByType('ab_on_start', false)[0];
+    const fx = ws.getBlocksByType('ab_effect', false)[0];
+    const part = ws.newBlock('ab_fx_drag');
+    const stmt = ws.newBlock('ab_particles_clear');
+    const checker = ws.connectionChecker;
+    expect(checker.canConnect(fx.getInput('DO')!.connection!, part.previousConnection!, false)).toBe(true);
+    expect(checker.canConnect(start.getInput('DO')!.connection!, part.previousConnection!, false)).toBe(false);
+    expect(checker.canConnect(fx.getInput('DO')!.connection!, stmt.previousConnection!, false)).toBe(false);
+    fx.setFieldValue('damp', 'NAME');
+    // Blockly fires change events after the current task.
+    await new Promise(r => setTimeout(r, 0));
+    expect(ws.getBlocksByType('ab_fx_burst', false)[0].getFieldValue('EFFECT')).toBe('damp');
+  } finally {
+    ws.dispose();
+  }
 });

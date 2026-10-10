@@ -959,45 +959,121 @@ static void drawSprites() {
   }
 }
 
-// Visual particles, independent of the sprite pool. 25 bytes each on AVR.
+// Visual particles, independent of the sprite pool. 27 bytes each on AVR.
 #ifdef AB_HAS_PARTICLES
+// A particle effect recipe, generated from the blocks into flash.
+// Angles in degrees: 0 up, 90 right. Speeds in pixels per second.
+struct Effect {
+  const uint8_t *img; // null means one pixel
+  int8_t color;       // 0 black, 1 white, 2 random
+  uint8_t blink;      // percent of the lifetime, at the end
+  int16_t lifeMin, lifeMax, dir, spread, speedMin, speedMax, areaW, areaH, ax, ay, drag, wobble;
+};
 struct Particle {
   int32_t x, y; // 1/256 pixel, world coordinates
-  int16_t vx, vy, endVx, endVy; // pixels per second
+  int16_t vx, vy, endVx, endVy; // pixels per second, or 1/16 pixels per second with an effect
   const uint8_t *img; // null means one white pixel
   uint16_t remaining, duration;
   int8_t color;
+  const Effect *fx; // in flash, null for particles without an effect
 };
 #ifndef AB_MAX_PARTICLES
 #define AB_MAX_PARTICLES (AB_MAX_SPRITES <= 12 ? 12 : 16)
 #endif
 static Particle particles[AB_MAX_PARTICLES];
 static void clearParticles() { memset(particles, 0, sizeof(particles)); }
+static Particle *freeParticle() {
+  for (uint8_t i = 0; i < AB_MAX_PARTICLES; i++)
+    if (!particles[i].remaining) return &particles[i];
+  return 0;
+}
 static void emitParticleTween(const uint8_t *img, int16_t x, int16_t y, int16_t vx, int16_t vy, int16_t ms, int16_t endVx, int16_t endVy, int8_t color = -1) {
   if (ms <= 0) return;
-  for (uint8_t i = 0; i < AB_MAX_PARTICLES; i++) {
-    Particle &p = particles[i];
-    if (p.remaining) continue;
-    p.x = (int32_t)x * 256; p.y = (int32_t)y * 256;
-    p.vx = vx; p.vy = vy; p.img = img; p.remaining = p.duration = ms;
-    p.endVx = endVx; p.endVy = endVy;
-    p.color = color == 2 ? random(0, 1) : color;
-    return;
-  }
+  Particle *p = freeParticle();
+  if (!p) return;
+  p->x = (int32_t)x * 256; p->y = (int32_t)y * 256;
+  p->vx = vx; p->vy = vy; p->img = img; p->remaining = p->duration = ms;
+  p->endVx = endVx; p->endVy = endVy; p->fx = 0;
+  p->color = color == 2 ? random(0, 1) : color;
 }
 static void emitParticle(const uint8_t *img, int16_t x, int16_t y, int16_t vx, int16_t vy, int16_t ms) {
   emitParticleTween(img, x, y, vx, vy, ms, vx, vy);
 }
+
+// sin(0 to 90 degrees) * 127, the same table as src/sim/intmath.ts.
+static const int8_t sinTable[91] PROGMEM = {
+  0, 2, 4, 7, 9, 11, 13, 15, 18, 20, 22, 24, 26, 29, 31, 33, 35, 37, 39, 41, 43, 46, 48, 50, 52, 54, 56, 58, 60, 62,
+  63, 65, 67, 69, 71, 73, 75, 76, 78, 80, 82, 83, 85, 87, 88, 90, 91, 93, 94, 96, 97, 99, 100, 101, 103, 104, 105,
+  107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 119, 120, 121, 121, 122, 123, 123, 124, 124, 125,
+  125, 125, 126, 126, 126, 127, 127, 127, 127, 127, 127,
+};
+static int8_t isin(int16_t d) {
+  d %= 360;
+  if (d < 0) d += 360;
+  bool neg = d >= 180;
+  if (neg) d -= 180;
+  if (d > 90) d = 180 - d;
+  int8_t v = pgm_read_byte(&sinTable[d]);
+  return neg ? -v : v;
+}
+
+static void burst(const Effect *fxp, int16_t n, int16_t x, int16_t y, int16_t rot) {
+  if (!fxp) return;
+  Effect fx;
+  memcpy_P(&fx, fxp, sizeof(fx));
+  for (int16_t k = 0; k < n; k++) {
+    Particle *p = freeParticle();
+    if (!p) return;
+    // The same order of random numbers as the simulator.
+    int16_t life = random(fx.lifeMin, fx.lifeMax);
+    int16_t a = (int16_t)(((int32_t)fx.dir + rot + random(-fx.spread, fx.spread)) % 360);
+    int16_t sp = random(fx.speedMin, fx.speedMax);
+    int16_t ox = fx.areaW ? random(0, fx.areaW - 1) - (fx.areaW >> 1) : 0;
+    int16_t oy = fx.areaH ? random(0, fx.areaH - 1) - (fx.areaH >> 1) : 0;
+    int8_t color = fx.color == 2 ? random(0, 1) : fx.color;
+    if (life <= 0) continue;
+    p->x = ((int32_t)x + ox) * 256; p->y = ((int32_t)y + oy) * 256;
+    p->vx = (int32_t)sp * 16 * isin(a) / 127;
+    p->vy = -((int32_t)sp * 16 * isin(a + 90) / 127);
+    p->endVx = p->endVy = 0;
+    p->img = fx.img; p->color = color; p->fx = fxp;
+    p->remaining = p->duration = life;
+  }
+}
+static void burstFrom(const Effect *fx, int16_t n, uint8_t s, int16_t rot) {
+  if (exists(s)) burst(fx, n, getProp(s, P_X), getProp(s, P_Y), rot);
+}
+static void clearEffect(const Effect *fx) {
+  for (uint8_t i = 0; i < AB_MAX_PARTICLES; i++)
+    if (fx && particles[i].fx == fx) particles[i].remaining = 0;
+}
+
+static int16_t clampSpeed(int32_t v) { return v < -32000 ? -32000 : v > 32000 ? 32000 : v; }
+
 static void updateParticles() {
   for (uint8_t i = 0; i < AB_MAX_PARTICLES; i++) {
     Particle &p = particles[i];
     if (!p.remaining) continue;
     uint16_t step = p.remaining < AB_FRAME_MS ? p.remaining : AB_FRAME_MS;
-    uint16_t midpoint = p.duration - p.remaining + step / 2;
-    int32_t vx = p.vx + ((int32_t)p.endVx - p.vx) * midpoint / p.duration;
-    int32_t vy = p.vy + ((int32_t)p.endVy - p.vy) * midpoint / p.duration;
-    p.x += vx * 256 * step / 1000;
-    p.y += vy * 256 * step / 1000;
+    if (p.fx) {
+      Effect fx;
+      memcpy_P(&fx, p.fx, sizeof(fx));
+      p.vx = clampSpeed(p.vx + (int32_t)fx.ax * 16 * step / 1000);
+      p.vy = clampSpeed(p.vy + (int32_t)fx.ay * 16 * step / 1000);
+      if (fx.drag) {
+        p.vx -= (int32_t)p.vx * fx.drag * step / 100000;
+        p.vy -= (int32_t)p.vy * fx.drag * step / 100000;
+      }
+      if (fx.wobble) p.vx = clampSpeed(p.vx + (int32_t)random(-fx.wobble, fx.wobble) * 16);
+      p.x += (int32_t)p.vx * 16 * step / 1000;
+      p.y += (int32_t)p.vy * 16 * step / 1000;
+    } else {
+      uint16_t midpoint = p.duration - p.remaining + step / 2;
+      int32_t vx = p.vx + ((int32_t)p.endVx - p.vx) * midpoint / p.duration;
+      int32_t vy = p.vy + ((int32_t)p.endVy - p.vy) * midpoint / p.duration;
+      p.x += vx * 256 * step / 1000;
+      p.y += vy * 256 * step / 1000;
+    }
     p.remaining -= step;
   }
 }
@@ -1005,10 +1081,17 @@ static void drawParticles() {
   for (uint8_t i = 0; i < AB_MAX_PARTICLES; i++) {
     Particle &p = particles[i];
     if (!p.remaining) continue;
+    uint8_t blink = p.fx ? pgm_read_byte(&p.fx->blink) : 0;
+    if (blink && (uint32_t)p.remaining * 100 < (uint32_t)p.duration * blink && (frameCount & 2)) continue;
     int32_t x = (p.x >> 8) - camX, y = (p.y >> 8) - camY;
     int16_t w = p.img ? imgW(p.img) : 1, h = p.img ? imgH(p.img) : 1;
     if (x + w / 2 < 0 || y + h / 2 < 0 || x - w / 2 >= 128 || y - h / 2 >= 64) continue;
-    if (p.img) drawImage(x - w / 2, y - h / 2, p.img, 0, p.color);
+    uint8_t frames = imgFrames(p.img), frame = 0;
+    if (p.fx && frames > 1) {
+      frame = (uint32_t)(p.duration - p.remaining) * frames / p.duration;
+      if (frame >= frames) frame = frames - 1;
+    }
+    if (p.img) drawImage(x - w / 2, y - h / 2, p.img, frame, p.color);
     else drawPixel(x, y, p.color == 0 ? 0 : 1);
   }
 }

@@ -14,6 +14,7 @@ export const ICONS = {
   scene: svg('<rect x="1.5" y="2.5" width="13" height="11"/><path d="M1.5 10l3.5-3 3 2.5 2.5-2 4 3.5"/>'),
   info: svg('<path d="M8 2.5l1.7 3.5 3.8.5-2.8 2.6.7 3.8L8 11l-3.4 1.9.7-3.8-2.8-2.6 3.8-.5z"/>'),
   graphics: svg('<path d="M2.5 13.5l3-1 7.5-7.5-2-2L3.5 10.5z"/><path d="M9.5 4.5l2 2"/>'),
+  particles: svg('<path d="M3 13l4-4M9 7l2-2"/><rect x="11.5" y="1.5" width="2" height="2"/><rect x="13" y="6" width="1.5" height="1.5"/><rect x="7" y="2" width="1.5" height="1.5"/><circle cx="3" cy="13" r="1.4"/>'),
   music: svg('<path d="M6 12.5V3.5l7-1.5v9"/><circle cx="4.5" cy="12.5" r="1.8"/><circle cx="11.5" cy="11" r="1.8"/>'),
   logic: svg('<path d="M2 8h4l2-4h6M8 8l2 4h4"/>'),
   loops: svg('<path d="M12.5 6A5 5 0 1 0 13 9.5"/><path d="M13 2.5V6H9.5"/>'),

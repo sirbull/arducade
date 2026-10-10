@@ -1,6 +1,6 @@
 import { API } from "../engine/api";
 import { forEachExpr } from "../ir/check";
-import type { EnumType, Expr, Program, Stmt, Ty, Event } from "../ir/ir";
+import { defaultEffect, type EffectDef, type EnumType, type Expr, type Program, type Stmt, type Ty, type Event } from "../ir/ir";
 import { sanitize } from "../gen/names";
 import {
   BUILTIN_KINDS,
@@ -46,7 +46,7 @@ class SourceNames {
     if (previous) return previous;
     let base = sanitize(name);
     const reserved = new Set(
-      "if else while for return break continue function def let const var global pass in of true false True False and or not class import from try catch finally throw new delete void null None async await yield events custom text melody choose asset kind sprites sprite game screen scene controller tiles images tilemaps info sound music animation randint _math".split(
+      "if else while for return break continue function def let const var global pass in of true false True False and or not class import from try catch finally throw new delete void null None async await yield events custom text melody choose asset kind sprites sprite game screen scene controller tiles images tilemaps info sound music animation randint _math effects effect particles".split(
         " ",
       ),
     );
@@ -245,6 +245,14 @@ export function parseSource(
           a = {
             k: "enum",
             type: "kind",
+            v: (args[0] as Extract<Expr, { k: "str" }>).v,
+          };
+        } else if (name === "effect") {
+          if (args.length !== 1 || args[0].k !== "str")
+            fail("effect expects one string.");
+          a = {
+            k: "enum",
+            type: "effect",
             v: (args[0] as Extract<Expr, { k: "str" }>).v,
           };
         } else if (name === "choose") {
@@ -528,6 +536,78 @@ export function parseSource(
     else if (eat("else")) no = eat("if") ? [ifAfter()] : body();
     return { k: "if", cond, then: yes, else: no };
   };
+  // Effects are recipes of constants: effects.define("smoke") and then one
+  // line per part, the same parts as the blocks.
+  const effects: EffectDef[] = [];
+  const effectPart = (part: string, args: Expr[]) => {
+    const name = args[0]?.k === "str" ? args[0].v : fail("Expected the effect name as a string.");
+    const n = (k: number) => {
+      const a = args[k];
+      if (a?.k === "num") return a.v;
+      if (a?.k === "un" && a.op === "neg" && a.a.k === "num") return -a.a.v;
+      return fail("Expected a number.");
+    };
+    const count = (c: number) => {
+      if (args.length !== c) fail(`Wrong number of arguments for 'effects.${part}'.`);
+    };
+    if (part === "define") {
+      count(1);
+      if (effects.some((e) => e.name === name)) fail(`Duplicate effect '${name}'.`);
+      effects.push(defaultEffect(name));
+      return;
+    }
+    const fx = effects.find((e) => e.name === name) ?? fail(`Unknown effect '${name}'.`);
+    switch (part) {
+      case "pixel":
+        count(2);
+        fx.image = "";
+        fx.color = n(1);
+        break;
+      case "image": {
+        count(3);
+        const img = args[1];
+        if (img?.k !== "enum" || img.type !== "image") fail("Expected an image.");
+        fx.image = (img as Extract<Expr, { k: "enum" }>).v;
+        fx.color = n(2);
+        break;
+      }
+      case "lifetime":
+        count(3);
+        fx.life = [n(1), n(2)];
+        break;
+      case "direction":
+        count(3);
+        fx.dir = n(1);
+        fx.spread = n(2);
+        break;
+      case "speed":
+        count(3);
+        fx.speed = [n(1), n(2)];
+        break;
+      case "area":
+        count(3);
+        fx.area = [n(1), n(2)];
+        break;
+      case "acceleration":
+        count(3);
+        fx.accel = [n(1), n(2)];
+        break;
+      case "drag":
+        count(2);
+        fx.drag = n(1);
+        break;
+      case "wobble":
+        count(2);
+        fx.wobble = n(1);
+        break;
+      case "blink":
+        count(2);
+        fx.blink = n(1);
+        break;
+      default:
+        fail(`Unknown effect part '${part}'.`);
+    }
+  };
   // Event metadata is explicit and identical across languages; handlers are
   // ordinary named functions, so no user closures are executed.
   const handlers = new Map<string, Stmt[]>();
@@ -586,6 +666,19 @@ export function parseSource(
       }
       end();
       registrations.push({ kind, args });
+    } else if (token().text === "effects" && ts[i + 1].text === ".") {
+      i += 2;
+      const part = ident();
+      need("(");
+      const args: Expr[] = [];
+      if (!eat(")")) {
+        do {
+          args.push(expr());
+        } while (eat(","));
+        need(")");
+      }
+      end();
+      effectPart(part, args);
     } else if (token().text === "custom" && ts[i + 1].text === ".") {
       i += 2;
       need("cpp");
@@ -732,6 +825,11 @@ export function parseSource(
         fail(`Wrong number of arguments for '${e.name}'.`);
     }
   });
+  forEachExpr(p, (e) => {
+    if (e.k === "enum" && e.type === "effect" && !effects.some((fx) => fx.name === e.v))
+      fail(`Unknown effect '${e.v}'.`);
+  });
+  if (effects.length) p.effects = effects;
   p.vars = [...vars].map((name) => ({ name, ty: "num" }));
   return p;
 }
@@ -778,6 +876,7 @@ export function generateSource(
         return names.vars.get(e.name);
       case "enum":
         if (e.type === "melody") return `melody(${quote(e.v)})`;
+        if (e.type === "effect") return `effect(${quote(e.v)})`;
         if (e.type === "kind") return kindRef(e.v);
         if (["image", "tilemap", "tile"].includes(e.type))
           return assetRef(e.type, e.v);
@@ -901,6 +1000,24 @@ export function generateSource(
     }
   };
   if (!py) for (const v of program.vars) emit(`let ${names.vars.get(v.name)};`);
+  for (const fx of program.effects ?? []) {
+    const d = defaultEffect(fx.name);
+    const part = (name: string, ...args: (string | number)[]) =>
+      emit(`effects.${name}(${[quote(fx.name), ...args].join(", ")})${py ? "" : ";"}`);
+    const same = (a: number[], b: number[]) => a.every((v, k) => v === b[k]);
+    part("define");
+    if (fx.image) part("image", assetRef("image", fx.image), fx.color);
+    else if (fx.color !== d.color) part("pixel", fx.color);
+    if (!same(fx.life, d.life)) part("lifetime", ...fx.life);
+    if (!same([fx.dir, fx.spread], [d.dir, d.spread])) part("direction", fx.dir, fx.spread);
+    if (!same(fx.speed, d.speed)) part("speed", ...fx.speed);
+    if (!same(fx.area, d.area)) part("area", ...fx.area);
+    if (!same(fx.accel, d.accel)) part("acceleration", ...fx.accel);
+    if (fx.drag !== d.drag) part("drag", fx.drag);
+    if (fx.wobble !== d.wobble) part("wobble", fx.wobble);
+    if (fx.blink !== d.blink) part("blink", fx.blink);
+    emit("");
+  }
   for (const f of program.funcs)
     block(
       `${py ? "def" : "function"} ${names.funcs.get(f.name)}(${f.params.map((p) => names.vars.get(p.name)).join(", ")})`,

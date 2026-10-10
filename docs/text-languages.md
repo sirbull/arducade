@@ -73,6 +73,16 @@ snake_case in Python. Constant member names are the same in both languages.
 * Engine functions listed by autocomplete, line comments, and
   `custom.cpp("...")`. Custom C++ is skipped by the simulator.
 
+* Particle effects, at the top level only. `effects.define("smoke")` starts
+  a recipe with default values; each following line sets one part, the same
+  parts as the blocks: `effects.pixel(name, color)`,
+  `effects.image(name, images.puff, color)`, `effects.lifetime(name, min, max)`,
+  `effects.direction(name, degrees, spread)`, `effects.speed(name, min, max)`,
+  `effects.area(name, w, h)`, `effects.acceleration(name, ax, ay)`,
+  `effects.drag(name, percent)`, `effects.wobble(name, amount)` and
+  `effects.blink(name, percent)`. Arguments are number literals. Use an
+  effect with `particles.burst(effect("smoke"), count, x, y, rotation)`.
+
 Classes, objects, imports, closures, arbitrary host functions, lists and
 floating-point numbers are unsupported. Python uses spaces for indentation
 and one statement per line. Function calls and expressions stay on one line.

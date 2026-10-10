@@ -5,7 +5,7 @@
 export type Ty = 'num' | 'bool' | 'str' | 'sprite' | 'void';
 
 /** Values chosen from a fixed list, for example a sprite kind or a button. */
-export type EnumType = 'kind' | 'button' | 'flag' | 'prop' | 'dir' | 'sfx' | 'color' | 'image' | 'tile' | 'tilemap' | 'melody';
+export type EnumType = 'kind' | 'button' | 'flag' | 'prop' | 'dir' | 'sfx' | 'color' | 'image' | 'tile' | 'tilemap' | 'melody' | 'effect';
 
 export type BinOp = '+' | '-' | '*' | '/' | '%' | '==' | '!=' | '<' | '<=' | '>' | '>=' | '&&' | '||';
 
@@ -69,11 +69,46 @@ export interface Func extends Node {
   body: Stmt[];
 }
 
+/**
+ * A particle effect recipe. Only constants, so it is stored in flash on the
+ * device. Angles are in degrees like Scratch: 0 up, 90 right, 180 down.
+ */
+export interface EffectDef extends Node {
+  name: string;
+  /** Image asset id, or '' for one pixel. An image with several frames plays them over the lifetime. */
+  image: string;
+  /** 1 white, 0 black, 2 random per particle. */
+  color: number;
+  /** Lifetime in ms, min and max. */
+  life: [number, number];
+  dir: number;
+  /** Random angle, plus or minus degrees. */
+  spread: number;
+  /** Pixels per second, min and max. */
+  speed: [number, number];
+  /** Width and height of the rectangle the particles start in. */
+  area: [number, number];
+  /** Pixels per second per second. Positive y is down. */
+  accel: [number, number];
+  /** Percent of the speed lost per second. */
+  drag: number;
+  /** Random sideways change of speed each frame, in pixels per second. */
+  wobble: number;
+  /** Percent of the lifetime, at the end, where the particle blinks. */
+  blink: number;
+}
+
+export function defaultEffect(name: string): EffectDef {
+  return { name, image: '', color: 1, life: [500, 500], dir: 0, spread: 180, speed: [20, 40], area: [0, 0], accel: [0, 0], drag: 0, wobble: 0, blink: 0 };
+}
+
 export interface Program {
   /** Global variables. Types are filled in by the type checker. */
   vars: Param[];
   funcs: Func[];
   events: Event[];
+  /** Particle effects, by name. Optional so older code that makes programs keeps working. */
+  effects?: EffectDef[];
 }
 
 /** A problem found while making or checking the IR. */

@@ -3,7 +3,7 @@
 import { BUILTIN_KINDS, BUTTON_IDS, COLORS, FLAGS, HIT, PROPS, SFX } from '../engine/enums';
 import { parseMelody } from '../engine/melody';
 import { forEachExpr } from '../ir/check';
-import type { EnumType, Event, Func, Program } from '../ir/ir';
+import type { EffectDef, EnumType, Event, Func, Program } from '../ir/ir';
 import type { Project } from '../project/model';
 import { NameTable, sanitize } from './names';
 
@@ -13,6 +13,7 @@ export class Names {
   funcs = new NameTable('f_');
   images = new NameTable('img_');
   maps = new NameTable('map_');
+  effects = new NameTable('fx_');
   imageIds = new Map<string, string>();
   mapIds = new Map<string, string>();
 
@@ -87,6 +88,24 @@ export function hash16(s: string): number {
   let h = 0x811c;
   for (let i = 0; i < s.length; i++) h = ((h ^ s.charCodeAt(i)) * 0x193) & 0xffff;
   return h === 0 ? 1 : h;
+}
+
+/** The effects in the program with their identifiers. */
+export function effectNames(p: Program, names: Names): Map<string, { id: string; fx: EffectDef }> {
+  return new Map((p.effects ?? []).map((fx) => [fx.name, { id: names.effects.get(fx.name), fx }]));
+}
+
+/** Initial values of an effect, in the order of ab::Effect and the simulator. */
+export function effectFields(fx: EffectDef): number[] {
+  const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, Math.trunc(v) || 0));
+  // Speeds are kept in 1/16 pixels per second in 16 bits.
+  const sp = (v: number) => clamp(v, -2000, 2000);
+  return [
+    clamp(fx.color, 0, 2), clamp(fx.blink, 0, 100), clamp(fx.life[0], 0, 32767), clamp(fx.life[1], 0, 32767),
+    clamp(fx.dir, -32768, 32767), clamp(fx.spread, 0, 360), sp(fx.speed[0]), sp(fx.speed[1]),
+    clamp(fx.area[0], 0, 255), clamp(fx.area[1], 0, 255), sp(fx.accel[0]), sp(fx.accel[1]),
+    clamp(fx.drag, 0, 100), clamp(fx.wobble, 0, 100),
+  ];
 }
 
 /** Each melody text in the program with its constant name and notes. */

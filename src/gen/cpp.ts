@@ -6,7 +6,7 @@ import { BUILTIN_KINDS } from '../engine/enums';
 import { checkProgram, forEachExpr, typeOf, type TypeInfo } from '../ir/check';
 import type { Diagnostic, Expr, Program, Stmt, Ty } from '../ir/ir';
 import { encodeImage, encodeTilemap, type Project } from '../project/model';
-import { enumNumber, eventsOf, hash16, melodies, Names } from './common';
+import { effectFields, effectNames, enumNumber, eventsOf, hash16, melodies, Names } from './common';
 import { stringLiteral, wrap16 } from './names';
 import { Writer } from './writer';
 import { levelTransitionCode } from './levels';
@@ -36,10 +36,12 @@ class CppGen {
   locals?: Map<string, Ty>;
   private tmp = 0;
   private melodies: ReturnType<typeof melodies>;
+  private effects: ReturnType<typeof effectNames>;
 
   constructor(private program: Program, private project: Project) {
     this.names = new Names(project);
     this.melodies = melodies(program);
+    this.effects = effectNames(program, this.names);
   }
 
   run(): CppResult {
@@ -53,7 +55,7 @@ class CppGen {
     w.line('// Made with ArduCade. This file is generated from the blocks.');
     w.line();
     w.line('#include "ab_config.h"');
-    let hasParticles = false;
+    let hasParticles = this.effects.size > 0;
     forEachExpr(p, e => { if (e.k === 'api' && e.fn.startsWith('particles.')) hasParticles = true; });
     if (hasParticles) w.line('#define AB_HAS_PARTICLES 1');
     if (eventsOf(p, 'overlap').length) w.line('#define AB_HAS_OVERLAP 1');
@@ -114,6 +116,15 @@ class CppGen {
         w.line(`static const uint8_t ${this.names.tilemap(m.id)}[] PROGMEM = {`);
         for (const l of bytes(encodeTilemap(m))) w.line('  ' + l);
         w.line('};');
+      }
+      w.line();
+    }
+    if (this.effects.size) {
+      w.line('// Particle effects');
+      for (const { id, fx } of this.effects.values()) {
+        const img = fx.image ? this.names.image(fx.image) : '0';
+        if (!img) this.diagnostics.push({ level: 'error', key: 'diag.noImage', id: fx.id });
+        w.line(`static const ab::Effect ${id} PROGMEM = {${[img ?? '0', ...effectFields(fx)].join(', ')}};`);
       }
       w.line();
     }
@@ -445,6 +456,14 @@ class CppGen {
         const m = this.melodies.get(e.v)!;
         if (m.bad.length) this.diagnostics.push({ level: 'warning', key: 'diag.badNote', params: { notes: m.bad.join(' ') }, id: e.id });
         return m.name;
+      }
+      case 'effect': {
+        const fx = this.effects.get(e.v);
+        if (!fx) {
+          this.diagnostics.push({ level: 'error', key: 'diag.noEffect', params: { name: e.v }, id: e.id });
+          return '0';
+        }
+        return `&${fx.id}`;
       }
       case 'tilemap': {
         const n = this.names.tilemap(e.v);

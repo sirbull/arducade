@@ -2,7 +2,7 @@
 
 import * as Blockly from 'blockly/core';
 import { varType } from './var-types';
-import type { BinOp, Diagnostic, Event, Expr, Func, Program, Stmt } from '../ir/ir';
+import { defaultEffect, type BinOp, type Diagnostic, type EffectDef, type Event, type Expr, type Func, type Program, type Stmt } from '../ir/ir';
 
 type Block = Blockly.Block;
 
@@ -17,11 +17,17 @@ class Converter {
   constructor(private ws: Blockly.Workspace) {}
 
   run(): ToIrResult {
-    const program: Program = { vars: [], funcs: [], events: [] };
+    const program: Program = { vars: [], funcs: [], events: [], effects: [] };
     for (const v of this.ws.getVariableMap().getAllVariables()) program.vars.push({ name: v.getName(), ty: varType(this.ws, v.getId()) ?? 'num' });
     const tops = this.ws.getTopBlocks(true);
     for (const b of tops) {
       if (!b.isEnabled()) continue;
+      if (b.type === 'ab_effect') {
+        const fx = this.effect(b);
+        if (program.effects!.some((o) => o.name === fx.name)) this.diagnostics.push({ level: 'error', key: 'diag.duplicateEffect', params: { name: fx.name }, id: b.id });
+        else program.effects!.push(fx);
+        continue;
+      }
       const ev = this.event(b);
       if (ev) program.events.push(ev);
       else if (b.type === 'procedures_defnoreturn' || b.type === 'procedures_defreturn') program.funcs.push(this.func(b));
@@ -80,6 +86,51 @@ class Converter {
         return { k: 'lifeZero', body: this.body(b), id };
     }
     return null;
+  }
+
+  /** An effect recipe. Parts left out keep their defaults; a later part wins. */
+  private effect(b: Block): EffectDef {
+    const fx: EffectDef = { ...defaultEffect(this.field(b, 'NAME').trim()), id: b.id };
+    for (let p = b.getInputTargetBlock('DO'); p; p = p.getNextBlock()) {
+      if (!p.isEnabled()) continue;
+      const n = (name: string) => Number(p!.getFieldValue(name)) || 0;
+      switch (p.type) {
+        case 'ab_fx_pixel':
+          fx.image = '';
+          fx.color = n('PARTICLE_COLOR');
+          break;
+        case 'ab_fx_image':
+          fx.image = this.field(p, 'IMAGE');
+          fx.color = n('PARTICLE_COLOR');
+          break;
+        case 'ab_fx_life':
+          fx.life = [n('MIN'), n('MAX')];
+          break;
+        case 'ab_fx_direction':
+          fx.dir = n('DIR');
+          fx.spread = n('SPREAD');
+          break;
+        case 'ab_fx_speed':
+          fx.speed = [n('MIN'), n('MAX')];
+          break;
+        case 'ab_fx_area':
+          fx.area = [n('W'), n('H')];
+          break;
+        case 'ab_fx_accel':
+          fx.accel = [n('AX'), n('AY')];
+          break;
+        case 'ab_fx_drag':
+          fx.drag = n('DRAG');
+          break;
+        case 'ab_fx_wobble':
+          fx.wobble = n('WOBBLE');
+          break;
+        case 'ab_fx_blink':
+          fx.blink = n('BLINK');
+          break;
+      }
+    }
+    return fx;
   }
 
   private func(b: Block): Func {
@@ -183,6 +234,12 @@ class Converter {
       }
       case 'ab_particles_clear':
         return this.api('particles.clear', [], id);
+      case 'ab_fx_burst':
+        return this.api('particles.burst', [{ ...this.en('effect', f('EFFECT')), id }, this.input(b, 'COUNT', { k: 'num', v: 5 }), this.input(b, 'X'), this.input(b, 'Y'), this.input(b, 'ROT')], id);
+      case 'ab_fx_burst_from':
+        return this.api('particles.burstFrom', [{ ...this.en('effect', f('EFFECT')), id }, this.input(b, 'COUNT', { k: 'num', v: 5 }), this.spriteIn(b), this.input(b, 'ROT')], id);
+      case 'ab_fx_clear':
+        return this.api('particles.clearEffect', [{ ...this.en('effect', f('EFFECT')), id }], id);
 
       // Game
       case 'ab_splash':

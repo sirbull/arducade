@@ -6,6 +6,7 @@
 import { BUTTON_IDS, FRAME_MS, NONE, SFX, SFX_STEPS, STORAGE_SLOTS } from '../engine/enums';
 import type { GameHooks } from '../gen/js';
 import { FONT_5X7 } from '../shared/font';
+import { isin } from './intmath';
 
 const FLAG_STAY_IN_SCREEN = 1;
 const FLAG_BOUNCE_ON_WALL = 2;
@@ -25,6 +26,19 @@ const BTN_LEFT = 2;
 const BTN_RIGHT = 3;
 const SFX_WIN = 5;
 const SFX_LOSE = 6;
+
+/** A particle effect recipe, made by the generated code with E.effect. */
+export interface Effect {
+  img: Uint8Array | null;
+  color: number; blink: number; lifeMin: number; lifeMax: number; dir: number; spread: number;
+  speedMin: number; speedMax: number; areaW: number; areaH: number; ax: number; ay: number; drag: number; wobble: number;
+}
+
+/** Legacy particles have no effect and tween from vx to endVx in pixels per second. */
+interface Particle {
+  x: number; y: number; vx: number; vy: number; endVx: number; endVy: number;
+  duration: number; remaining: number; color: number; img: Uint8Array | null; fx: Effect | null;
+}
 
 /** Stops a running game while it waits inside splash or pause. */
 export class StopSignal extends Error {}
@@ -151,34 +165,98 @@ export class Engine {
     this.sprites = Array.from({ length: this.maxSprites }, newSprite);
   }
 
-  particles: { x: number; y: number; vx: number; vy: number; endVx: number; endVy: number; duration: number; color: number; img: Uint8Array | null; remaining: number }[] = [];
+  /** Fixed slots like the device, so particles update in the same order. */
+  private slots: Particle[] = [];
+
+  get particles(): Particle[] { return this.slots.filter(p => p.remaining > 0); }
 
   get maxParticles() { return this.maxSprites <= 12 ? 12 : 16; }
 
-  clearParticles() { this.particles = []; }
+  clearParticles() { this.slots = []; }
+
+  private freeSlot(): number {
+    for (let i = 0; i < this.maxParticles; i++) if (!this.slots[i] || this.slots[i].remaining <= 0) return i;
+    return -1;
+  }
 
   emitParticle(img: Uint8Array | null, x: number, y: number, vx: number, vy: number, ms: number, endVx = vx, endVy = vy, color = -1) {
-    if (ms <= 0 || this.particles.length >= this.maxParticles) return;
-    this.particles.push({ img, x: x * 256, y: y * 256, vx, vy, endVx, endVy, duration: ms, remaining: ms, color: color === 2 ? this.random(0, 1) : color });
+    if (ms <= 0) return;
+    const i = this.freeSlot();
+    if (i < 0) return;
+    this.slots[i] = { img, x: x * 256, y: y * 256, vx, vy, endVx, endVy, duration: ms, remaining: ms, color: color === 2 ? this.random(0, 1) : color, fx: null };
+  }
+
+  effect(img: Uint8Array | null, f: number[]): Effect {
+    const [color, blink, lifeMin, lifeMax, dir, spread, speedMin, speedMax, areaW, areaH, ax, ay, drag, wobble] = f;
+    return { img, color, blink, lifeMin, lifeMax, dir, spread, speedMin, speedMax, areaW, areaH, ax, ay, drag, wobble };
+  }
+
+  burst(fx: Effect | null, n: number, x: number, y: number, rot: number) {
+    if (!fx) return;
+    for (let k = 0; k < n; k++) {
+      const i = this.freeSlot();
+      if (i < 0) return;
+      // Same order of random numbers as the device.
+      const life = this.random(fx.lifeMin, fx.lifeMax);
+      const a = (fx.dir + rot + this.random(-fx.spread, fx.spread)) % 360;
+      const sp = this.random(fx.speedMin, fx.speedMax);
+      const ox = fx.areaW ? this.random(0, fx.areaW - 1) - (fx.areaW >> 1) : 0;
+      const oy = fx.areaH ? this.random(0, fx.areaH - 1) - (fx.areaH >> 1) : 0;
+      const color = fx.color === 2 ? this.random(0, 1) : fx.color;
+      if (life <= 0) continue;
+      this.slots[i] = {
+        img: fx.img, x: (x + ox) * 256, y: (y + oy) * 256,
+        vx: tdiv(sp * 16 * isin(a), 127), vy: -tdiv(sp * 16 * isin(a + 90), 127),
+        endVx: 0, endVy: 0, duration: life, remaining: life, color, fx,
+      };
+    }
+  }
+
+  burstFrom(fx: Effect | null, n: number, s: number, rot: number) {
+    if (this.exists(s)) this.burst(fx, n, this.getProp(s, 0), this.getProp(s, 1), rot);
+  }
+
+  clearEffect(fx: Effect | null) {
+    for (const p of this.slots) if (fx && p.fx === fx) p.remaining = 0;
   }
 
   private updateParticles() {
-    for (const p of this.particles) {
+    for (const p of this.slots) {
+      if (p.remaining <= 0) continue;
       const step = Math.min(p.remaining, FRAME_MS);
-      const midpoint = p.duration - p.remaining + tdiv(step, 2);
-      const vx = p.vx + tdiv((p.endVx - p.vx) * midpoint, p.duration);
-      const vy = p.vy + tdiv((p.endVy - p.vy) * midpoint, p.duration);
-      p.x += tdiv(vx * 256 * step, 1000);
-      p.y += tdiv(vy * 256 * step, 1000);
+      const fx = p.fx;
+      if (fx) {
+        // Speeds in 1/16 pixels per second.
+        const v = (x: number) => Math.max(-32000, Math.min(32000, x));
+        p.vx = v(p.vx + tdiv(fx.ax * 16 * step, 1000));
+        p.vy = v(p.vy + tdiv(fx.ay * 16 * step, 1000));
+        if (fx.drag) {
+          p.vx -= tdiv(p.vx * fx.drag * step, 100000);
+          p.vy -= tdiv(p.vy * fx.drag * step, 100000);
+        }
+        if (fx.wobble) p.vx = v(p.vx + this.random(-fx.wobble, fx.wobble) * 16);
+        p.x += tdiv(p.vx * 16 * step, 1000);
+        p.y += tdiv(p.vy * 16 * step, 1000);
+      } else {
+        const midpoint = p.duration - p.remaining + tdiv(step, 2);
+        const vx = p.vx + tdiv((p.endVx - p.vx) * midpoint, p.duration);
+        const vy = p.vy + tdiv((p.endVy - p.vy) * midpoint, p.duration);
+        p.x += tdiv(vx * 256 * step, 1000);
+        p.y += tdiv(vy * 256 * step, 1000);
+      }
       p.remaining -= step;
     }
-    this.particles = this.particles.filter(p => p.remaining > 0);
   }
 
   private drawParticles() {
-    for (const p of this.particles) {
+    for (const p of this.slots) {
+      if (p.remaining <= 0) continue;
+      const fx = p.fx;
+      if (fx?.blink && p.remaining * 100 < p.duration * fx.blink && this.frameCount & 2) continue;
       const x = Math.floor(p.x / 256) - this.camX, y = Math.floor(p.y / 256) - this.camY;
-      if (p.img) this.drawImage(x - tdiv(p.img[0], 2), y - tdiv(p.img[1], 2), p.img, 0, p.color);
+      const frames = p.img ? p.img[2] : 0;
+      const frame = fx && frames > 1 ? Math.min(frames - 1, tdiv((p.duration - p.remaining) * frames, p.duration)) : 0;
+      if (p.img) this.drawImage(x - tdiv(p.img[0], 2), y - tdiv(p.img[1], 2), p.img, frame, p.color);
       else this.drawPixel(x, y, p.color === 0 ? 0 : 1);
     }
   }

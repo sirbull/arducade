@@ -40,6 +40,10 @@ export const API = api({
   'particles.pixelColor': { ret: 'void', args: ['num', 'num', 'num', 'num', 'num', 'num', 'num', 'num'], cpp: 'ab::emitParticleTween(0, $0, $1, $2, $3, $4, $5, $6, $7)', js: 'E.emitParticle(null, $0, $1, $2, $3, $4, $5, $6, $7)', name: 'particles.pixelColor' },
   'particles.imageColor': { ret: 'void', args: ['image', 'num', 'num', 'num', 'num', 'num', 'num', 'num', 'num'], cpp: 'ab::emitParticleTween($0, $1, $2, $3, $4, $5, $6, $7, $8)', js: 'E.emitParticle($0, $1, $2, $3, $4, $5, $6, $7, $8)', name: 'particles.imageColor' },
   'particles.clear': { ret: 'void', args: [], cpp: 'ab::clearParticles()', js: 'E.clearParticles()', name: 'particles.clear' },
+  // Particles from an effect recipe: effect, count, x, y, rotation in degrees.
+  'particles.burst': { ret: 'void', args: ['effect', 'num', 'num', 'num', 'num'], cpp: 'ab::burst($0, $1, $2, $3, $4)', js: 'E.burst($0, $1, $2, $3, $4)', name: 'particles.burst' },
+  'particles.burstFrom': { ret: 'void', args: ['effect', 'num', 'sprite', 'num'], cpp: 'ab::burstFrom($0, $1, $2, $3)', js: 'E.burstFrom($0, $1, $2, $3)', name: 'particles.burstFrom' },
+  'particles.clearEffect': { ret: 'void', args: ['effect'], cpp: 'ab::clearEffect($0)', js: 'E.clearEffect($0)', name: 'particles.clearEffect' },
 
   // Sprites
   'sprites.create': { ret: 'sprite', args: ['image', 'kind'], cpp: 'ab::create($0, $1)', js: 'E.create($0, $1)', name: 'sprites.create' },

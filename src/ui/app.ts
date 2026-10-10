@@ -180,6 +180,16 @@ export class App {
     const flyout = this.ws.getFlyout() as Blockly.Flyout | null;
     if (flyout) {
       flyout.getFlyoutScale = () => 0.8;
+      // Flyout scrolling uses the SVG bounds, so a trailing separator alone
+      // does not reserve visible space below the last block. Extend the actual
+      // scroll range, in screen pixels, for wheel, scrollbar and touch alike.
+      const metrics = flyout.getWorkspace().getMetricsManager();
+      const getScrollMetrics = metrics.getScrollMetrics.bind(metrics);
+      metrics.getScrollMetrics = (workspaceCoordinates, view, content) => {
+        const region = getScrollMetrics(workspaceCoordinates, view, content);
+        const scale = workspaceCoordinates ? flyout.getWorkspace().scale : 1;
+        return { ...region, height: region.height + 96 / scale };
+      };
       // Every palette starts below its close button.
       const show = flyout.show.bind(flyout);
       flyout.show = (def) => {

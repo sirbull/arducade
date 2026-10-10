@@ -5,6 +5,7 @@
 import * as Blockly from 'blockly/core';
 import { t } from '../i18n/i18n';
 import { buildToolbox } from '../blocks/toolbox';
+import { DEFS } from '../blocks/defs';
 import { openDialog } from './dialogs';
 import { clear, h } from './dom';
 import { getAssetProject, setAssetProject } from '../blocks/assets';
@@ -84,6 +85,13 @@ function sections(secretTiny: boolean): Section[] {
       .map(({ kind, ...state }) => state)
       .filter((state) => Blockly.Blocks[subject(state)] && !seen.has(subject(state)) && seen.add(subject(state)));
     list.push({ id: key, title: Blockly.Msg[`AB_CAT_${key}`] ?? key, blocks });
+  }
+  // Older projects can contain blocks that are no longer in the toolbox.
+  // Keep their explanations reachable through Help and the block menu.
+  for (const def of DEFS) {
+    if (seen.has(def.type)) continue;
+    const section = list.find(sec => sec.id === def.style.replace(/^ab_/, '').toUpperCase());
+    section?.blocks?.push(b(def.type));
   }
   return list;
 }

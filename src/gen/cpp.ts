@@ -5,8 +5,8 @@ import { API, getApi } from '../engine/api';
 import { BUILTIN_KINDS } from '../engine/enums';
 import { checkProgram, forEachExpr, typeOf, type TypeInfo } from '../ir/check';
 import type { Diagnostic, Expr, Program, Stmt, Ty } from '../ir/ir';
-import { encodeImage, encodeTilemap, type Project } from '../project/model';
-import { effectFields, effectNames, enumNumber, eventsOf, hash16, melodies, Names } from './common';
+import { encodeBackground, encodeImage, encodeTilemap, type Project } from '../project/model';
+import { buttonMatch, effectFields, effectNames, enumNumber, eventsOf, hash16, melodies, Names } from './common';
 import { stringLiteral, wrap16 } from './names';
 import { Writer } from './writer';
 import { levelTransitionCode } from './levels';
@@ -58,6 +58,14 @@ class CppGen {
     let hasParticles = this.effects.size > 0;
     forEachExpr(p, e => { if (e.k === 'api' && e.fn.startsWith('particles.')) hasParticles = true; });
     if (hasParticles) w.line('#define AB_HAS_PARTICLES 1');
+    let hasBackground = false, hasShake = false;
+    forEachExpr(p, e => {
+      if (e.k !== 'api') return;
+      if (e.fn.startsWith('background.')) hasBackground = true;
+      if (e.fn === 'scene.shake') hasShake = true;
+    });
+    if (hasBackground) w.line('#define AB_HAS_BACKGROUND 1');
+    if (hasShake) w.line('#define AB_HAS_SHAKE 1');
     if (eventsOf(p, 'overlap').length) w.line('#define AB_HAS_OVERLAP 1');
     if (eventsOf(p, 'tile').length) w.line('#define AB_HAS_TILE_OVERLAP 1');
     const cells = Math.max(8, ...this.project.tilemaps.map((m) => m.width * m.height));
@@ -92,6 +100,8 @@ class CppGen {
       ['AB_NO_OUTLINE', /ab::setOutline/],
       ['AB_NO_HUD', /ab::(setScore|changeScore|setLife|changeLife)\(/],
     ].filter(([, used]) => !(used as RegExp).test(body)).map(([name]) => `#define ${name} 1`);
+    if (/ab::timer/.test(body)) unused.push('#define AB_HAS_TIMERS 1');
+    if (/ab::setScorePosition\(/.test(body)) unused.push('#define AB_SCORE_POS 1');
     this.w.lines.splice(at, 0, ...unused);
     for (const [id, [a, b]] of this.w.ranges) if (a >= at) this.w.ranges.set(id, [a + unused.length, b + unused.length]);
   }
@@ -111,6 +121,15 @@ class CppGen {
       for (const img of pr.images) {
         w.line(`static const uint8_t ${this.names.image(img.id)}[] PROGMEM = {`);
         for (const l of bytes(encodeImage(img.width, img.height, img.frames))) w.line('  ' + l);
+        w.line('};');
+      }
+      w.line();
+    }
+    if (pr.backgrounds.length) {
+      w.line('// Backgrounds');
+      for (const bg of pr.backgrounds) {
+        w.line(`static const uint8_t ${this.names.image(bg.id)}[] PROGMEM = {`);
+        for (const l of bytes(encodeBackground(bg))) w.line('  ' + l);
         w.line('};');
       }
       w.line();
@@ -245,7 +264,7 @@ class CppGen {
     buttons.forEach((e, i) => handler(`on_button_${i}`, e.id, e.body));
     w.line('void ab_on_button(uint8_t button, uint8_t pressed) {');
     buttons.forEach((e, i) => {
-      w.line(`  if (button == ${enumNumber('button', e.button, this.names)} && pressed == ${e.pressed ? 1 : 0}) on_button_${i}();`);
+      w.line(`  if (pressed == ${e.pressed ? 1 : 0} && ${buttonMatch(e.button, this.names, 'ab::isPressed')}) on_button_${i}();`);
     });
     w.line('}');
     w.line();

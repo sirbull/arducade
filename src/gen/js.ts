@@ -5,8 +5,8 @@
 import { getApi } from '../engine/api';
 import { checkProgram, typeOf, type TypeInfo } from '../ir/check';
 import type { Diagnostic, Expr, Program, Stmt, Ty } from '../ir/ir';
-import { encodeImage, encodeTilemap, type Project } from '../project/model';
-import { effectFields, effectNames, enumNumber, eventsOf, hash16, melodies, Names } from './common';
+import { encodeBackground, encodeImage, encodeTilemap, type Project } from '../project/model';
+import { buttonMatch, effectFields, effectNames, enumNumber, eventsOf, hash16, melodies, Names } from './common';
 import { stringLiteral, wrap16 } from './names';
 import { Writer } from './writer';
 import { levelTransitionCode } from './levels';
@@ -55,6 +55,7 @@ class JsGen {
     const pr = this.project;
 
     for (const img of pr.images) w.line(`const ${this.names.image(img.id)} = E.image([${encodeImage(img.width, img.height, img.frames).join(',')}]);`);
+    for (const bg of pr.backgrounds) w.line(`const ${this.names.image(bg.id)} = E.image([${encodeBackground(bg).join(',')}]);`);
     const tiles = pr.tiles.map((t) => `E.image([${encodeImage(8, 8, [t.pixels]).join(',')}])`);
     let solid = 0;
     pr.tiles.forEach((t, i) => {
@@ -131,7 +132,7 @@ class JsGen {
     w.line(`async draw() { ${draw.join(' ')} },`);
     w.line('async button(button, pressed) {');
     buttons.forEach((e, i) =>
-      w.line(`  if (button === ${enumNumber('button', e.button, this.names)} && pressed === ${e.pressed ? 1 : 0}) await on_button_${i}();`),
+      w.line(`  if (pressed === ${e.pressed ? 1 : 0} && ${buttonMatch(e.button, this.names, 'E.isPressed')}) await on_button_${i}();`),
     );
     w.line('},');
     w.line('async overlap(a, b) {');

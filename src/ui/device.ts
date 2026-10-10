@@ -66,6 +66,7 @@ export class DeviceTools {
     const p = this.app.project;
     let assets = 0;
     for (const img of p.images) assets += 4 + img.frames.length * Math.ceil(img.height / 8) * img.width * 2;
+    for (const bg of p.backgrounds) assets += 4 + Math.ceil(bg.height / 8) * bg.width;
     assets += p.tiles.length * 12;
     for (const m of p.tilemaps) assets += 2 + m.width * m.height;
     const statements = build.cpp.code.split('\n').filter((l) => l.trim().endsWith(';')).length;

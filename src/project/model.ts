@@ -91,6 +91,8 @@ export interface Project {
   /** Text mode keeps the original block workspace as a recoverable copy. */
   source?: { language: 'javascript' | 'python'; code: string };
   images: ImageAsset[];
+  /** Full screen pictures drawn behind everything. One frame each. */
+  backgrounds: ImageAsset[];
   tiles: TileAsset[];
   tilemaps: TilemapAsset[];
   /** Optional map loaded after the on-start blocks. */
@@ -125,6 +127,7 @@ export function newProject(name: string, profile?: Profile): Project {
     pixelColor: 'white',
     blocks: { blocks: { languageVersion: 0, blocks: [{ type: 'ab_on_start', x: 20, y: 20 }] } },
     images: [],
+    backgrounds: [],
     tiles: [],
     tilemaps: [],
     kinds: [],
@@ -154,6 +157,7 @@ function upgradeProject(p: Partial<Project>): Project {
     version: PROJECT_VERSION,
     profile: p.profile ? parseProfile(JSON.stringify(p.profile)) : base.profile,
     images: Array.isArray(p.images) ? p.images : [],
+    backgrounds: Array.isArray(p.backgrounds) ? p.backgrounds : [],
     tiles: Array.isArray(p.tiles) ? p.tiles : [],
     tilemaps: Array.isArray(p.tilemaps) ? p.tilemaps : [],
     kinds: Array.isArray(p.kinds) ? p.kinds : [],
@@ -203,6 +207,11 @@ export function encodeImage(width: number, height: number, frames: PixelRows[]):
     if (hasMask) out.push(...mask);
   }
   return out;
+}
+
+/** A background in the engine format. Transparent and black are the same, so no mask is needed. */
+export function encodeBackground(img: ImageAsset): number[] {
+  return encodeImage(img.width, img.height, [img.frames[0].map((row) => row.replace(/0/g, '.'))]);
 }
 
 /** Tilemap in the engine format: width, height, cells. */

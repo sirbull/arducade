@@ -12,6 +12,7 @@ export class Names {
   vars = new NameTable('v_');
   funcs = new NameTable('f_');
   images = new NameTable('img_');
+  backgrounds = new NameTable('bg_');
   maps = new NameTable('map_');
   effects = new NameTable('fx_');
   imageIds = new Map<string, string>();
@@ -19,6 +20,8 @@ export class Names {
 
   constructor(public project: Project) {
     for (const img of project.images) this.imageIds.set(img.id, this.images.get(img.name));
+    // Backgrounds are images too, so blocks can pass them where an image goes.
+    for (const bg of project.backgrounds) this.imageIds.set(bg.id, this.backgrounds.get(bg.name));
     for (const m of project.tilemaps) this.mapIds.set(m.id, this.maps.get(m.name));
   }
 
@@ -68,6 +71,16 @@ export function enumNumber(type: EnumType, v: string, names: Names): number {
     default:
       return 0;
   }
+}
+
+/** Condition for an "on button" handler. `isPressed` is ab::isPressed or E.isPressed. */
+export function buttonMatch(button: string, names: Names, isPressed: string): string {
+  const a = BUTTON_IDS.indexOf('a'), b = BUTTON_IDS.indexOf('b');
+  if (button === 'any') return 'true';
+  if (button === 'direction') return `button < ${a}`;
+  // ponytail: A and B released in the same frame only fires on the first of them.
+  if (button === 'ab') return `((button == ${a} && ${isPressed}(${b})) || (button == ${b} && ${isPressed}(${a})))`;
+  return `button == ${enumNumber('button', button, names)}`;
 }
 
 export function eventsOf<K extends Event['k']>(p: Program, k: K): Extract<Event, { k: K }>[] {

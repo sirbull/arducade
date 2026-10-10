@@ -21,7 +21,7 @@ import { readCartridge } from '../project/cartridge';
 import { saveCartridge } from './save-dialog';
 import { Runner, type PixelColor } from '../sim/runner';
 import { BUTTON_IDS } from '../engine/enums';
-import { ImagesPane, MapPane, TilesPane } from './assets-panes';
+import { BackgroundsPane, ImagesPane, MapPane, TilesPane } from './assets-panes';
 import { buildWorkspace, type BuildResult } from './build';
 import type { TextEditor } from './text-editor';
 import { generateSource, parseSource, SourceError, type TextLanguage } from '../text/languages';
@@ -64,6 +64,7 @@ export class App {
   private textEditors: Partial<Record<TextLanguage, TextEditor>> = {};
   private images!: ImagesPane;
   private tiles!: TilesPane;
+  private backgrounds!: BackgroundsPane;
   private map!: MapPane;
   private device!: DeviceTools;
   private guide!: GuidePanel;
@@ -112,6 +113,7 @@ export class App {
     const host = { project: () => this.project, changed: (structural: boolean) => this.assetsChanged(structural) };
     this.images = new ImagesPane($('#pane-images'), host);
     this.tiles = new TilesPane($('#pane-tiles'), host);
+    this.backgrounds = new BackgroundsPane($('#pane-backgrounds'), host);
     this.map = new MapPane($('#pane-map'), host);
     this.device = new DeviceTools(this);
     this.guide = new GuidePanel($('#guide-panel'), {
@@ -503,6 +505,7 @@ export class App {
   private renderActivePane() {
     if (this.activeTab === 'images') this.images.render();
     if (this.activeTab === 'tiles') this.tiles.render();
+    if (this.activeTab === 'backgrounds') this.backgrounds.render();
     if (this.activeTab === 'map') this.map.render();
   }
 

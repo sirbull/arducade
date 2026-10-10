@@ -94,10 +94,30 @@ export const API = api({
   },
   'scene.cameraX': { ret: 'num', args: [], cpp: 'ab::camX', js: 'E.camX', name: 'scene.cameraLeft' },
   'scene.cameraY': { ret: 'num', args: [], cpp: 'ab::camY', js: 'E.camY', name: 'scene.cameraTop' },
+  // Strength in pixels, time in ms.
+  'scene.shake': { ret: 'void', args: ['num', 'num'], cpp: 'ab::shake($0, $1)', js: 'E.shake($0, $1)', name: 'scene.cameraShake' },
+
+  // Background: one picture behind everything, repeated to fill the screen.
+  'background.set': { ret: 'void', args: ['image'], cpp: 'ab::setBackground($0)', js: 'E.setBackground($0)', name: 'scene.setBackgroundImage' },
+  'background.clear': { ret: 'void', args: [], cpp: 'ab::setBackground(0)', js: 'E.setBackground(null)', name: 'scene.clearBackground' },
+  'background.setPosition': { ret: 'void', args: ['num', 'num'], cpp: 'ab::setBackgroundPosition($0, $1)', js: 'E.setBackgroundPosition($0, $1)', name: 'scene.setBackgroundPosition' },
+  'background.changePosition': { ret: 'void', args: ['num', 'num'], cpp: 'ab::setBackgroundPosition(ab::bgX + $0, ab::bgY + $1)', js: 'E.setBackgroundPosition(E.bgX + $0, E.bgY + $1)', name: 'scene.changeBackgroundPosition' },
+  'background.x': { ret: 'num', args: [], cpp: 'ab::bgX', js: 'E.bgX', name: 'scene.backgroundX' },
+  'background.y': { ret: 'num', args: [], cpp: 'ab::bgY', js: 'E.bgY', name: 'scene.backgroundY' },
 
   // Info
+  'info.timerSetMillis': { ret: 'void', args: ['num', 'num'], cpp: 'ab::timerSetMillis($0, $1)', js: 'E.timerSetMillis($0, $1)', name: 'info.timerSetMillis' },
+  'info.timerChangeMillis': { ret: 'void', args: ['num', 'num'], cpp: 'ab::timerChangeMillis($0, $1)', js: 'E.timerChangeMillis($0, $1)', name: 'info.timerChangeMillis' },
+  'info.timerMillis': { ret: 'num', args: ['num'], cpp: 'ab::timerMillis($0)', js: 'E.timerMillis($0)', name: 'info.timerMillis' },
+  'info.timerSet': { ret: 'void', args: ['num', 'num'], cpp: 'ab::timerSet($0, $1)', js: 'E.timerSet($0, $1)', name: 'info.timerSet' },
+  'info.timerChange': { ret: 'void', args: ['num', 'num'], cpp: 'ab::timerChange($0, $1)', js: 'E.timerChange($0, $1)', name: 'info.timerChange' },
+  'info.timerRun': { ret: 'void', args: ['num', 'num'], cpp: 'ab::timerRun($0, $1)', js: 'E.timerRun($0, $1)', name: 'info.timerRun' },
+  'info.timerFormat': { ret: 'void', args: ['num', 'num'], cpp: 'ab::timerFormat($0, $1)', js: 'E.timerFormat($0, $1)', name: 'info.timerFormat' },
+  'info.timerPosition': { ret: 'void', args: ['num', 'num', 'num'], cpp: 'ab::timerPosition($0, $1, $2)', js: 'E.timerPosition($0, $1, $2)', name: 'info.timerPosition' },
+  'info.timerValue': { ret: 'num', args: ['num'], cpp: 'ab::timerValue($0)', js: 'E.timerValue($0)', name: 'info.timerValue' },
   'info.score': { ret: 'num', args: [], cpp: 'ab::score', js: 'E.score', name: 'info.score' },
   'info.setScore': { ret: 'void', args: ['num'], cpp: 'ab::setScore($0)', js: 'E.setScore($0)', name: 'info.setScore' },
+  'info.setScorePosition': { ret: 'void', args: ['num', 'num'], cpp: 'ab::setScorePosition($0, $1)', js: 'E.setScorePosition($0, $1)', name: 'info.setScorePosition' },
   'info.changeScore': { ret: 'void', args: ['num'], cpp: 'ab::changeScore($0)', js: 'E.changeScore($0)', name: 'info.changeScoreBy' },
   'info.life': { ret: 'num', args: [], cpp: 'ab::life', js: 'E.life', name: 'info.life' },
   'info.setLife': { ret: 'void', args: ['num'], cpp: 'ab::setLife($0)', js: 'await E.setLife($0)', async: true, name: 'info.setLife' },

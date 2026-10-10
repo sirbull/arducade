@@ -1,4 +1,4 @@
-// The Images, Tiles and Tile map tabs.
+// The Images, Backgrounds, Tiles and Tile map tabs.
 
 import { pixelsToDataUrl } from '../blocks/assets';
 import { BUILTIN_KINDS } from '../engine/enums';
@@ -265,6 +265,109 @@ export class ImagesPane {
     if (!(await confirmDialog(t('images.deleteTitle'), t('images.deleteText', { name: img.name }), t('ui.delete')))) return;
     const p = this.host.project();
     p.images = p.images.filter((i) => i !== img);
+    this.host.changed(true);
+    this.render();
+  }
+}
+
+// Backgrounds ------------------------------------------------------------
+
+export class BackgroundsPane {
+  private selected = '';
+
+  constructor(private root: HTMLElement, private host: AssetHost) {}
+
+  render() {
+    const p = this.host.project();
+    if (!p.backgrounds.find((b) => b.id === this.selected)) this.selected = p.backgrounds[0]?.id ?? '';
+    const bg = p.backgrounds.find((b) => b.id === this.selected);
+    clear(this.root);
+    const list = h(
+      'div',
+      { class: 'asset-list' },
+      h('div', { class: 'asset-list-head' }, h('h3', {}, t('backgrounds.title')), h('button', { class: 'primary small', onclick: () => this.add() }, t('backgrounds.add'))),
+      h('p', { class: 'muted small' }, t('backgrounds.help')),
+      ...p.backgrounds.map((b) =>
+        h(
+          'button',
+          { class: `asset-item ${b.id === this.selected ? 'active' : ''}`, onclick: () => ((this.selected = b.id), this.render()) },
+          h('img', { src: pixelsToDataUrl(b.frames[0], b.width, b.height, 32 / Math.max(b.width, b.height)), alt: '' }),
+          h('span', {}, b.name),
+          h('small', {}, `${b.width}x${b.height}`),
+        ),
+      ),
+    );
+    const editor = h('div', { class: 'asset-editor' });
+    if (bg) editor.append(...this.editorFor(bg));
+    else editor.append(h('p', { class: 'muted' }, t('backgrounds.empty')));
+    this.root.append(list, editor);
+  }
+
+  private editorFor(bg: ImageAsset): HTMLElement[] {
+    const p = this.host.project();
+    const nameInput = h('input', { type: 'text', value: bg.name, 'aria-label': t('images.name') });
+    nameInput.addEventListener('change', () => {
+      const name = nameInput.value.trim();
+      if (!validName(name) || p.backgrounds.some((o) => o !== bg && o.name === name)) {
+        toast(t('images.badName'), 'error');
+        nameInput.value = bg.name;
+        return;
+      }
+      bg.name = name;
+      this.host.changed(true);
+      this.render();
+    });
+    // The engine image format keeps width and height in one byte each.
+    const size = (label: string, value: number, set: (v: number) => void) => {
+      const input = h('input', { type: 'number', min: 8, max: 255, value, 'aria-label': label });
+      input.addEventListener('change', () => {
+        set(Math.max(8, Math.min(255, Math.round(Number(input.value)) || 8)));
+        bg.frames = [resizeRows(bg.frames[0], bg.width, bg.height)];
+        this.host.changed(true);
+        this.render();
+      });
+      return h('label', { class: 'inline' }, label, input);
+    };
+    const editor = new PixelEditor(bg.width, bg.height, bg.frames[0], (rows) => {
+      bg.frames[0] = rows;
+      this.host.changed(true);
+    });
+    return [
+      h(
+        'div',
+        { class: 'asset-props' },
+        h('label', { class: 'inline' }, t('images.name'), nameInput),
+        size(t('images.width'), bg.width, (v) => (bg.width = v)),
+        size(t('images.height'), bg.height, (v) => (bg.height = v)),
+        h('button', { onclick: () => this.duplicate(bg) }, t('ui.duplicate')),
+        h('button', { class: 'danger', onclick: () => this.remove(bg) }, t('ui.delete')),
+      ),
+      editor.el,
+    ];
+  }
+
+  private add() {
+    const p = this.host.project();
+    const bg: ImageAsset = { id: newId('b'), name: uniqueName('background', p.backgrounds.map((b) => b.name)), width: 128, height: 64, frames: [emptyPixels(128, 64)] };
+    p.backgrounds.push(bg);
+    this.selected = bg.id;
+    this.host.changed(true);
+    this.render();
+  }
+
+  private duplicate(bg: ImageAsset) {
+    const p = this.host.project();
+    const copy: ImageAsset = { ...structuredClone(bg), id: newId('b'), name: uniqueName(bg.name, p.backgrounds.map((b) => b.name)) };
+    p.backgrounds.push(copy);
+    this.selected = copy.id;
+    this.host.changed(true);
+    this.render();
+  }
+
+  private async remove(bg: ImageAsset) {
+    if (!(await confirmDialog(t('backgrounds.deleteTitle'), t('backgrounds.deleteText', { name: bg.name }), t('ui.delete')))) return;
+    const p = this.host.project();
+    p.backgrounds = p.backgrounds.filter((b) => b !== bg);
     this.host.changed(true);
     this.render();
   }

@@ -8,6 +8,9 @@ export type Tool = 'pencil' | 'erase' | 'fill' | 'line' | 'rectangle' | 'select'
 type EditorState = { rows: PixelRows; selection: Rect | null; tool: Tool };
 type Rect = { x: number; y: number; w: number; h: number };
 let pixelClipboard: PixelRows | null = null;
+// "Erase matching color" stays on across editors and visits until the user turns it off.
+const ERASE_MATCHING_KEY = 'ardublocks.pixelEraseMatching';
+let eraseMatching = (() => { try { return localStorage.getItem(ERASE_MATCHING_KEY) === '1'; } catch { return false; } })();
 const CLIPBOARD_PREFIX = 'ARDUBLOCKS_PIXELS\n';
 const icons: Record<string, string> = {
   copy: 'M9 9h12v12H9z M15 9V3H3v12h6',
@@ -37,7 +40,6 @@ export class PixelEditor {
   private grid: Color[][] = [];
   private tool: Tool = 'pencil';
   private color: Color = '1';
-  private toggle = false;
   private drawing = false;
   private start = [0, 0];
   private last = [0, 0];
@@ -78,7 +80,10 @@ export class PixelEditor {
       } }); colorButtons.push(b); colors.append(b);
     }
     colorButtons[0].classList.add('active'); colorButtons[0].setAttribute('aria-pressed', 'true');
-    const toggle = h('input', { type: 'checkbox', onchange: () => { this.toggle = toggle.checked; } });
+    const toggle = h('input', { type: 'checkbox', checked: eraseMatching, onchange: () => {
+      eraseMatching = toggle.checked;
+      try { localStorage.setItem(ERASE_MATCHING_KEY, eraseMatching ? '1' : '0'); } catch { /* Kept only for this visit. */ }
+    } });
     colors.append(h('label', { class: 'inline small' }, toggle, t('pixel.toggle')));
     const grid = h('input', { type: 'checkbox', checked: true, onchange: () => { this.showGrid = grid.checked; this.draw(); } });
     const zoomLabel = h('span', {}, '100%');
@@ -172,7 +177,7 @@ export class PixelEditor {
   private setTool(tool: Tool) { if (tool !== 'select' && this.sel) { this.drop(); this.sel = null; this.draw(); } this.tool = tool; for (const [k, b] of this.toolButtons) { b.classList.toggle('active', k === tool); b.setAttribute('aria-pressed', String(k === tool)); } }
   private put(x: number, y: number) {
     const key = `${x},${y}`; if (this.visited.has(key)) return; this.visited.add(key);
-    this.grid[y][x] = this.toggle && this.strokeColor !== '.' && this.grid[y][x] === this.strokeColor ? '.' : this.strokeColor;
+    this.grid[y][x] = eraseMatching && this.strokeColor !== '.' && this.grid[y][x] === this.strokeColor ? '.' : this.strokeColor;
   }
   private line(a: number[], b: number[]) {
     let [x, y] = a; const [tx, ty] = b; const dx = Math.abs(tx - x), dy = -Math.abs(ty - y), sx = x < tx ? 1 : -1, sy = y < ty ? 1 : -1; let err = dx + dy;
@@ -252,7 +257,7 @@ export class PixelEditor {
     this.floating = null; this.draw(); this.commit(before);
   }
   private fill(x: number, y: number) {
-    const target = this.grid[y][x]; const color = this.toggle && target === this.strokeColor ? '.' : this.strokeColor; if (target === color) return;
+    const target = this.grid[y][x]; const color = eraseMatching && target === this.strokeColor ? '.' : this.strokeColor; if (target === color) return;
     const stack = [[x, y]]; while (stack.length) { const [cx, cy] = stack.pop()!; if (cx < 0 || cy < 0 || cx >= this.width || cy >= this.height || this.grid[cy][cx] !== target) continue; this.grid[cy][cx] = color; stack.push([cx + 1, cy], [cx - 1, cy], [cx, cy + 1], [cx, cy - 1]); } this.draw();
   }
   private isTextTarget(target: EventTarget | null) {

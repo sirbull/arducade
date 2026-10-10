@@ -227,7 +227,7 @@ export function parseSource(
           const id = (args[1] as Extract<Expr, { k: "str" }>).v;
           const assets =
             type === "image"
-              ? project.images
+              ? [...project.images, ...project.backgrounds]
               : type === "tilemap"
                 ? project.tilemaps
                 : type === "tile"
@@ -283,7 +283,7 @@ export function parseSource(
         if (!type) fail(`Unknown constant '${name}'.`);
         const assets =
           type === "image"
-            ? project.images
+            ? [...project.images, ...project.backgrounds]
             : type === "tilemap"
               ? project.tilemaps
               : type === "tile"
@@ -853,7 +853,7 @@ export function generateSource(
   const assetRef = (type: EnumType, id: string) => {
     const assets =
       type === "image"
-        ? project.images
+        ? [...project.images, ...project.backgrounds]
         : type === "tilemap"
           ? project.tilemaps
           : project.tiles;

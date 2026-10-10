@@ -22,6 +22,25 @@ const src: FileSource = {
 const headers = Object.fromEntries(['ardublocks.h', 'ab_display.h', 'ab_font.h', 'ab_tiny.h'].map((f) => [f, readFileSync(join(__dirname, '../core/ardublocks', f), 'utf8')]));
 
 describe.skipIf(!haveTools)('WebAssembly compiler', () => {
+  it('compiles timer displays and counting for a 2 KB RAM device', async () => {
+    const project = newProject('Timers');
+    const num = (v: number) => ({ k: 'num' as const, v });
+    const program = { ...emptyProgram(), events: [{ k: 'start' as const, body: [
+      { k: 'expr' as const, e: { k: 'api' as const, fn: 'info.timerSet', args: [0, 94].map(num) } },
+      { k: 'expr' as const, e: { k: 'api' as const, fn: 'info.timerRun', args: [0, -1].map(num) } },
+      { k: 'expr' as const, e: { k: 'api' as const, fn: 'info.timerChange', args: [1, 120].map(num) } },
+      { k: 'expr' as const, e: { k: 'api' as const, fn: 'info.timerSetMillis', args: [0, 125].map(num) } },
+      { k: 'expr' as const, e: { k: 'api' as const, fn: 'info.timerChangeMillis', args: [1, -100].map(num) } },
+      { k: 'expr' as const, e: { k: 'api' as const, fn: 'info.timerSetMillis', args: [num(1), { k: 'api' as const, fn: 'info.timerMillis', args: [num(0)] }] } },
+      { k: 'expr' as const, e: { k: 'api' as const, fn: 'info.timerFormat', args: [1, 7].map(num) } },
+      { k: 'expr' as const, e: { k: 'api' as const, fn: 'info.timerPosition', args: [1, 10, 30].map(num) } },
+    ] }] };
+    const profile = BUILTIN_PROFILES.find(p => p.id === 'nano-sh1106-i2c')!;
+    const out = await compileGame(src, { mcu: profile.chip, game: generateCpp(program, project).code, config: profileToConfigH(profile), headers });
+    expect(out.hex.startsWith(':')).toBe(true);
+    expect(out.ram).toBeLessThanOrEqual(1792);
+  }, 120000);
+
   it('compiles adjustable sprite outlines for a 2 KB RAM device', async () => {
     const project = newProject('Outline');
     project.images = [{ id: 'dot', name: 'dot', width: 1, height: 1, frames: [['1']] }];

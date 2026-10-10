@@ -46,6 +46,7 @@ export function templateToProject(t: TemplateSource): Project {
     profile: BUILTIN_PROFILES.find((p) => p.id === DEFAULT_PROFILE_ID)!,
     blocks: t.blocks,
     images: t.images,
+    backgrounds: [],
     tiles: t.tiles,
     tilemaps: t.tilemaps,
     kinds: t.kinds,

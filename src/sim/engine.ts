@@ -129,6 +129,8 @@ export class Engine {
   life = 0;
   hiscore = 0;
   showScore = false;
+  scoreX = -1; // -1: top right corner
+  scoreY = 0;
   showLife = false;
   gameOverPending = false;
   gameOverWin = false;
@@ -141,6 +143,13 @@ export class Engine {
   rng = 0xace1;
   inverted = false;
   frameCount = 0;
+  background: Uint8Array | null = null;
+  bgX = 0;
+  bgY = 0;
+  private shakeLeft = 0;
+  private shakeAmp = 0;
+  private shakeX = 0;
+  private shakeY = 0;
 
   map: number[] | null = null;
   tileImages: (Uint8Array | null)[] = [null];
@@ -555,7 +564,8 @@ export class Engine {
     if (this.opts.noWaits) return;
     const poll = async (want: boolean) => {
       do {
-        this.readButtons();
+        this.updateTimers();
+      this.readButtons();
         await this.sleep(10);
       } while (this.isPressed(BTN_A) !== want);
     };
@@ -666,6 +676,32 @@ export class Engine {
     if (col < 0 || col >= this.mapW()) return edgeWalls;
     if (row < 0 || row >= this.mapH()) return false;
     return (this.solidTiles & (1 << this.tileAt(col, row))) !== 0;
+  }
+
+  setBackground(img: Uint8Array | null) {
+    this.background = img;
+  }
+
+  setBackgroundPosition(x: number, y: number) {
+    this.bgX = w16(x);
+    this.bgY = w16(y);
+  }
+
+  /** Same as ab::shake: strength in pixels (at most 16), time rounded up to whole frames. */
+  shake(strength: number, ms: number) {
+    this.shakeAmp = Math.max(0, Math.min(16, strength));
+    this.shakeLeft = ms > 0 ? tdiv(ms + FRAME_MS - 1, FRAME_MS) : 0;
+  }
+
+  /** Repeats the background to fill the screen. */
+  private drawBackground() {
+    const img = this.background;
+    if (!img) return;
+    const w = img[0], h = img[1];
+    let x0 = w16(this.bgX - this.shakeX) % w, y0 = w16(this.bgY - this.shakeY) % h;
+    if (x0 > 0) x0 -= w;
+    if (y0 > 0) y0 -= h;
+    for (let y = y0; y < 64; y += h) for (let x = x0; x < 128; x += w) this.drawImage(x, y, img, 0);
   }
 
   private drawMap() {
@@ -1070,7 +1106,66 @@ export class Engine {
 
   // Score and lives -------------------------------------------------------
 
+  readonly timers = Array.from({ length: 8 }, (_, i) => ({ seconds: 0, mode: 0, format: 3, visible: false, x: 0, y: 10 + i * 9, last: 0, remainder: 0 }));
+
+  private updateTimers() {
+    const now = this.millis();
+    for (const t of this.timers) {
+      if (t.mode) {
+        const value = Math.max(0, Math.min(32767000, t.seconds * 1000 + t.remainder + Math.max(0, now - t.last) * t.mode));
+        t.seconds = Math.floor(value / 1000);
+        t.remainder = value % 1000;
+        if (t.mode < 0 && value === 0) t.mode = 0;
+      }
+      t.last = now;
+    }
+  }
+
+  timerValue(id: number) { this.updateTimers(); return this.timers[id]?.seconds ?? 0; }
+  timerSet(id: number, s: number) {
+    this.updateTimers(); const t = this.timers[id]; if (!t) return;
+    t.seconds = Math.max(0, Math.min(32767, Math.trunc(s)));
+    t.remainder = 0; t.visible = true;
+  }
+  timerChange(id: number, value: number) {
+    this.updateTimers(); const t = this.timers[id]; if (!t) return;
+    this.timerChangeMillis(id, Math.trunc(value) * 1000);
+  }
+  timerMillis(id: number) { this.updateTimers(); return this.timers[id]?.remainder ?? 0; }
+  timerSetMillis(id: number, value: number) {
+    this.updateTimers(); const t = this.timers[id]; if (!t) return;
+    t.remainder = t.seconds === 32767 ? 0 : Math.max(0, Math.min(999, Math.trunc(value))); t.visible = true;
+  }
+  timerChangeMillis(id: number, value: number) {
+    this.updateTimers(); const t = this.timers[id]; if (!t) return;
+    const total = Math.max(0, Math.min(32767000, t.seconds * 1000 + t.remainder + Math.trunc(value)));
+    t.seconds = Math.floor(total / 1000); t.remainder = total % 1000; t.visible = true;
+    if (t.mode < 0 && total === 0) t.mode = 0;
+  }
+  timerRun(id: number, mode: number) {
+    this.updateTimers(); const t = this.timers[id]; if (!t) return;
+    t.mode = Math.sign(mode); t.visible = true;
+  }
+  timerFormat(id: number, format: number) { const t = this.timers[id]; if (t) { t.format = format; t.visible = format !== 5; } }
+  timerPosition(id: number, x: number, y: number) { const t = this.timers[id]; if (t) { t.x = Math.trunc(x); t.y = Math.trunc(y); } }
+  timerText(id: number) {
+    const t = this.timers[id], s = t.seconds;
+    const pad = (v: number) => String(v).padStart(2, '0');
+    if (t.format < 3) return String(Math.floor(s / [1, 60, 3600][t.format]));
+    const fraction = `.${String(t.remainder).padStart(3, '0')}`;
+    if (t.format === 6) return `${pad(Math.floor(s / 60))}:${pad(s % 60)}${fraction}`;
+    if (t.format === 7) return `${pad(Math.floor(s / 3600))}:${pad(Math.floor(s / 60) % 60)}:${pad(s % 60)}${fraction}`;
+    if (t.format === 3) return `${pad(Math.floor(s / 60))}:${pad(s % 60)}`;
+    return `${pad(Math.floor(s / 3600))}:${pad(Math.floor(s / 60) % 60)}:${pad(s % 60)}`;
+  }
+
   private drawHud() {
+    this.timers.forEach((t, i) => {
+      if (!t.visible || t.format === 5) return;
+      const text = this.timerText(i);
+      this.fillRect(t.x - 1, t.y, text.length * 6 + 2, 9, 0);
+      this.drawText(t.x, t.y + 1, text, 1);
+    });
     if (this.showLife) {
       const heart = [0x06, 0x0f, 0x1e, 0x0f, 0x06];
       for (let i = 0; i < this.life && i < 8; i++) {
@@ -1080,14 +1175,20 @@ export class Engine {
     if (this.showScore) {
       const text = String(this.score);
       const w = text.length * 6;
-      this.fillRect(127 - w - 1, 0, w + 2, 9, 0);
-      this.drawText(127 - w, 1, text, 1);
+      const x = this.scoreX < 0 ? 127 - w : this.scoreX;
+      this.fillRect(x - 1, this.scoreY, w + 2, 9, 0);
+      this.drawText(x, this.scoreY + 1, text, 1);
     }
   }
 
   setScore(v: number) {
     this.score = w16(v);
     this.showScore = true;
+  }
+
+  setScorePosition(x: number, y: number) {
+    this.scoreX = Math.max(0, Math.trunc(x));
+    this.scoreY = Math.trunc(y);
   }
 
   changeScore(by: number) {
@@ -1150,11 +1251,16 @@ export class Engine {
     this.map = null;
     this.camX = this.camY = 0;
     this.cameraSprite = this.controlled = NONE;
+    this.timers.forEach((t, i) => Object.assign(t, { seconds: 0, mode: 0, format: 3, visible: false, x: 0, y: 10 + i * 9, last: this.millis(), remainder: 0 }));
     this.score = this.life = 0;
     this.showScore = this.showLife = this.gameOverPending = false;
+    this.scoreX = -1;
+    this.scoreY = 0;
     this.soundOff();
     this.inverted = false;
     this.frameCount = 0;
+    this.background = null;
+    this.bgX = this.bgY = this.shakeLeft = 0;
     this.pitchLo = this.pitchHi = 100;
     this.hooks.init();
     await this.hooks.start();
@@ -1235,11 +1341,25 @@ export class Engine {
       this.updateCamera();
       this.updateSound();
 
+      // Shaking moves the camera for one frame and is undone after drawing.
+      if (this.shakeLeft) {
+        this.shakeLeft--;
+        this.shakeX = this.random(-this.shakeAmp, this.shakeAmp);
+        this.shakeY = this.random(-this.shakeAmp, this.shakeAmp);
+      } else this.shakeX = this.shakeY = 0;
+      this.camX += this.shakeX;
+      this.camY += this.shakeY;
       this.clear();
+      this.drawBackground();
       this.drawMap();
       this.drawSprites();
       this.drawParticles();
-      await this.hooks.draw();
+      try {
+        await this.hooks.draw();
+      } finally {
+        this.camX -= this.shakeX;
+        this.camY -= this.shakeY;
+      }
       if (this.stopped) return false;
       this.drawHud();
       this.opts.show(this.buffer, this.inverted);

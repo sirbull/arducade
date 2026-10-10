@@ -244,6 +244,13 @@ input[type='number'] {
   border: 1px solid #16181e;
   box-shadow: inset 0 2px 4px #0008, 0 1px 0 #fff4;
 }
+.screen-resolution {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.4;
+  text-align: center;
+}
 #screen {
   display: block;
   width: 100%;

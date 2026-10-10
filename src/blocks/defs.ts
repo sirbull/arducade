@@ -28,6 +28,8 @@ const dropdown = (name: string, keys: [string, string][]): Arg => ({
   options: keys.map(([label, value]) => [`%{BKY_${label}}`, value]),
 });
 
+const TIMER = { type: 'field_dropdown', name: 'TIMER', options: Array.from({ length: 8 }, (_, i) => [i ? `timer${i + 1}` : 'timer', String(i)]) };
+
 const COLOR = dropdown('COLOR', [
   ['AB_COLOR_WHITE', 'white'],
   ['AB_COLOR_BLACK', 'black'],
@@ -60,14 +62,15 @@ const PROP_GET = dropdown('PROP', [
   ['AB_PROP_TOP', 'top'],
   ['AB_PROP_BOTTOM', 'bottom'],
 ]);
-const BUTTON = dropdown('BUTTON', [
+const BUTTON_KEYS: [string, string][] = [
   ['AB_BUTTON_A', 'a'],
   ['AB_BUTTON_B', 'b'],
   ['AB_BUTTON_UP', 'up'],
   ['AB_BUTTON_DOWN', 'down'],
   ['AB_BUTTON_LEFT', 'left'],
   ['AB_BUTTON_RIGHT', 'right'],
-]);
+];
+const BUTTON = dropdown('BUTTON', BUTTON_KEYS);
 const ON_OFF = dropdown('ON', [
   ['AB_ON', 'on'],
   ['AB_OFF', 'off'],
@@ -80,7 +83,7 @@ interface Def {
   /** Translation key of the text. */
   msg: string;
   args?: Arg[];
-  output?: string | null;
+  output?: string | string[] | null;
   statement?: boolean;
   hat?: boolean;
   /** Statement input after the text, for event and loop blocks. */
@@ -144,7 +147,7 @@ export const DEFS: Def[] = [
   { type: 'ab_sprite_set_prop', ...SPRITES, msg: 'AB_SPRITE_SET_PROP', args: [sprite('SPRITE'), PROP, num('VALUE')], statement: true, inline: true },
   { type: 'ab_sprite_change_prop', ...SPRITES, msg: 'AB_SPRITE_CHANGE_PROP', args: [sprite('SPRITE'), PROP, num('VALUE')], statement: true, inline: true },
   { type: 'ab_sprite_get_prop', ...SPRITES, msg: 'AB_SPRITE_GET_PROP', args: [sprite('SPRITE'), PROP_GET], output: 'Number', inline: true },
-  { type: 'ab_sprite_set_position', ...SPRITES, msg: 'AB_SPRITE_SET_POSITION', args: [sprite('SPRITE'), num('X'), num('Y')], statement: true, inline: true },
+  { type: 'ab_sprite_set_position', ...SPRITES, msg: 'AB_SPRITE_SET_POSITION', args: [{ ...sprite('SPRITE'), check: ['Sprite', 'Timer'] }, num('X'), num('Y')], statement: true, inline: true },
   { type: 'ab_sprite_set_velocity', ...SPRITES, msg: 'AB_SPRITE_SET_VELOCITY', args: [sprite('SPRITE'), num('VX'), num('VY')], statement: true, inline: true },
   { type: 'ab_sprite_set_outline_width', ...SPRITES, msg: 'AB_SPRITE_SET_OUTLINE_WIDTH', args: [sprite('SPRITE'), num('WIDTH')], statement: true, inline: true },
   { type: 'ab_sprite_set_outline', ...SPRITES, msg: 'AB_SPRITE_SET_OUTLINE', args: [sprite('SPRITE'), dropdown('OUTLINE', [['AB_OUTLINE_AUTO', '3'], ['AB_OUTLINE_OFF', '0'], ['AB_COLOR_BLACK', '1'], ['AB_COLOR_WHITE', '2']])], statement: true, inline: true },
@@ -208,7 +211,10 @@ export const DEFS: Def[] = [
     type: 'ab_on_button',
     ...CONTROLLER,
     msg: 'AB_ON_BUTTON',
-    args: [BUTTON, dropdown('EVENT', [['AB_PRESSED', 'pressed'], ['AB_RELEASED', 'released']])],
+    args: [
+      dropdown('BUTTON', [...BUTTON_KEYS, ['AB_BUTTON_AB', 'ab'], ['AB_BUTTON_DIRECTION', 'direction'], ['AB_BUTTON_ANY', 'any']]),
+      dropdown('EVENT', [['AB_PRESSED', 'pressed'], ['AB_RELEASED', 'released']]),
+    ],
     hat: true,
     body: true,
   },
@@ -221,6 +227,13 @@ export const DEFS: Def[] = [
   { type: 'ab_set_camera', ...SCENE, msg: 'AB_SET_CAMERA', args: [num('X'), num('Y')], statement: true, inline: true },
   { type: 'ab_camera_x', ...SCENE, msg: 'AB_CAMERA_X', output: 'Number' },
   { type: 'ab_camera_y', ...SCENE, msg: 'AB_CAMERA_Y', output: 'Number' },
+  { type: 'ab_shake', ...SCENE, msg: 'AB_SHAKE', args: [num('STRENGTH'), num('MS')], statement: true, inline: true },
+  { type: 'ab_bg_set', ...SCENE, msg: 'AB_BG_SET', args: [{ type: 'field_ab_background', name: 'BG' }], statement: true },
+  { type: 'ab_bg_clear', ...SCENE, msg: 'AB_BG_CLEAR', statement: true },
+  { type: 'ab_bg_set_position', ...SCENE, msg: 'AB_BG_SET_POSITION', args: [num('X'), num('Y')], statement: true, inline: true },
+  { type: 'ab_bg_change_position', ...SCENE, msg: 'AB_BG_CHANGE_POSITION', args: [num('X'), num('Y')], statement: true, inline: true },
+  { type: 'ab_bg_x', ...SCENE, msg: 'AB_BG_X', output: 'Number' },
+  { type: 'ab_bg_y', ...SCENE, msg: 'AB_BG_Y', output: 'Number' },
   { type: 'ab_spawn_on_tiles', ...SCENE, msg: 'AB_SPAWN_ON_TILES', args: [tile(), image(), kind()], statement: true },
   {
     type: 'ab_on_tile',
@@ -235,8 +248,18 @@ export const DEFS: Def[] = [
   { type: 'ab_place_on_tile', ...SCENE, msg: 'AB_PLACE_ON_TILE', args: [sprite('SPRITE'), num('COL'), num('ROW')], statement: true, inline: true },
 
   // Info
+  { type: 'ab_timer_set', ...INFO, msg: 'AB_TIMER_SET', args: [TIMER, num('SECONDS')], statement: true, inline: true },
+  { type: 'ab_timer_change', ...INFO, msg: 'AB_TIMER_CHANGE', args: [TIMER, num('VALUE')], statement: true, inline: true },
+  { type: 'ab_timer_set_millis', ...INFO, msg: 'AB_TIMER_SET_MILLIS', args: [TIMER, num('VALUE')], statement: true, inline: true },
+  { type: 'ab_timer_change_millis', ...INFO, msg: 'AB_TIMER_CHANGE_MILLIS', args: [TIMER, num('VALUE')], statement: true, inline: true },
+  { type: 'ab_timer_millis', ...INFO, msg: 'AB_TIMER_MILLIS', args: [TIMER], output: 'Number' },
+  { type: 'ab_timer_run', ...INFO, msg: 'AB_TIMER_RUN', args: [TIMER, dropdown('MODE', [['AB_TIMER_UP', '1'], ['AB_TIMER_DOWN', '-1'], ['AB_TIMER_STOP', '0']])], statement: true },
+  { type: 'ab_timer_format', ...INFO, msg: 'AB_TIMER_FORMAT', args: [TIMER, dropdown('FORMAT', [['AB_TIMER_SECONDS', '0'], ['AB_TIMER_MINUTES', '1'], ['AB_TIMER_HOURS', '2'], ['AB_TIMER_MS', '3'], ['AB_TIMER_HMS', '4'], ['AB_TIMER_MS_MILLIS', '6'], ['AB_TIMER_HMS_MILLIS', '7'], ['AB_TIMER_HIDE', '5']])], statement: true },
+  { type: 'ab_timer_position', ...INFO, msg: 'AB_TIMER_POSITION', args: [TIMER, num('X'), num('Y')], statement: true, inline: true },
+  { type: 'ab_timer', ...INFO, msg: 'AB_TIMER_VALUE', args: [TIMER], output: ['Number', 'Timer'] },
   { type: 'ab_score_set', ...INFO, msg: 'AB_SCORE_SET', args: [num('VALUE')], statement: true },
   { type: 'ab_score_change', ...INFO, msg: 'AB_SCORE_CHANGE', args: [num('VALUE')], statement: true },
+  { type: 'ab_score_position', ...INFO, msg: 'AB_SCORE_POSITION', args: [num('X'), num('Y')], statement: true, inline: true },
   { type: 'ab_score', ...INFO, msg: 'AB_SCORE', output: 'Number' },
   { type: 'ab_life_set', ...INFO, msg: 'AB_LIFE_SET', args: [num('VALUE')], statement: true },
   { type: 'ab_life_change', ...INFO, msg: 'AB_LIFE_CHANGE', args: [num('VALUE')], statement: true },

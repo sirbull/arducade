@@ -137,6 +137,11 @@ static uint32_t nextFrame;
 static uint32_t frameCount;
 static int16_t score, life, hiscore;
 static bool showScore, showLife, gameOverPending, gameOverWin;
+#ifdef AB_SCORE_POS
+static int16_t scoreX = -1, scoreY; // scoreX -1: top right corner
+#else
+static const int16_t scoreX = -1, scoreY = 0; // folded away when unused
+#endif
 static int16_t camX, camY;
 static uint8_t cameraSprite = NONE;
 static uint16_t rng = 0xACE1;
@@ -856,6 +861,41 @@ static void spawnOnTiles(uint8_t tile, const uint8_t *img, uint8_t kind) {
 static void cameraFollow(uint8_t s) { cameraSprite = s; }
 static void setCamera(int16_t x, int16_t y) { cameraSprite = NONE; camX = x; camY = y; }
 
+#ifdef AB_HAS_SHAKE
+static uint16_t shakeLeft; // frames
+static int8_t shakeAmp, shakeX, shakeY;
+// Strength in pixels (at most 16), time rounded up to whole frames.
+static void shake(int16_t strength, int16_t ms) {
+  shakeAmp = constrain(strength, 0, 16);
+  shakeLeft = ms > 0 ? (ms + AB_FRAME_MS - 1) / AB_FRAME_MS : 0;
+}
+#endif
+
+#ifdef AB_HAS_BACKGROUND
+static const uint8_t *background;
+static int16_t bgX, bgY;
+static void setBackground(const uint8_t *img) { background = img; }
+static void setBackgroundPosition(int16_t x, int16_t y) { bgX = x; bgY = y; }
+// Repeats the background to fill the screen.
+static void drawBackground() {
+  if (!background) return;
+  int16_t w = imgW(background), h = imgH(background);
+  int16_t x0 = bgX, y0 = bgY;
+#ifdef AB_HAS_SHAKE
+  x0 -= shakeX;
+  y0 -= shakeY;
+#endif
+  x0 %= w;
+  y0 %= h;
+  if (x0 > 0) x0 -= w;
+  if (y0 > 0) y0 -= h;
+  for (int16_t y = y0; y < 64; y += h) {
+    if (!onPage(y, h)) continue;
+    for (int16_t x = x0; x < 128; x += w) drawImage(x, y, background, 0);
+  }
+}
+#endif
+
 // Moves one sprite along one axis and stops it at walls.
 static void moveAxis(Sprite &sp, bool horizontal, int32_t delta) {
   int16_t w = imgW(sp.img), h = imgH(sp.img);
@@ -1171,7 +1211,80 @@ static void drawParticles() {
 
 static const uint8_t heart[] PROGMEM = {0x06, 0x0F, 0x1E, 0x0F, 0x06};
 
+#ifdef AB_HAS_TIMERS
+struct GameTimer { int16_t seconds, x, y; uint32_t last; uint16_t remainder; int8_t mode; uint8_t format; bool visible; };
+static GameTimer gameTimers[8];
+static void updateTimers() {
+  uint32_t now = millis();
+  for (uint8_t i = 0; i < 8; i++) {
+    GameTimer &t = gameTimers[i];
+    if (t.mode) {
+      uint32_t elapsed = now - t.last;
+      if (elapsed > 32767000UL) elapsed = 32767000UL;
+      int32_t value = (int32_t)t.seconds * 1000 + t.remainder + (int32_t)elapsed * t.mode;
+      value = value < 0 ? 0 : value > 32767000L ? 32767000L : value;
+      t.seconds = value / 1000; t.remainder = value % 1000;
+      if (t.mode < 0 && !value) t.mode = 0;
+    }
+    t.last = now;
+  }
+}
+static int16_t timerValue(uint8_t id) { updateTimers(); return id < 8 ? gameTimers[id].seconds : 0; }
+static void timerSet(uint8_t id, int16_t s) {
+  updateTimers(); if (id >= 8) return;
+  GameTimer &t = gameTimers[id];
+  int32_t value = s;
+  t.seconds = value < 0 ? 0 : value > 32767 ? 32767 : value;
+  t.remainder = 0; t.visible = true;
+}
+static int16_t timerMillis(uint8_t id) { updateTimers(); return id < 8 ? gameTimers[id].remainder : 0; }
+static void timerSetMillis(uint8_t id, int16_t value) {
+  updateTimers(); if (id >= 8) return;
+  GameTimer &t = gameTimers[id];
+  t.remainder = t.seconds == 32767 ? 0 : value < 0 ? 0 : value > 999 ? 999 : value; t.visible = true;
+}
+static void timerChangeMillis(uint8_t id, int32_t value) {
+  updateTimers(); if (id >= 8) return;
+  GameTimer &t = gameTimers[id];
+  int32_t total = (int32_t)t.seconds * 1000 + t.remainder + value;
+  total = total < 0 ? 0 : total > 32767000L ? 32767000L : total;
+  t.seconds = total / 1000; t.remainder = total % 1000; t.visible = true;
+  if (t.mode < 0 && !total) t.mode = 0;
+}
+static void timerChange(uint8_t id, int16_t value) { timerChangeMillis(id, (int32_t)value * 1000); }
+static void timerRun(uint8_t id, int16_t mode) {
+  updateTimers(); if (id >= 8) return;
+  gameTimers[id].mode = mode < 0 ? -1 : mode > 0 ? 1 : 0; gameTimers[id].visible = true;
+}
+static void timerFormat(uint8_t id, uint8_t format) { if (id < 8) { gameTimers[id].format = format; gameTimers[id].visible = format != 5; } }
+static void timerPosition(uint8_t id, int16_t x, int16_t y) { if (id < 8) { gameTimers[id].x = x; gameTimers[id].y = y; } }
+static void timerDigits(char *&p, uint16_t v) {
+  if (v >= 100) *p++ = '0' + v / 100;
+  *p++ = '0' + (v / 10) % 10; *p++ = '0' + v % 10;
+}
+static void drawTimers() {
+  for (uint8_t i = 0; i < 8; i++) {
+    GameTimer &t = gameTimers[i]; if (!t.visible || t.format == 5 || !onPage(t.y, 9)) continue;
+    uint16_t s = t.seconds;
+    char text[16], *p = text;
+    if (t.format < 3) { tbClear(); tbNum(s / (t.format == 0 ? 1 : t.format == 1 ? 60 : 3600)); }
+    else {
+      if (t.format == 4 || t.format == 7) { timerDigits(p, s / 3600); *p++ = ':'; }
+      timerDigits(p, (t.format == 4 || t.format == 7) ? (s / 60) % 60 : s / 60); *p++ = ':'; timerDigits(p, s % 60);
+      if (t.format == 6 || t.format == 7) { *p++ = '.'; *p++ = '0' + t.remainder / 100; timerDigits(p, t.remainder % 100); }
+      *p = 0;
+    }
+    const char *label = t.format < 3 ? textBuf : text;
+    fillRect(t.x - 1, t.y, textWidth(label) + 2, 9, 0);
+    drawText(t.x, t.y + 1, label, 1);
+  }
+}
+#endif
+
 static void drawHud() {
+#ifdef AB_HAS_TIMERS
+  drawTimers();
+#endif
 #ifdef AB_NO_HUD
   return;
 #endif
@@ -1185,16 +1298,20 @@ static void drawHud() {
       }
     }
   }
-  if (showScore && onPage(0, 9)) {
+  if (showScore && onPage(scoreY, 9)) {
     tbClear();
     tbNum(score);
     int16_t w = textWidth(textBuf);
-    fillRect(127 - w - 1, 0, w + 2, 9, 0);
-    drawText(127 - w, 1, textBuf, 1);
+    int16_t x = scoreX < 0 ? 127 - w : scoreX;
+    fillRect(x - 1, scoreY, w + 2, 9, 0);
+    drawText(x, scoreY + 1, textBuf, 1);
   }
 }
 
 static void setScore(int16_t v) { score = v; showScore = true; }
+#ifdef AB_SCORE_POS
+static void setScorePosition(int16_t x, int16_t y) { scoreX = x < 0 ? 0 : x; scoreY = y; }
+#endif
 static void changeScore(int16_t by) { setScore(score + by); }
 static void setLife(int16_t v) {
   life = v;
@@ -1280,9 +1397,24 @@ static void restart() {
 #endif
   map = 0;
   camX = camY = 0;
+#ifdef AB_HAS_BACKGROUND
+  background = 0;
+  bgX = bgY = 0;
+#endif
+#ifdef AB_HAS_SHAKE
+  shakeLeft = 0;
+#endif
   cameraSprite = controlled = NONE;
+#ifdef AB_HAS_TIMERS
+  memset(gameTimers, 0, sizeof(gameTimers));
+  for (uint8_t i = 0; i < 8; i++) { gameTimers[i].format = 3; gameTimers[i].y = 10 + i * 9; gameTimers[i].last = millis(); }
+#endif
   score = life = 0;
   showScore = showLife = gameOverPending = false;
+#ifdef AB_SCORE_POS
+  scoreX = -1;
+  scoreY = 0;
+#endif
   soundOff();
   displayInvert(false);
   frameCount = 0;
@@ -1339,6 +1471,9 @@ static void begin() {
 }
 
 static void drawFrame() {
+#ifdef AB_HAS_BACKGROUND
+  drawBackground();
+#endif
   drawMap();
   drawSprites();
 #ifdef AB_HAS_PARTICLES
@@ -1364,6 +1499,9 @@ static void frame() {
     if ((buttons & mask) && !(buttonsPrev & mask)) ab_on_button(b, 1);
     else if (!(buttons & mask) && (buttonsPrev & mask)) ab_on_button(b, 0);
   }
+#ifdef AB_HAS_TIMERS
+  updateTimers();
+#endif
   ab_on_update();
   updateSprites();
 #ifdef AB_HAS_PARTICLES
@@ -1373,7 +1511,23 @@ static void frame() {
   updateCamera();
   updateSound();
 
+#ifdef AB_HAS_SHAKE
+  // Shaking moves the camera for one frame and is undone after drawing.
+  if (shakeLeft) {
+    shakeLeft--;
+    shakeX = random(-shakeAmp, shakeAmp);
+    shakeY = random(-shakeAmp, shakeAmp);
+  } else {
+    shakeX = shakeY = 0;
+  }
+  camX += shakeX;
+  camY += shakeY;
+#endif
   render(drawFrame);
+#ifdef AB_HAS_SHAKE
+  camX -= shakeX;
+  camY -= shakeY;
+#endif
 
   if (gameOverPending) showGameOver();
 }

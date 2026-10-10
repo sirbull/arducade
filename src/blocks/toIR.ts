@@ -259,6 +259,8 @@ class Converter {
       case 'ab_sprite_change_prop':
         return this.api('sprites.change', [this.spriteIn(b), this.en('prop', f('PROP')), this.input(b, 'VALUE')], id);
       case 'ab_sprite_set_position':
+        // ponytail: a timer block in the sprite slot moves the timer display
+        if (b.getInputTargetBlock('SPRITE')?.type === 'ab_timer') return this.api('info.timerPosition', [{ k: 'num', v: Number(b.getInputTargetBlock('SPRITE')!.getFieldValue('TIMER')) }, this.input(b, 'X'), this.input(b, 'Y')], id);
         return this.api('sprites.setPosition', [this.spriteIn(b), this.input(b, 'X'), this.input(b, 'Y')], id);
       case 'ab_sprite_set_velocity':
         return this.api('sprites.setVelocity', [this.spriteIn(b), this.input(b, 'VX'), this.input(b, 'VY')], id);
@@ -294,6 +296,16 @@ class Converter {
         return this.api('scene.cameraFollow', [this.spriteIn(b)], id);
       case 'ab_set_camera':
         return this.api('scene.setCamera', [this.input(b, 'X'), this.input(b, 'Y')], id);
+      case 'ab_shake':
+        return this.api('scene.shake', [this.input(b, 'STRENGTH'), this.input(b, 'MS')], id);
+      case 'ab_bg_set':
+        return this.api('background.set', [this.en('image', f('BG'))], id);
+      case 'ab_bg_clear':
+        return this.api('background.clear', [], id);
+      case 'ab_bg_set_position':
+        return this.api('background.setPosition', [this.input(b, 'X'), this.input(b, 'Y')], id);
+      case 'ab_bg_change_position':
+        return this.api('background.changePosition', [this.input(b, 'X'), this.input(b, 'Y')], id);
       case 'ab_spawn_on_tiles':
         return this.api('scene.spawnOnTiles', [this.en('tile', f('TILE')), this.en('image', f('IMAGE')), this.en('kind', f('KIND'))], id);
       case 'ab_set_tile':
@@ -302,8 +314,24 @@ class Converter {
         return this.api('scene.placeOnTile', [this.spriteIn(b), this.input(b, 'COL'), this.input(b, 'ROW')], id);
 
       // Info
+      case 'ab_timer_set':
+        return this.api('info.timerSet', [{ k: 'num', v: Number(f('TIMER')) }, this.input(b, 'SECONDS')], id);
+      case 'ab_timer_change':
+        return this.api('info.timerChange', [{ k: 'num', v: Number(f('TIMER')) }, this.input(b, 'VALUE')], id);
+      case 'ab_timer_set_millis':
+        return this.api('info.timerSetMillis', [{ k: 'num', v: Number(f('TIMER')) }, this.input(b, 'VALUE')], id);
+      case 'ab_timer_change_millis':
+        return this.api('info.timerChangeMillis', [{ k: 'num', v: Number(f('TIMER')) }, this.input(b, 'VALUE')], id);
+      case 'ab_timer_run':
+        return this.api('info.timerRun', [{ k: 'num', v: Number(f('TIMER')) }, { k: 'num', v: Number(f('MODE')) }], id);
+      case 'ab_timer_format':
+        return this.api('info.timerFormat', [{ k: 'num', v: Number(f('TIMER')) }, { k: 'num', v: Number(f('FORMAT')) }], id);
+      case 'ab_timer_position':
+        return this.api('info.timerPosition', [{ k: 'num', v: Number(f('TIMER')) }, this.input(b, 'X'), this.input(b, 'Y')], id);
       case 'ab_score_set':
         return this.api('info.setScore', [this.input(b, 'VALUE')], id);
+      case 'ab_score_position':
+        return this.api('info.setScorePosition', [this.input(b, 'X'), this.input(b, 'Y')], id);
       case 'ab_score_change':
         return this.api('info.changeScore', [this.input(b, 'VALUE', { k: 'num', v: 1 })], id);
       case 'ab_life_set':
@@ -450,8 +478,16 @@ class Converter {
         return api('scene.cameraX', []);
       case 'ab_camera_y':
         return api('scene.cameraY', []);
+      case 'ab_bg_x':
+        return api('background.x', []);
+      case 'ab_bg_y':
+        return api('background.y', []);
       case 'ab_tile_is':
         return api('scene.tileIs', [this.input(b, 'COL'), this.input(b, 'ROW'), this.en('tile', f('TILE'))]);
+      case 'ab_timer_millis':
+        return api('info.timerMillis', [{ k: 'num', v: Number(f('TIMER')) }]);
+      case 'ab_timer':
+        return api('info.timerValue', [{ k: 'num', v: Number(f('TIMER')) }]);
       case 'ab_score':
         return api('info.score', []);
       case 'ab_life':

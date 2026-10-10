@@ -1,4 +1,4 @@
-// Dropdown fields whose options come from the open project: images, tiles,
+// Dropdown fields whose options come from the open project: images, backgrounds, tiles,
 // tile maps and sprite kinds.
 
 import * as Blockly from 'blockly/core';
@@ -50,13 +50,12 @@ export function pixelsToDataUrl(rows: PixelRows, width: number, height: number, 
 
 type Option = [string | Blockly.ImageProperties, string];
 
-function imageOptions(): Option[] {
-  const images = current?.images ?? [];
+function imageOptions(images = current?.images ?? [], size = 32): Option[] {
   if (!images.length) return [[noneLabel, '']];
   return images.map((img) => {
-    // Give artwork a consistent 32px preview; Blockly grows the containing
+    // Give artwork a consistent preview size; Blockly grows the containing
     // row to fit the image plus the field's vertical padding.
-    const scale = 32 / Math.max(img.width, img.height);
+    const scale = size / Math.max(img.width, img.height);
     return [
       { src: pixelsToDataUrl(img.frames[0], img.width, img.height, scale), width: img.width * scale, height: img.height * scale, alt: img.name },
       img.id,
@@ -93,6 +92,15 @@ class ImageField extends AssetDropdown {
   }
 }
 
+class BackgroundField extends AssetDropdown {
+  constructor() {
+    super(() => imageOptions(current?.backgrounds ?? [], 48));
+  }
+  static fromJson() {
+    return new BackgroundField();
+  }
+}
+
 class TileField extends AssetDropdown {
   constructor() {
     super(tileOptions);
@@ -125,6 +133,7 @@ export function registerAssetFields() {
   if (registered) return;
   registered = true;
   Blockly.fieldRegistry.register('field_ab_image', ImageField);
+  Blockly.fieldRegistry.register('field_ab_background', BackgroundField);
   Blockly.fieldRegistry.register('field_ab_tile', TileField);
   Blockly.fieldRegistry.register('field_ab_tilemap', TilemapField);
   Blockly.fieldRegistry.register('field_ab_kind', KindField);

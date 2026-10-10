@@ -174,13 +174,18 @@ De nye prosjektene er en egen progresjon, inspirert av MakeCode Arcades prosjekt
 |---|---|---:|---:|---|
 | 2-1 | Ut av labyrinten | 8 | 3 | Faste ruter, nøkkel, en variabel som husker |
 | 2-2 | Vakten som skifter humør | 10 | 3 | Patrulje, jakt, stopp, tilstander og samarbeid mellom tidtakere |
-| 2-3 | Lommevenn | 12 | 3 | Energi, glede, avgrensede verdier, ELLER, søvn og humør |
-| 2-4 | Tre på rad | 14 | 3 | Spill for to, funksjoner med argumenter og retur, løkker, alle vinnerlinjer og uavgjort |
-| 2-5 | Bombelabyrinten | 16 | 4 | Bombe med lunte, kryssformet eksplosjon, ødeleggbare kasser, egne sprite-typer og seiersvilkår |
+| 2-3 | Tre på rad | 14 | 3 | Spill for to, funksjoner med argumenter og retur, løkker, alle vinnerlinjer og uavgjort |
+| 2-4 | Bombelabyrinten | 16 | 4 | Bombe med lunte, kryssformet eksplosjon, ødeleggbare kasser, egne sprite-typer og seiersvilkår |
+| 2-5 | Lommevenn | 18 | 4 | Animert kjæledyr som går, meny med markør, tilstandsmaskin (gå, spise, leke, sove), nedtelling, funksjon for humør og avgrensede målere |
+| 2-6 | Flaggløpet | 21 | 4 | Tyngdekraft og hopp, mynter på ruter, klokke som teller opp, to fiendetyper (slim som går og flaggermus som flyr), hoppe på fiender, tre brett med funksjoner, tidsbonus og rekord |
 
 Alle tekster, inkludert kapitteltitler, karttekster og navn på ny grafikk, finnes på norsk, engelsk, spansk, fransk og tysk. Original 8×8-grafikk ligger i `src/project/guide-art.ts`, er tilgjengelig i Biblioteket og kopieres inn i hvert prosjekt. Labyrint- og bombekartene er også ferdige og redigerbare. Nye guider ligger i `src/guides/courses/`; kartet ligger i `src/ui/guide-catalog.ts`.
 
 Tre på rad lagrer ni felt som ett tall i tretallsystemet (0 tom, 1 kryss, 2 sirkel). Dette holder seg innenfor enhetens 16-bits heltall og begrenser spritebruken til ti. Poengfeltet viser hvilken spiller som skal trekke; null og «=» betyr uavgjort. Det er et spill for to lokale spillere, uten datamotstander. Seier vises med meldingen «X WINS!» eller «O WINS!», etterfulgt av «spillet er slutt: tapt», fordi motorens seiersskjerm alltid sier YOU WIN!
+
+Lommevenn er siste prosjekt. Kjæledyret går frem og tilbake med to animasjonsrammer per bilde. En meny nederst (mat, ball, måne) styres med pilene og A. Variabelen mode velger tilstand, og busy teller ned sekundene til dyret går igjen. «Sett bilde» starter animasjonen på nytt, så bildet byttes bare når en aktivitet starter eller slutter, aldri i «hver oppdatering».
+
+Flaggløpet har tre ferdige brett (jump-1 til jump-3, 48×8 ruter). Slim (Fiende) går og snur ved vegger; flaggermus (egen type Bat) flyr opp og ned over hullene ved at vy snus hver 800 ms. Begge kan trampes på. Flagget kaller nextLevel, som laster neste brett eller gir seier. Sluttpoeng er mynter × 10, fiender × 20, tidsbonus maks(0, 300 − sekunder) og liv igjen × 50, og motorens BEST lagrer rekorden. Flaggene står i ulike kolonner, så et nytt brett aldri utløser sitt eget flagg i samme bilde.
 
 Bombespillet er en liten variant med én bombe om gangen og eksplosjonsradius én rute. Både spilleren og robotene rammes av eksplosjonen. Steinvegger fjernes aldri, starthjørnet er stengt inne av kasser, kasser gir poeng, og utgangen krever at alle tre robotene er slått. De mer omfattende plattform-, rom- og eventyrverdenene fra det opprinnelige utkastet er fortsatt senere arbeid.
 

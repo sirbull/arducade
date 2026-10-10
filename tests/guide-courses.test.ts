@@ -15,7 +15,7 @@ const lines = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
 
 describe('progressive courses',()=>{
   it('has five increasingly long projects with ordered chapters and original gallery sprites',()=>{
-    expect(COURSES.map(g=>g.steps.length)).toEqual([8,10,12,14,16]);
+    expect(COURSES.map(g=>g.steps.length)).toEqual([8,10,14,16,18,21]);
     const owned = new Set<string>();
     for(const guide of COURSES){
       expect(guide.chapters![0].start).toBe(0);
@@ -72,10 +72,12 @@ describe('progressive courses',()=>{
   it('the bomb blast also defeats its owner if they fail to escape',async()=>{
     expect(await play('w2-bombs',async(e,f)=>{await f(16);await f(0,140);return e.gameOverPending&&!e.gameOverWin;})).toBe(true);
   });
-  it('limits pet energy and happiness while accepting repeated taps',async()=>{
+  it('keeps the pet menu inside its three icons and lets sleep restore energy',async()=>{
     expect(await play('w2-pet',async(e,f)=>{
-      for(let i=0;i<12;i++){await f(48);await f();}
-      return e.life===5&&e.score===5;
+      await e.setLife(2);await f();
+      for(let i=0;i<5;i++){await f(8);await f();}
+      await f(16);await f(0,150);
+      return !e.gameOverPending&&e.life>2&&e.sprites[0].vx===0;
     })).toBe(true);
   });
 });

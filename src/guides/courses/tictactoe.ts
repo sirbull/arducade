@@ -38,7 +38,7 @@ const status = draw([ifThen(and(cmp('EQ',get('finished'),num(1)),cmp('EQ',blk('a
 const finalBody = [...base,set('finished',num(0))];
 const finalEvents = [grid,cursorPosition,...navigation,cellFunction,lineFunction,checkWinner(true,true),place([mark,markPosition,...remember,...finalAfter],true),status];
 export const ticTacToe: Guide = {
-  id:'w2-tictactoe',number:'2-4',title:L('Three in a row','Tre på rad','Tres en raya','Morpion','Drei gewinnt'),
+  id:'w2-tictactoe',number:'2-3',title:L('Three in a row','Tre på rad','Tres en raya','Morpion','Drei gewinnt'),
   description:L('A two-player board game. Learn loops, functions and how to check every winning line.', 'Et brettspill for to. Lær løkker, funksjoner og å sjekke alle vinnende linjer.', 'Un juego para dos. Aprende bucles, funciones y a comprobar todas las líneas ganadoras.', 'Un jeu pour deux. Découvre les boucles, les fonctions et toutes les lignes gagnantes.', 'Ein Spiel für zwei. Lerne Schleifen, Funktionen und die Prüfung aller Gewinnlinien.'),
   images:['ttt-cursor','ttt-x','ttt-o'],start:blank(),
   chapters:[{start:0,title:L('Board and cursor','Brett og markør','Tablero y cursor','Grille et curseur','Brett und Cursor')},{start:4,title:L('Remember the moves','Husk trekkene','Recuerda las jugadas','Mémorise les coups','Merke dir die Züge')},{start:8,title:L('Win or draw','Seier eller uavgjort','Victoria o empate','Victoire ou égalité','Sieg oder Unentschieden')}],

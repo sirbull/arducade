@@ -49,11 +49,11 @@ describe('guide catalog',()=>{
     expect(isGuideOpen(5,{[GUIDES[4].id]:1},false)).toBe(true);
     expect(isGuideOpen(9,{},true)).toBe(true);
     const {root,host}=world();
-    expect(root.querySelectorAll('.course-card')).toHaveLength(10);
+    expect(root.querySelectorAll('.course-card')).toHaveLength(11);
     expect(root.querySelectorAll('.course-card.open')).toHaveLength(1);
     const free=root.querySelector('input')!;free.checked=true;free.dispatchEvent(new Event('change'));
     expect(host.setFree).toHaveBeenCalledWith(true);
-    expect(root.querySelectorAll('.course-card.open')).toHaveLength(10);
+    expect(root.querySelectorAll('.course-card.open')).toHaveLength(11);
   });
   it('lets users inspect a locked project without launching it',()=>{
     const {root,host}=world();(root.querySelectorAll('.course-card')[5] as HTMLButtonElement).click();

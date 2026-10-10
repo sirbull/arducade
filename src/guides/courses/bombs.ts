@@ -44,7 +44,7 @@ const body = [...bombs,score(0)];
 const core = [placeBomb(true),blastTile(true),explode,timer];
 const events = [...core,danger,defeat,finish,contact('Player','Enemy',[lose()])];
 export const bombGuide: Guide = {
-  id:'w2-bombs',number:'2-5',title:L('Bomb maze','Bombelabyrinten','Laberinto de bombas','Labyrinthe explosif','Bombenlabyrinth'),
+  id:'w2-bombs',number:'2-4',title:L('Bomb maze','Bombelabyrinten','Laberinto de bombas','Labyrinthe explosif','Bombenlabyrinth'),
   description:L('Place bombs, break crates and defeat a robot. Combine maps, timers, functions and collisions.', 'Plasser bomber, spreng kasser og slå en robot. Sett sammen kart, tidtakere, funksjoner og treff.', 'Coloca bombas, rompe cajas y vence a un robot. Combina mapas, temporizadores, funciones y contactos.', 'Pose des bombes, casse des caisses et bats un robot. Combine cartes, minuteries, fonctions et contacts.', 'Lege Bomben, sprenge Kisten und besiege einen Roboter. Verbinde Karten, Timer, Funktionen und Berührungen.'),
   images:['bomb-runner','bomb-fuse','bomb-blast','bomb-bot','bomb-exit'],tiles:tiles('bomb-wall','bomb-crate'),tilemaps:[room('bomb-room',stones,boxes)],kinds:['Bomb','Exit'],start:blank(),
   chapters:[{start:0,title:L('Build the arena','Bygg arenaen','Construye la arena','Construis l’arène','Baue die Arena')},{start:5,title:L('Bomb and fuse','Bombe og lunte','Bomba y mecha','Bombe et mèche','Bombe und Zünder')},{start:8,title:L('The cross-shaped blast','Eksplosjonen som et kryss','Explosión en cruz','Explosion en croix','Kreuzförmige Explosion')},{start:12,title:L('Danger and victory','Fare og seier','Peligro y victoria','Danger et victoire','Gefahr und Sieg')}],

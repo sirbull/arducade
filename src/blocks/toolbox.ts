@@ -49,6 +49,7 @@ export function buildToolbox(): Json {
         block('ab_sprite_set_prop', { SPRITE: spriteVar(), VALUE: n(0) }),
         block('ab_sprite_change_prop', { SPRITE: spriteVar(), VALUE: n(1) }),
         block('ab_sprite_get_prop', { SPRITE: spriteVar() }),
+        block('ab_sprite_stay_in_screen', { SPRITE: spriteVar() }),
         block('ab_sprite_set_flag', { SPRITE: spriteVar() }),
         block('ab_on_overlap'),
         block('ab_sprite_overlaps', { A: spriteVar(), B: spriteVar('otherSprite') }),

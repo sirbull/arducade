@@ -49,6 +49,7 @@ const EXAMPLES: Record<string, Json[]> = {
   ab_move_sprite: [b('ab_on_start', body(setVar('mySprite', create(), b('ab_move_sprite', { SPRITE: v('mySprite'), VX: n(60), VY: n(60) }))))],
   ab_on_button: [b('ab_on_button', body(setVar('projectile', val(b('ab_sprite_projectile', { FROM: v('mySprite'), VX: n(0), VY: n(-80) })))), { BUTTON: 'a', EVENT: 'pressed' })],
   ab_on_overlap: [b('ab_on_overlap', body(b('ab_score_change', { VALUE: n(1) }, undefined, b('ab_sprite_destroy', { SPRITE: v('otherSprite') }))))],
+  ab_sprite_stay_in_screen: [b('ab_on_start', body(setVar('mySprite', create(), b('ab_sprite_stay_in_screen', { SPRITE: v('mySprite') }))))],
   ab_sprite_set_flag: [b('ab_on_start', body(setVar('mySprite', create(), b('ab_sprite_set_flag', { SPRITE: v('mySprite') }, { FLAG: 'stayInScreen', ON: 'on' }))))],
   ab_on_life_zero: [b('ab_on_life_zero', body(b('ab_game_over', undefined, { WIN: 'lose' })))],
   ab_draw_text: [b('ab_on_draw', body(b('ab_draw_text', { TEXT: val(b('text_join', { ADD0: s('Score: '), ADD1: val(b('ab_score')) })), X: n(0), Y: n(0) })))],

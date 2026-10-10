@@ -272,6 +272,8 @@ class Converter {
         return this.api('sprites.setOutline', [this.spriteIn(b), { k: 'num', v: Number(f('OUTLINE')) }], id);
       case 'ab_sprite_set_image':
         return this.api('sprites.setImage', [this.spriteIn(b), this.en('image', f('IMAGE'))], id);
+      case 'ab_sprite_stay_in_screen':
+        return this.api('sprites.setFlag', [this.spriteIn(b), { k: 'enum', type: 'flag', v: 'stayInScreen' }, { k: 'bool', v: true }], id);
       case 'ab_sprite_set_flag':
         return this.api('sprites.setFlag', [this.spriteIn(b), this.en('flag', f('FLAG')), { k: 'bool', v: f('ON') === 'on' }], id);
       case 'ab_sprite_animate':

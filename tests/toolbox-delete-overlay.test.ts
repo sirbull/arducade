@@ -5,13 +5,14 @@ import { ToolboxDeleteOverlay } from '../src/ui/toolbox-delete-overlay';
 
 function setup(visible = true) {
   const div = document.createElement('div');
+  div.innerHTML = '<svg><g class="blocklyFlyout"><path class="blocklyFlyoutBackground" /></g></svg>';
   div.getBoundingClientRect = () => ({ top: 10, bottom: 610, left: 20, height: 600 }) as DOMRect;
   const originalRect = vi.fn(() => new Blockly.utils.Rect(10, 610, 20, 520));
   const flyout = {
     autoClose: false,
     isVisible: () => visible,
     setVisible: (value: boolean) => { visible = value; },
-    getWidth: () => 350,
+    getWidth: vi.fn(() => 350),
     getClientRect: originalRect,
   };
   let listener: (event: Blockly.Events.Abstract) => void;
@@ -50,4 +51,27 @@ it('keeps a previously closed palette closed after dragging', () => {
   drag(false);
   expect(flyout.isVisible()).toBe(false);
   target.dispose();
+});
+
+it('follows search result widths and visibility without workspace events', async () => {
+  const { target, flyout, div } = setup();
+  const button = div.querySelector<HTMLButtonElement>('.flyout-close')!;
+  const background = div.querySelector('.blocklyFlyoutBackground')!;
+  expect(button.style.left).toBe('452px');
+  for (const width of [220, 160, 480]) {
+    flyout.getWidth.mockReturnValue(width);
+    background.setAttribute('d', `M 0 0 H ${width} V 600 Z`);
+    await Promise.resolve();
+    expect(button.style.left).toBe(`${150 + width - 48}px`);
+    expect(button.hidden).toBe(false);
+  }
+  flyout.setVisible(false);
+  div.querySelector('.blocklyFlyout')!.setAttribute('style', 'display: none');
+  await Promise.resolve();
+  expect(button.hidden).toBe(true);
+  target.dispose();
+  flyout.getWidth.mockReturnValue(300);
+  background.setAttribute('d', 'M 0 0 H 300 Z');
+  await Promise.resolve();
+  expect(button.style.left).toBe('582px');
 });

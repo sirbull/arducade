@@ -11,6 +11,7 @@ export class ToolboxDeleteOverlay extends Blockly.DeleteArea {
   private closeButton = document.createElement('button');
   private restorePalette = false;
   private originalFlyoutRect?: Blockly.Flyout['getClientRect'];
+  private flyoutObserver?: MutationObserver;
   private change = (event: Blockly.Events.Abstract) => {
     if (event.type === Blockly.Events.TOOLBOX_ITEM_SELECT || event.type === Blockly.Events.VIEWPORT_CHANGE) this.placeClose();
     if (event.type !== Blockly.Events.BLOCK_DRAG) return;
@@ -57,6 +58,15 @@ export class ToolboxDeleteOverlay extends Blockly.DeleteArea {
       // never reserve a delete area over the space freed during the drag.
       this.originalFlyoutRect = flyout.getClientRect;
       flyout.getClientRect = () => null;
+      // Search can resize the palette without a toolbox or viewport event.
+      // Observe its background geometry and visibility after Blockly updates it.
+      const root = ws.getInjectionDiv().querySelector('.blocklyFlyout');
+      if (root) {
+        this.flyoutObserver = new MutationObserver(() => this.placeClose());
+        this.flyoutObserver.observe(root, { attributes: true, attributeFilter: ['style', 'transform'] });
+        const background = root.querySelector('.blocklyFlyoutBackground');
+        if (background) this.flyoutObserver.observe(background, { attributes: true, attributeFilter: ['d'] });
+      }
     }
     ws.getComponentManager().addComponent({
       component: this,
@@ -64,6 +74,7 @@ export class ToolboxDeleteOverlay extends Blockly.DeleteArea {
       weight: -1,
     });
     ws.addChangeListener(this.change);
+    this.placeClose();
   }
 
   private width() {
@@ -93,6 +104,7 @@ export class ToolboxDeleteOverlay extends Blockly.DeleteArea {
   override onDragExit() { this.overlay.classList.remove('active'); }
 
   dispose() {
+    this.flyoutObserver?.disconnect();
     const flyout = this.ws.getFlyout() as Blockly.Flyout | null;
     if (flyout && this.originalFlyoutRect) flyout.getClientRect = this.originalFlyoutRect;
     if (this.restorePalette) flyout?.setVisible(true);

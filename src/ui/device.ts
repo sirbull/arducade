@@ -8,6 +8,7 @@ import { hasErrors, validateProfile, profileToConfigH } from '../hw/profile';
 import { t } from '../i18n/i18n';
 import type { Diagnostic } from '../ir/ir';
 import { CORE_HEADERS } from '../project/sketch';
+import { downloadFile, pickTextFile, safeFileName } from '../project/store';
 import { resetAndRequestPort, touch1200, uploadAvr109 } from '../upload/avr109';
 import { parseHex, serialApi, sleep, UploadError, type SerialPortLike } from '../upload/serial';
 import { uploadStk500v1 } from '../upload/stk500v1';
@@ -36,6 +37,8 @@ export class DeviceTools {
     $('#btn-compile').addEventListener('click', () => void this.compile());
     $('#btn-upload').addEventListener('click', () => void this.upload());
     $('#btn-sketch').addEventListener('click', () => this.app.downloadSketch());
+    $('#btn-hex-download').addEventListener('click', () => void this.downloadHex());
+    $('#btn-hex-upload').addEventListener('click', () => void this.pickHex());
   }
 
   private chip(): Chip | null {
@@ -158,7 +161,39 @@ export class DeviceTools {
     }
   }
 
-  async upload() {
+  private async downloadHex() {
+    if (this.busy) return;
+    this.busy = true;
+    try {
+      const out = await this.compileNow();
+      if (out) downloadFile(`${safeFileName(this.app.project.name)}.hex`, out.hex, 'application/octet-stream');
+    } finally {
+      this.busy = false;
+    }
+  }
+
+  /** Uploads someone else's .hex. Confirmed in a dialog so requestPort gets a fresh click. */
+  private async pickHex() {
+    if (this.busy) return;
+    const file = await pickTextFile('.hex');
+    if (!file) return;
+    try {
+      parseHex(file.text);
+    } catch {
+      toast(t('device.badHex'), 'error');
+      return;
+    }
+    const chip = this.chip();
+    const d = openDialog(t('device.uploadHex'));
+    d.body.append(h('p', {}, t('device.uploadHexConfirm', { file: file.name, chip: chip?.name ?? '?' })));
+    d.footer.append(
+      h('button', { onclick: () => d.close() }, t('ui.cancel')),
+      h('button', { class: 'primary', onclick: () => { d.close(); void this.upload(file.text); } }, t('device.upload')),
+    );
+  }
+
+  /** Compiles and uploads the game, or uploads the given Intel HEX as is. */
+  async upload(hex?: string) {
     if (this.busy) return;
     const chip = this.chip();
     if (!chip) return;
@@ -183,13 +218,20 @@ export class DeviceTools {
         this.status('');
         return;
       }
-      const out = await this.compileNow();
-      if (!out) return;
-      if (out.flash > usableFlash(chip)) {
+      if (hex === undefined) {
+        const out = await this.compileNow();
+        if (!out) return;
+        if (out.flash > usableFlash(chip)) {
+          toast(t('device.tooBig'), 'error');
+          return;
+        }
+        hex = out.hex;
+      }
+      const program = parseHex(hex);
+      if (program.length > usableFlash(chip)) {
         toast(t('device.tooBig'), 'error');
         return;
       }
-      const program = parseHex(out.hex);
       const progress = (stage: string, f: number) => this.status(t(`upload.${stage}`, { percent: Math.round(f * 100) }));
       if (chip.upload === 'stk500v1') {
         await uploadStk500v1(port, program, { bauds: chip.baud ?? [115200, 57600], pageSize: PAGE_SIZE[chip.id] ?? 128, signature: chip.signature, progress });

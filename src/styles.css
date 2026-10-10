@@ -357,6 +357,8 @@ input[type='number'] {
 }
 
 /* Device */
+.device-advanced { margin-top: 8px; }
+.device-advanced summary { cursor: pointer; padding: 8px 0; color: var(--muted); }
 .device .row {
   margin-bottom: 8px;
 }

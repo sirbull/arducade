@@ -79,5 +79,13 @@ it('cycles display colors immediately and preserves game pixels', () => {
   expect(buffer[0]).toBe(1); expect(buffer.slice(1).every(v => v === 0)).toBe(true);
   expect(runner.cyclePixelColor()).toBe('white');
   display.show(new Uint8Array(1024).fill(255), true);
+  expect(pixels().every((v, i) => v === (i % 4 === 3 ? 255 : 0))).toBe(true);
+  display.show(new Uint8Array(1024), false);
+  runner.cyclePixelColor();
+  expect(pixels().every((v, i) => v === (i % 4 === 3 ? 255 : 0))).toBe(true);
+  runner.clearScreen();
   expect(pixels().some((v, i) => i % 4 !== 3 && v > 0)).toBe(true);
+  runner.running = true;
+  runner.clearScreen();
+  expect(pixels().every((v, i) => v === (i % 4 === 3 ? 255 : 0))).toBe(true);
 });

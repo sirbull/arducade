@@ -177,9 +177,6 @@ export class Runner {
   private show(buffer: Uint8Array, inverted: boolean) {
     this.lastBuffer.set(buffer);
     this.lastInverted = inverted;
-    // Only replace a visually blank frame; keep the game's buffer untouched.
-    const blank = buffer.every(byte => byte === (inverted ? 255 : 0));
-    if (blank) { buffer = this.splash; inverted = false; }
     const [r, g, b] = PIXEL_RGB[this.pixelColor];
     const d = this.image.data;
     for (let y = 0; y < 64; y++) {
@@ -197,7 +194,7 @@ export class Runner {
   }
 
   clearScreen() {
-    this.show(new Uint8Array(1024), false);
+    this.show(this.running ? new Uint8Array(1024) : this.splash, false);
   }
 
   /** Starts a game from generated JavaScript. */
@@ -231,6 +228,7 @@ export class Runner {
     this.syncInput();
     const hooks = hooksFactory(engine, (v: number) => (v << 16) >> 16, div16, mod16, engine.loopGuard);
     this.running = true;
+    this.clearScreen();
     this.events.onState?.();
     try {
       await engine.begin(hooks);

@@ -66,6 +66,7 @@ export class TextEditor {
       tabSize: 4,
       insertSpaces: true,
       scrollBeyondLastLine: false,
+      padding: { top: 16 },
       theme: "vs-dark",
       ariaLabel: language === "python" ? "Python" : "JavaScript",
     });

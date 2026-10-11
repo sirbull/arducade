@@ -5,6 +5,7 @@ import { FONT_5X7 } from '../shared/font';
 import { BUTTON_IDS } from '../engine/enums';
 import type { GameHooks, JsResult } from '../gen/js';
 import { div16, mod16 } from './intmath';
+import { Debugger } from './debugger';
 import { Engine, LoopError, StopSignal } from './engine';
 
 export type PixelColor = 'white' | 'blue' | 'yellow';
@@ -58,14 +59,46 @@ const KEYS: string[][] = [
 ];
 
 export interface RunnerEvents {
-  onError(key: string, detail?: string): void;
+  onError(key: string, detail?: string, id?: string): void;
   onSkippedCpp(): void;
   onInput?(buttons: number): void;
   onState?(): void;
+  onDebug?(): void;
 }
 
 export class Runner {
   private engine: Engine | null = null;
+  private hooks: GameHooks | null = null;
+  readonly debugger = new Debugger(() => {
+    this.paused = this.debugger.paused;
+    this.engine?.setPaused(this.paused);
+    if (this.paused) { this.tone(0); this.releaseAll(); }
+    else if (this.engine) this.engine.resetLoopGuard();
+    this.events.onState?.();
+    this.events.onDebug?.();
+  });
+
+  inspect() {
+    return {
+      variables: { ...this.hooks?.inspect?.(), ...(this.debugger.paused ? this.debugger.locals : {}) },
+      sprites: this.engine?.sprites.flatMap((sprite, id) => sprite.alive ? [{ id, kind: sprite.kind,
+        x: this.engine!.getProp(id, 0), y: this.engine!.getProp(id, 1),
+        vx: this.engine!.getProp(id, 2), vy: this.engine!.getProp(id, 3) }] : []) ?? [],
+      frame: this.engine?.frameCount ?? 0,
+    };
+  }
+
+  debugResume(mode: 'run' | 'block' | 'frame' = 'run') {
+    if (!this.engine) return;
+    this.debugger.resume(mode);
+  }
+
+  setDebug(enabled: boolean) {
+    this.releaseAll();
+    this.debugger.enabled = enabled;
+    if (!enabled) this.debugResume();
+    this.events.onDebug?.();
+  }
   private raf = 0;
   private heldKeys = new Set<string>();
   private keys = 0;
@@ -200,10 +233,11 @@ export class Runner {
   /** Starts a game from generated JavaScript. */
   async start(game: JsResult, storageKey: string, maxSprites = 16, tiny = false) {
     this.stop();
+    if (this.debugger.enabled) this.debugger.pause();
     let hooksFactory: (E: Engine, ...helpers: unknown[]) => GameHooks;
     try {
       // The generated code only uses the engine and the helpers passed in.
-      hooksFactory = new Function('E', '$w', '$div', '$mod', '$lg', game.code) as typeof hooksFactory;
+      hooksFactory = new Function('E', '$w', '$div', '$mod', '$lg', '$debug', game.code) as typeof hooksFactory;
     } catch (err) {
       this.events.onError('sim.compileError', String(err));
       return;
@@ -226,7 +260,11 @@ export class Runner {
     });
     this.engine = engine;
     this.syncInput();
-    const hooks = hooksFactory(engine, (v: number) => (v << 16) >> 16, div16, mod16, engine.loopGuard);
+    const hooks = hooksFactory(engine, (v: number) => (v << 16) >> 16, div16, mod16, engine.loopGuard, (index: number, locals: Record<string, unknown>) => {
+      if (this.engine !== engine || engine.isStopped) throw new StopSignal();
+      return this.debugger.checkpoint(game.debugIds?.[index] ?? '', locals);
+    });
+    this.hooks = hooks;
     this.running = true;
     this.clearScreen();
     this.events.onState?.();
@@ -239,7 +277,9 @@ export class Runner {
     if (this.engine !== engine || engine.isStopped) return;
     const tick = () => {
       if (this.engine !== engine || engine.isStopped) return;
-      if (!this.paused) engine.frame().catch((err) => {
+      if (!this.paused) engine.frame().then(rendered => {
+        if (rendered && this.engine === engine) { this.debugger.frameEnd(); this.events.onDebug?.(); }
+      }).catch((err) => {
         if (this.engine === engine) this.fail(err);
       });
       this.raf = requestAnimationFrame(tick);
@@ -249,9 +289,10 @@ export class Runner {
 
   private fail(err: unknown) {
     if (err instanceof StopSignal) return;
+    const id = this.debugger.location;
     this.stop();
-    if (err instanceof LoopError) this.events.onError('sim.infiniteLoop');
-    else this.events.onError('sim.runtimeError', err instanceof Error ? err.message : String(err));
+    if (err instanceof LoopError) this.events.onError('sim.infiniteLoop', undefined, id);
+    else this.events.onError('sim.runtimeError', err instanceof Error ? err.message : String(err), id);
   }
 
   setMuted(muted: boolean) {
@@ -263,6 +304,11 @@ export class Runner {
 
   togglePause() {
     if (!this.engine) return;
+    if (this.debugger.enabled) {
+      if (this.paused) this.debugResume();
+      else this.debugger.pause();
+      return;
+    }
     this.paused = !this.paused;
     this.engine.setPaused(this.paused);
     if (this.paused) { this.tone(0); this.releaseAll(); }
@@ -272,6 +318,8 @@ export class Runner {
   stop() {
     cancelAnimationFrame(this.raf);
     if (this.engine) this.engine.stop();
+    this.debugger.reset(new StopSignal());
+    this.hooks = null;
     this.engine = null;
     this.running = false;
     this.paused = false;

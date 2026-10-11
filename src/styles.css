@@ -1228,6 +1228,8 @@ button.brand:hover:not(:disabled) { background: none; color: var(--text); }
   display: flex;
   flex-direction: column;
   gap: 16px;
+  margin-inline: -16px;
+  padding-inline: 16px;
 }
 .side-content > * { flex-shrink: 0; }
 .side-device-bar .meter-summary { width: 100%; }
@@ -1663,6 +1665,33 @@ dialog.docs-dialog[open] { display: flex; flex-direction: column; }
 .docs-picture .blocklyMainBackground { stroke: none; fill: transparent; }
 .docs-picture + p { margin-top: 0; }
 #btn-docs::before { content: '?'; margin-right: 7px; font-weight: 700; }
+/* The same documentation as its own page (docs), opened from the home page. */
+.show-docs #btn-docs { display: none; }
+.docs-page {
+  --home-pad: max(24px, calc((100vw - 1240px) / 2));
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 32px var(--home-pad) 0;
+}
+.docs-page h1 { margin: 0 0 24px; font-size: clamp(26px, 4vw, 38px); }
+.docs-page h1:focus { outline: none; }
+.docs-page .docs { flex: 1; min-height: 0; display: grid; grid-template-columns: 240px 1fr; gap: 32px; }
+.docs-page .docs-nav { padding-bottom: 32px; border-right: 1px solid var(--border); padding-right: 16px; }
+.docs-page .docs-content { padding-bottom: 64px; }
+.docs-page .docs-content h2 { font-size: 28px; margin-bottom: 16px; }
+.docs-page .docs-content p { font-size: 16px; }
+@media (max-width: 700px) {
+  .docs-page { padding: 20px 16px 0; }
+  .docs-page h1 { margin-bottom: 12px; }
+  .docs-page .docs { grid-template-columns: 1fr; grid-template-rows: auto 1fr; gap: 10px; }
+  .docs-page .docs-nav { border-right: 0; padding: 0 0 6px; }
+}
+/* Narrow screens stack the page: keep the text as the scrolling part. */
+@media (max-width: 600px) {
+  .docs-page { height: calc(100dvh - 52px); }
+}
 @media (max-width: 700px) {
   .dialog-body.docs { grid-template-columns: 1fr; grid-template-rows: auto 1fr; gap: 10px; }
   .docs-nav { flex-direction: row; overflow-x: auto; padding-bottom: 6px; }
@@ -1689,7 +1718,7 @@ dialog.docs-dialog[open] { display: flex; flex-direction: column; }
   .side { display: grid; grid-template-columns: 310px minmax(0, 1fr); align-content: start; gap: 12px 16px; max-height: 42dvh; padding: 12px 16px; overflow-y: auto; }
   .side-content { display: contents; }
   .side-content > .sim-shell:not(.standalone) { grid-column: 1; grid-row: 1 / span 5; position: sticky; top: 0; }
-  .side-content > :not(.sim-shell), .side-device-bar { grid-column: 2; }
+  .side-content > :not(.sim-shell), .side-debug-tools, .side-device-bar { grid-column: 2; }
   .side-device-bar { position: sticky; bottom: -12px; margin: 0 -16px -12px; padding-bottom: 12px; }
   .sim-shell > .keys { display: none; }
   .pane.assets.active { grid-template-columns: 200px minmax(0, 1fr); }
@@ -1711,6 +1740,9 @@ dialog.docs-dialog[open] { display: flex; flex-direction: column; }
 .docs-wiring caption { text-align: left; font-weight: 600; padding: 12px 0; }
 .docs-wiring th, .docs-wiring td { border: 1px solid var(--border); padding: 10px; text-align: left; }
 .docs-wiring thead { background: var(--panel-2); }
+.docs-shortcuts th { width: 40%; white-space: nowrap; font-weight: 400; }
+.docs-shortcuts .keys { display: inline-flex; gap: 4px; }
+.docs-shortcuts kbd { display: inline-block; min-width: 1.8em; padding: 2px 6px; border: 1px solid var(--border); border-bottom-width: 3px; border-radius: 0; background: var(--panel-2); font-family: inherit; font-size: 13px; font-weight: 600; line-height: 1.4; text-align: center; }
 .docs-figure a:focus-visible, .docs-illustrated summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
 /* Let the detailed vector wiring guide stay readable in the scrolling document. */
 .docs-figure img[src$='/pro-micro-wiring.svg'] { max-height: none; }
@@ -1723,3 +1755,98 @@ dialog.docs-dialog[open] { display: flex; flex-direction: column; }
 .layout.side-collapsed { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); }
 .layout.side-collapsed > .side { display: none; }
 .layout.side-collapsed > .editor { border-right: none; border-bottom: none; }
+
+/* Debugger stays beside the game, with an optional non-modal floating panel. */
+.debug-panel[hidden] { display: none; }
+#btn-debug[aria-expanded="true"] { color: var(--accent); }
+.debug-panel { position: relative; padding: 12px 16px; min-width: 0; border-radius: 0; }
+.debug-panel:not(.floating) { margin-inline: -16px; border-inline: 0; background: var(--panel); box-shadow: none; resize: none; }
+.debug-head { display: flex; flex-wrap: nowrap; align-items: center; gap: 12px; padding-block: 6px; }
+.debug-head strong { margin-right: auto; }
+.debug-panel button { min-height: 44px; border-radius: 0; white-space: normal; }
+.debug-body { overflow: auto; min-height: 0; }
+.debug-body[hidden] { display: none; }
+.debug-panel.enabled { display: flex; flex-direction: column; height: 480px; min-height: 360px; max-height: calc(100dvh - 24px); resize: vertical; overflow: hidden; }
+.debug-panel.enabled .debug-body { flex: 1; }
+.side.debug-active > .side-debug-tools { display: none; }
+.side.debug-docked { row-gap: 0; }
+.side.debug-docked .side-content > :not(.sim-shell):not(.debug-panel) { display: none; }
+.side.debug-docked .debug-panel.enabled:not(.floating) { flex: 1; height: auto; min-height: 260px; max-height: none; border-bottom: 0; resize: none; }
+.debug-panel h4 { margin: 16px 0 6px; font-size: 13px; }
+.debug-status { font-size: 12px; }
+.debug-controls { display: flex; flex-wrap: nowrap; gap: 12px; padding: 6px; }
+.debug-controls button { flex: 0 1 32px; min-width: 0; }
+.debug-values { width: 100%; border-collapse: collapse; font-size: 12px; table-layout: fixed; }
+.debug-values :is(th, td) { padding: 7px; border-bottom: 1px solid var(--border); text-align: left; overflow-wrap: anywhere; }
+.debug-values td { font-family: monospace; }
+.debug-changed { color: var(--accent); background: var(--panel); }
+.debug-sprite { font: 12px monospace; padding: 8px 0; border-bottom: 1px solid var(--border); overflow-wrap: anywhere; }
+.debug-panel select { width: 100%; min-height: 44px; border-radius: 0; margin-bottom: 6px; }
+.debug-breakpoint { display: flex; gap: 6px; margin-top: 6px; }
+.debug-breakpoint button:first-child { flex: 1; min-width: 0; text-align: left; overflow-wrap: anywhere; }
+.debug-breakpoint button:last-child { flex: 0 0 32px; }
+.debug-log :is(p, button) { font-size: 12px; overflow-wrap: anywhere; }
+.debug-log button { display: block; width: 100%; text-align: left; margin-top: 6px; }
+.debug-panel.floating { position: fixed; padding-left: 24px; z-index: 90; width: min(420px, calc(100vw - 24px)); min-width: min(296px, calc(100vw - 24px)); max-width: calc(100vw - 24px); box-shadow: 0 8px 32px #0006; resize: both; }
+.debug-panel.floating .debug-drag { cursor: move; touch-action: none; }
+.show-home .debug-panel { display: none; }
+@media (min-width: 601px) and (max-width: 900px) {
+  .side-content > .debug-panel:not(.floating) { grid-column: 2; grid-row: 1; }
+  .debug-panel:not(.floating) { margin-left: 0; }
+}
+@media (max-width: 600px) {
+  .debug-panel.floating { left: 12px; top: 60px; width: calc(100vw - 24px); resize: vertical; }
+}
+.debug-panel:not(.enabled) :is(.debug-actions, .debug-sizing) { display: none; }
+.debug-panel .debug-body { display: flex; flex-direction: column; overflow: hidden; }
+.debug-panel .debug-body[hidden] { display: none; }
+.debug-tabs { display: flex; flex-wrap: nowrap; gap: 12px; padding: 6px; margin-top: 6px; margin-bottom: 12px; flex-shrink: 0; }
+.debug-tabs button { flex: 0 0 32px; }
+.debug-tabs [aria-selected="true"] { border-color: var(--accent); color: var(--accent); }
+.debug-section { overflow: auto; min-height: 0; flex: 1; padding-right: 4px; }
+.debug-section[hidden] { display: none; }
+.debug-section h4 { margin: 0 0 10px; font-size: 12px; font-weight: 500; color: var(--muted); }
+.debug-sizing { display: flex; justify-content: flex-end; gap: 12px; padding-block: 6px; }
+.debug-panel:not(.floating) .debug-sizing { display: none; }
+.debug-sizing button { font-size: 11px; padding: 4px 8px; }
+.debug-breakpoint-block > .blocklyPath { stroke: #c43636; stroke-width: 3px; stroke-dasharray: 7 3; }
+.debug-panel .debug-icon-button { position: relative; width: 32px; height: 32px; min-height: 32px; padding: 0; box-shadow: 0 2px 0 var(--border); }
+.debug-panel .debug-icon-button::before { content: ''; position: absolute; inset: -6px; }
+.debug-panel .debug-icon-button svg { width: 18px; height: 18px; }
+@media (min-width: 601px) and (max-width: 900px) {
+  .side.debug-docked { height: 42dvh; grid-template-rows: minmax(0, 1fr) auto; }
+  .side.debug-docked .side-content > .sim-shell:not(.standalone) { grid-row: 1 / span 2; }
+  .side.debug-docked .debug-panel.enabled:not(.floating) { min-height: 0; align-self: stretch; }
+  .side.debug-docked .side-device-bar { grid-row: 2; }
+}
+
+/* A compact launcher above the export section, with a 44px touch target. */
+.side-debug-tools { display: flex; justify-content: flex-end; align-items: center; min-height: 44px; padding: 6px; flex-shrink: 0; }
+.debug-launcher, .debug-icon-button { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; min-height: 44px; padding: 0; border-radius: 0; flex-shrink: 0; }
+.debug-launcher svg, .debug-icon-button svg { width: 20px; height: 20px; }
+.debug-launcher { position: relative; width: 32px; height: 32px; min-height: 32px; box-shadow: 0 2px 0 var(--border); }
+.debug-launcher::before { content: ''; position: absolute; inset: -6px; }
+.debug-launcher svg { width: 18px; height: 18px; }
+.debug-sizing .debug-icon-button { padding: 0; }
+
+/* A visible orange edge with a wider touch target for moving the window. */
+.debug-grip { position: absolute; inset: 0 auto 0 0; width: 22px; z-index: 1; cursor: grab; touch-action: none; user-select: none; border-radius: 0; }
+.debug-grip::before { content: ''; position: absolute; inset: 0 auto 0 0; width: 5px; background: #ff681f; }
+.debug-grip[hidden] { display: none; }
+.debug-grip:active, .debug-drag:active { cursor: grabbing; }
+.debug-grip:focus-visible { outline: 2px solid #ff681f; outline-offset: -2px; }
+.debug-drag { cursor: grab; touch-action: none; user-select: none; }
+
+/* Static, localized debugger illustrations in Help. */
+.docs-debug-preview { border: 1px solid var(--border); border-left: 5px solid #ff681f; border-radius: 0; padding: 14px; background: var(--panel); }
+.docs-debug-preview-head, .docs-debug-preview-tools, .docs-debug-label { display: flex; align-items: center; gap: 10px; }
+.docs-debug-preview-head strong { margin-right: auto; }
+.docs-debug-preview-tools { margin-top: 14px; flex-wrap: wrap; }
+.docs-debug-icon { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; flex: 0 0 40px; border: 1px solid var(--border); border-radius: 0; background: var(--panel-2); font-size: 22px; }
+.docs-debug-preview-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.docs-debug-preview-tabs span { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; font-size: 18px; border: 1px solid var(--border); border-radius: 0; }
+.docs-debug-preview-tabs span:first-child { border-color: var(--accent); }
+.docs-debug-changed { color: var(--accent); font-weight: bold; }
+.docs-debug-legend th:first-child { min-width: 160px; }
+.docs-debug-workflow { padding-left: 24px; }
+.docs-debug-workflow li { padding-left: 4px; margin: 12px 0; line-height: 1.6; }

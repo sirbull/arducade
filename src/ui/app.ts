@@ -19,6 +19,8 @@ import { sketchZip } from '../project/sketch';
 import { downloadFile, loadSettings, pickProjectFile, profiles as profileStore, projects as projectStore, safeFileName, saveSettings, type Settings } from '../project/store';
 import { readCartridge } from '../project/cartridge';
 import { saveCartridge } from './save-dialog';
+import { DebugPanel } from './debug-panel';
+import { bindSimulatorInput } from './simulator-input';
 import { Runner, type PixelColor } from '../sim/runner';
 import { BUTTON_IDS } from '../engine/enums';
 import { BackgroundsPane, ImagesPane, MapPane, TilesPane } from './assets-panes';
@@ -27,7 +29,8 @@ import type { TextEditor } from './text-editor';
 import { generateSource, parseSource, SourceError, type TextLanguage } from '../text/languages';
 import { CodeView } from './code-view';
 import { confirmDialog } from './dialogs';
-import { openDocs } from './docs';
+import { openDocs, renderDocs } from './docs';
+import { ALT, bindShortcuts, combo, MOD, trimBlocklyShortcuts } from './shortcuts';
 import { $, clear, h, toast } from './dom';
 import { loadTemplates, openGallery, starButton, thumbnail } from './gallery';
 import { allProfiles, loadServerProfiles, openProfileDialog, profileFromUrl, setSecretProfiles } from './profile-editor';
@@ -42,6 +45,8 @@ import { renderGuideCatalog, reachedStep } from './guide-catalog';
 
 // Picked once per page load so the header only changes on refresh.
 const headerImage = Math.floor(Math.random() * 5) + 1;
+/** The docs page lives at docs next to index.html. */
+const isDocsPath = () => /\/docs$/.test(location.pathname);
 
 const DEFAULT_SETTINGS: Settings = {
   language: 'en',
@@ -59,6 +64,7 @@ export class App {
   private comments?: CommentsPanel;
   private deleteOverlay?: ToolboxDeleteOverlay;
   runner!: Runner;
+  private debugPanel?: DebugPanel;
   build: BuildResult | null = null;
   private codeView!: CodeView;
   private textEditors: Partial<Record<TextLanguage, TextEditor>> = {};
@@ -74,7 +80,10 @@ export class App {
   private activeTab = 'blocks';
   private tabRequest = 0;
   private lastJs = '';
+  private lastDebugIds = '';
   private homeVisible = false;
+  private docsVisible = false;
+  private disposeDocs = () => {};
   private simStandalone = false;
   private simSize = 0;
   private hasProject = false;
@@ -95,9 +104,17 @@ export class App {
 
     this.codeView = new CodeView($('#code'));
     this.runner = new Runner($('#screen') as HTMLCanvasElement, {
-      onError: (key, detail) => this.simMessage(t(key) + (detail ? `: ${detail}` : ''), 'error'),
-      onSkippedCpp: () => this.simMessage(t('sim.skippedCpp'), 'info'),
-      onState: () => this.renderSimControls(),
+      onError: (key, detail, id) => {
+        const message = t(key) + (detail ? `: ${detail}` : '');
+        this.simMessage(message, 'error');
+        this.debugPanel?.log(message, id);
+      },
+      onSkippedCpp: () => {
+        const message = t('sim.skippedCpp');
+        this.simMessage(message, 'info'); this.debugPanel?.log(message);
+      },
+      onState: () => { this.renderSimControls(); this.debugPanel?.render(true); },
+      onDebug: () => this.debugPanel?.render(),
       onInput: (buttons) => {
         if (this.runner.running) this.guide.onInput(buttons);
         document.querySelectorAll<HTMLButtonElement>('.pad [data-btn]').forEach((button) => {
@@ -132,6 +149,17 @@ export class App {
     });
 
     this.injectWorkspace();
+    if (!this.debugPanel) {
+      this.debugPanel = new DebugPanel(this.runner, () => this.ws, () => {
+        clearTimeout(this.buildTimer); this.runBuild(false); this.restartSim();
+      }, id => {
+        if (!this.ws.getBlockById(id)) return;
+        this.selectTab('blocks');
+        this.ws.centerOnBlock(id);
+        this.ws.getBlockById(id)?.select();
+      });
+      $('#sim-shell').after(this.debugPanel.el);
+    }
     this.bindUi();
     setSecretProfiles(!!this.settings.secretTiny);
     await loadServerProfiles();
@@ -151,7 +179,8 @@ export class App {
 
     const last = this.settings.lastProjectId ? await projectStore.get(this.settings.lastProjectId).catch(() => undefined) : undefined;
     if (last) this.loadProject(last);
-    await this.showHome(false);
+    if (isDocsPath()) await this.showDocsPage(false);
+    else await this.showHome(false);
   }
 
   // Workspace -------------------------------------------------------------
@@ -175,6 +204,7 @@ export class App {
       sounds: false,
       media: 'blockly-media/',
     });
+    trimBlocklyShortcuts();
     // Keep toolbox blocks at a fixed size instead of following workspace zoom
     // (browser zoom still scales the whole UI).
     const flyout = this.ws.getFlyout() as Blockly.Flyout | null;
@@ -274,6 +304,7 @@ export class App {
     document.body.classList.remove('show-home');
     $('#home').hidden = true;
     $('#editor-layout').hidden = false;
+    this.debugPanel?.reset();
     this.project = p;
     this.runner.pixelColor = p.pixelColor ?? 'white';
     this.settings.pixelColor = this.runner.pixelColor;
@@ -326,10 +357,13 @@ export class App {
     }
     this.codeView.setCode(this.build.cpp.code);
     this.renderProblems(this.build.diagnostics);
+    this.debugPanel?.updateProgram(this.build.program);
     this.device.estimate();
     this.guide.update();
     this.scheduleSave();
-    if (forceStop || this.build.js.code !== this.lastJs) {
+    const debugIds = JSON.stringify(this.build.js.debugIds);
+    if (forceStop || this.build.js.code !== this.lastJs || debugIds !== this.lastDebugIds) {
+      this.lastDebugIds = debugIds;
       this.lastJs = this.build.js.code;
       this.runner.stop();
       this.runner.releaseAll();
@@ -360,6 +394,7 @@ export class App {
   }
 
   private showSelected(id: string | undefined) {
+    this.debugPanel?.select(id ?? '');
     const range = id ? this.build?.cpp.ranges.get(id) : undefined;
     this.codeView.highlight(range, this.activeTab === 'code');
   }
@@ -408,6 +443,7 @@ export class App {
       stop: '<rect x="6" y="6" width="12" height="12" fill="currentColor" stroke="none"/>',
       restart: '<path d="M4 10a8 8 0 1 1 1 8M4 4v6h6"/>',
       sound: '<path d="M11 5 6 9H3v6h3l5 4Z"/><path d="M15 8a6 6 0 0 1 0 8M18 5a10 10 0 0 1 0 14"/>',
+      bug: '<circle cx="12" cy="6" r="3"/><path d="M8 9h8v11H8zM12 9v11M8 11H4l-2-2M8 15H2M8 18H4l-2 3M16 11h4l2-2M16 15h6M16 18h4l2 3M10 3 8 1M14 3l2-2"/>',
       color: '<circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 1 0 16Z" fill="currentColor"/>',
       muted: '<path d="M11 5 6 9H3v6h3l5 4Z"/><path d="m16 9 5 6m0-6-5 6"/>',
     };
@@ -419,6 +455,7 @@ export class App {
       ['btn-restart', 'restart', 'sim.restart'],
       ['btn-mute', this.runner.muted ? 'muted' : 'sound', this.runner.muted ? 'sim.unmute' : 'sim.mute'],
       ['btn-sim-color', 'color', 'sim.color'],
+      ['btn-debug', 'bug', this.runner.debugger.enabled ? 'debug.hide' : 'debug.show'],
     ];
     for (const [id, icon, key] of controls) {
       const button = $( '#' + id);
@@ -433,6 +470,7 @@ export class App {
     colorButton.title = `${t('sim.color')}: ${t(`pixel.${this.runner.pixelColor}Color`)}`;
     colorButton.setAttribute('aria-label', colorButton.title);
     $('#btn-mute').setAttribute('aria-pressed', String(!this.runner.muted));
+    $('#btn-debug').setAttribute('aria-expanded', String(this.runner.debugger.enabled));
     // Only left and right on an ATtiny85 console. Both together are A.
     document.querySelectorAll('.pad').forEach((pad) => pad.classList.toggle('tiny', this.isTiny()));
   }
@@ -610,6 +648,7 @@ export class App {
       this.guide.render();
     }
     if (this.homeVisible) await this.showHome(false);
+    if (this.docsVisible) await this.showDocsPage(false);
     if (profileChanged && this.project) {
       const p = await this.defaultProfile();
       if (await confirmDialog(t('settings.profile'), t('settings.applyProfile', { name: p.name }), t('ui.yes'))) this.setProfile(p);
@@ -649,15 +688,51 @@ export class App {
 
   // Projects --------------------------------------------------------------
 
+  /** Saves the project open in the editor before the editor is hidden. */
+  private async saveOpenProject() {
+    if (this.homeVisible || this.docsVisible || !this.hasProject) return;
+    clearTimeout(this.buildTimer);
+    clearTimeout(this.saveTimer);
+    this.project.name = ($('#project-name') as HTMLInputElement).value.trim() || t('project.defaultName');
+    this.project.blocks = Blockly.serialization.workspaces.save(this.ws);
+    this.project.modified = Date.now();
+    await projectStore.save(this.project).catch(() => toast(t('project.saveError'), 'error'));
+  }
+
+  private hideDocsPage() {
+    this.disposeDocs();
+    this.disposeDocs = () => {};
+    this.docsVisible = false;
+    document.body.classList.remove('show-docs');
+    $('#docs-page').hidden = true;
+  }
+
+  /** The documentation as its own page at docs, opened from the home page. */
+  async showDocsPage(push = true) {
+    if (push && !isDocsPath()) history.pushState(null, '', 'docs');
+    await this.saveOpenProject();
+    this.runner.stop();
+    this.disposeDocs();
+    this.homeVisible = false;
+    this.homeRender++;
+    this.docsVisible = true;
+    document.body.classList.add('show-home', 'show-docs');
+    $('#home').hidden = true;
+    $('#editor-layout').hidden = true;
+    const page = $('#docs-page');
+    page.hidden = false;
+    clear(page);
+    const heading = h('h1', { tabindex: '-1' }, t('docs.title'));
+    const body = h('div');
+    page.append(heading, body);
+    this.disposeDocs = renderDocs(body, this.settings.theme as ThemeId, undefined, !!this.settings.secretTiny);
+    heading.focus();
+  }
+
   async showHome(save = true) {
-    if (save && !this.homeVisible && this.hasProject) {
-      clearTimeout(this.buildTimer);
-      clearTimeout(this.saveTimer);
-      this.project.name = ($('#project-name') as HTMLInputElement).value.trim() || t('project.defaultName');
-      this.project.blocks = Blockly.serialization.workspaces.save(this.ws);
-      this.project.modified = Date.now();
-      await projectStore.save(this.project).catch(() => toast(t('project.saveError'), 'error'));
-    }
+    if (save) await this.saveOpenProject();
+    if (isDocsPath()) history.pushState(null, '', './');
+    this.hideDocsPage();
     this.runner.stop();
     this.runner.clearScreen();
     this.homeVisible = true;
@@ -675,7 +750,8 @@ export class App {
       h('div', { class: 'home-intro' }, heading, h('p', { class: 'muted' }, t('home.help')),
       h('div', { class: 'row' },
         h('button', { class: 'primary', onclick: async () => this.loadProject(newProject(t('project.defaultName'), await this.defaultProfile())) }, t('home.create')),
-        h('button', { onclick: () => this.importProject() }, t('menu.import')))),
+        h('button', { onclick: () => this.importProject() }, t('menu.import')),
+        h('button', { class: 'home-docs', onclick: () => void this.showDocsPage() }, t('docs.title')))),
       projectsSection, templatesSection, guidesSection);
     heading.focus();
     projectsSection.append(h('h2', {}, t('projects.title')), h('p', { class: 'muted' }, t('ui.loading')));
@@ -855,6 +931,11 @@ export class App {
   private bindUi() {
     document.querySelectorAll<HTMLElement>('.tabs [data-tab]').forEach((b) => b.addEventListener('click', () => this.selectTab(b.dataset.tab!)));
     $('#btn-home').addEventListener('click', () => this.showHome());
+    // Back and forward between the home page and the docs page.
+    window.addEventListener('popstate', () => {
+      if (isDocsPath()) void this.showDocsPage(false);
+      else if (this.docsVisible) void this.showHome(false);
+    });
     $('#btn-new').addEventListener('click', () => this.newFromGallery());
     $('#btn-import').addEventListener('click', () => this.importProject());
     $('#btn-export').addEventListener('click', () => this.exportProject());
@@ -939,6 +1020,7 @@ export class App {
       $('#sim').focus();
     });
     $('#btn-sim-close').addEventListener('click', () => {
+      this.runner.releaseAll();
       this.simStandalone = false;
       this.renderSimView();
       $('#btn-sim-view').focus();
@@ -949,6 +1031,7 @@ export class App {
       $('#sim').focus();
     });
     this.renderSimControls();
+    $('#btn-debug').addEventListener('click', () => this.debugPanel?.toggleVisibility());
     $('#btn-run').addEventListener('click', () => {
       if (this.runner.running) {
         this.runner.resumeAudio();
@@ -983,29 +1066,20 @@ export class App {
       this.settings.muted = this.runner.muted;
       saveSettings(this.settings);
     });
-    document.querySelectorAll<HTMLButtonElement>('.pad [data-btn]').forEach((b) => {
-      const id = b.dataset.btn as (typeof BUTTON_IDS)[number];
-      const down = (e: PointerEvent) => {
-        e.preventDefault();
-        $('#sim').focus({ preventScroll: true });
-        b.setPointerCapture(e.pointerId);
-        this.runner.setTouch(id, true);
-      };
-      const up = () => this.runner.setTouch(id, false);
-      b.addEventListener('pointerdown', down);
-      b.addEventListener('pointerup', up);
-      b.addEventListener('lostpointercapture', up);
-      b.addEventListener('pointercancel', up);
-    });
+    bindSimulatorInput($('#sim'), this.runner, () => {});
     const editable = (el: EventTarget | null) =>
       el instanceof HTMLElement && (el.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName) || !!el.closest('.blocklyWidgetDiv, dialog, .pixel-editor, .language-picker, .monaco-editor'));
     window.addEventListener('keydown', (e) => {
       if (e.code === 'Escape' && this.simStandalone) {
+        this.runner.releaseAll();
         this.simStandalone = false;
         this.renderSimView();
         $('#btn-sim-view').focus();
         return;
       }
+      if (e.target instanceof HTMLElement && e.target.closest('.debug-panel')) return;
+      if (e.target instanceof HTMLButtonElement && !e.target.hasAttribute('data-btn')
+        && (e.code === 'Enter' || e.code === 'Space')) return;
       if (this.homeVisible || editable(e.target) || e.ctrlKey || e.metaKey || e.altKey) return;
       if (this.runner.keyDown(e)) {
         e.preventDefault();
@@ -1013,8 +1087,32 @@ export class App {
       }
     });
     window.addEventListener('keyup', (e) => this.runner.keyUp(e));
+    const searchBox = $('.block-search') as HTMLElement;
+    const tabs = Array.from(document.querySelectorAll<HTMLElement>('.tabs [data-tab]'));
+    bindShortcuts({
+      save: () => {
+        // Commit a name being typed before saving.
+        if (document.activeElement === $('#project-name')) (document.activeElement as HTMLElement).blur();
+        this.exportProject();
+      },
+      run: () => $('#btn-restart').click(),
+      tab: (i) => tabs[i]?.click(),
+      search: () => {
+        if (this.project.source) return;
+        if (this.activeTab !== 'blocks') this.selectTab('blocks');
+        if (searchBox.classList.contains('open')) (searchBox.querySelector('input') as HTMLInputElement).focus();
+        else (searchBox.querySelector('.block-search-toggle') as HTMLButtonElement).click();
+      },
+      help: () => openDocs(this.settings.theme as ThemeId, 'shortcuts', !!this.settings.secretTiny),
+    }, () => this.homeVisible || !!document.querySelector('dialog[open]'), editable);
+    $('#btn-export').setAttribute('aria-keyshortcuts', MOD === '⌘' ? 'Meta+S' : 'Control+S');
+    $('#btn-export').title = combo(MOD, 'S');
+    tabs.forEach((tab, i) => { tab.setAttribute('aria-keyshortcuts', `Alt+${i + 1}`); tab.title = combo(ALT, String(i + 1)); });
     window.addEventListener('blur', () => this.runner.releaseAll());
+    document.addEventListener('visibilitychange', () => { if (document.hidden) this.runner.releaseAll(); });
+    $('#sim').addEventListener('focusout', event => {
+      if (!(event.relatedTarget instanceof Node) || !$('#sim').contains(event.relatedTarget)) this.runner.releaseAll();
+    });
     window.addEventListener('resize', () => Blockly.svgResize(this.ws));
   }
 }
-

@@ -1,5 +1,12 @@
 # Hardware profile configuration
 
+For the user guide, open **Help → Hardware and profiles** in ArduCade
+(**Hjelp → Maskinvare og profiler** in Norwegian). That section explains each
+microcontroller and display, browser compilation versus sketch export, custom
+profile setup, example wiring, safe mode changes and troubleshooting. Its tables
+read the editor’s hardware definitions directly. This file documents the profile
+format and implementation constraints.
+
 Profiles retain format `ardublocks-profile`, version 1. Optional `configurationMode`,
 `boardId`, `clockHz` and `sound.enabled` fields extend the existing structure.
 Missing mode means Microcontroller: legacy profiles are never assigned a guessed board.

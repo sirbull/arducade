@@ -1,1 +1,1746 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="1700" viewBox="0 0 1500 1700" role="img" aria-labelledby="title desc"><title id="title">Pro Micro + SSD1306: component connection guide</title><desc id="desc">Top-view vector components with individually colored wires and named Pro Micro terminals. Display and button connections come from the ArduCade hardware profile. The battery holder, switch and 10 kiloohm resistor are shown as unconnected reference components until their specifications are known.</desc><rect x="0" y="0" width="1500" height="1700" fill="#f2f6f8" stroke="none" stroke-width="1"/><g font-family="Arial, Helvetica, sans-serif"><text x="48" y="61" font-size="37" fill="#172c3d" text-anchor="start" font-weight="700">PRO MICRO + SSD1306</text><text x="48" y="95" font-size="21" fill="#526677" text-anchor="start" font-weight="400">ArduCade · SPI · 5 V / 16 MHz · components viewed from above</text><text x="48" y="133" font-size="19" fill="#172c3d" text-anchor="start" font-weight="400">Wires end at named Pro Micro pins. Matching pin names mean the same connection.</text><path d="M690 88 L720 88" fill="none" stroke="#394651" stroke-width="4" stroke-linejoin="miter"/><text x="729" y="95" font-size="17" fill="#172c3d" text-anchor="start" font-weight="400">GND</text><path d="M800 88 L830 88" fill="none" stroke="#c73944" stroke-width="4" stroke-linejoin="miter"/><text x="839" y="95" font-size="17" fill="#172c3d" text-anchor="start" font-weight="400">VCC</text><path d="M910 88 L940 88" fill="none" stroke="#267cb8" stroke-width="4" stroke-linejoin="miter"/><text x="949" y="95" font-size="17" fill="#172c3d" text-anchor="start" font-weight="400">CLK</text><path d="M1020 88 L1050 88" fill="none" stroke="#149078" stroke-width="4" stroke-linejoin="miter"/><text x="1059" y="95" font-size="17" fill="#172c3d" text-anchor="start" font-weight="400">DIN</text><path d="M1130 88 L1160 88" fill="none" stroke="#d08219" stroke-width="4" stroke-linejoin="miter"/><text x="1169" y="95" font-size="17" fill="#172c3d" text-anchor="start" font-weight="400">CS</text><path d="M1240 88 L1270 88" fill="none" stroke="#8257ac" stroke-width="4" stroke-linejoin="miter"/><text x="1279" y="95" font-size="17" fill="#172c3d" text-anchor="start" font-weight="400">DC</text><path d="M1350 88 L1380 88" fill="none" stroke="#bc538c" stroke-width="4" stroke-linejoin="miter"/><text x="1389" y="95" font-size="17" fill="#172c3d" text-anchor="start" font-weight="400">RES</text><rect x="40" y="168" width="640" height="666" fill="#fff" stroke="#d9e2e9" stroke-width="2"/><rect x="40" y="168" width="6" height="666" fill="#2e6874" stroke="none" stroke-width="1"/><text x="66" y="208" font-size="20" fill="#2e6874" text-anchor="start" font-weight="700">01</text><text x="105" y="208" font-size="25" fill="#172c3d" text-anchor="start" font-weight="700">Arduino Pro Micro</text><text x="66" y="240" font-size="17" fill="#526677" text-anchor="start" font-weight="400">Find the pins on your board; the USB connector may vary.</text><g transform="translate(96 281) scale(1)"><rect x="0" y="0" width="240" height="535" fill="#155c82" stroke="#0d3c58" stroke-width="3"/><g transform="translate(120 -12) scale(1)"><rect x="-48" y="-5" width="96" height="60" fill="#acb5bd" stroke="#5c6770" stroke-width="2"/><rect x="-38" y="5" width="76" height="24" fill="#273440" stroke="none" stroke-width="1"/><rect x="-29" y="10" width="58" height="9" fill="#a5afb6" stroke="none" stroke-width="1"/><rect x="-46" y="35" width="12" height="20" fill="#d5dce0" stroke="none" stroke-width="1"/><rect x="34" y="35" width="12" height="20" fill="#d5dce0" stroke="none" stroke-width="1"/><rect x="-23" y="16" width="46" height="5" fill="#c6af6f" stroke="none" stroke-width="1"/></g><text x="120" y="78" font-size="21" fill="#edf7fa" text-anchor="middle" font-weight="700">PRO MICRO</text><g transform="translate(120 286) rotate(45)"><rect x="-24" y="-24" width="48" height="48" fill="#242c33" stroke="#89949c" stroke-width="2"/><rect x="-20" y="-30" width="3" height="6" fill="#bdc7cc" stroke="none" stroke-width="1"/><rect x="-20" y="24" width="3" height="6" fill="#bdc7cc" stroke="none" stroke-width="1"/><rect x="-30" y="-20" width="6" height="3" fill="#bdc7cc" stroke="none" stroke-width="1"/><rect x="24" y="-20" width="6" height="3" fill="#bdc7cc" stroke="none" stroke-width="1"/><rect x="-12" y="-30" width="3" height="6" fill="#bdc7cc" stroke="none" stroke-width="1"/><rect x="-12" y="24" width="3" height="6" fill="#bdc7cc" stroke="none" stroke-width="1"/><rect x="-30" y="-12" width="6" height="3" fill="#bdc7cc" stroke="none" stroke-width="1"/><rect x="24" y="-12" width="6" height="3" fill="#bdc7cc" stroke="none" stroke-width="1"/><rect x="-4" y="-30" width="3" height="6" fill="#bdc7cc" stroke="none" stroke-width="1"/><rect x="-4" y="24" width="3" height="6" fill="#bdc7cc" stroke="none" stroke-width="1"/><rect x="-30" y="-4" width="6" height="3" fill="#bdc7cc" stroke="none" stroke-width="1"/><rect x="24" y="-4" width="6" height="3" fill="#bdc7cc" stroke="none" stroke-width="1"/><rect x="4" y="-30" width="3" height="6" fill="#bdc7cc" stroke="none" stroke-width="1"/><rect x="4" y="24" width="3" height="6" fill="#bdc7cc" stroke="none" stroke-width="1"/><rect x="-30" y="4" width="6" height="3" fill="#bdc7cc" stroke="none" stroke-width="1"/><rect x="24" y="4" width="6" height="3" fill="#bdc7cc" stroke="none" stroke-width="1"/><rect x="12" y="-30" width="3" height="6" fill="#bdc7cc" stroke="none" stroke-width="1"/><rect x="12" y="24" width="3" height="6" fill="#bdc7cc" stroke="none" stroke-width="1"/><rect x="-30" y="12" width="6" height="3" fill="#bdc7cc" stroke="none" stroke-width="1"/><rect x="24" y="12" width="6" height="3" fill="#bdc7cc" stroke="none" stroke-width="1"/><rect x="20" y="-30" width="3" height="6" fill="#bdc7cc" stroke="none" stroke-width="1"/><rect x="20" y="24" width="3" height="6" fill="#bdc7cc" stroke="none" stroke-width="1"/><rect x="-30" y="20" width="6" height="3" fill="#bdc7cc" stroke="none" stroke-width="1"/><rect x="24" y="20" width="6" height="3" fill="#bdc7cc" stroke="none" stroke-width="1"/><text x="0" y="-5" font-size="8" fill="#a9b5bc" text-anchor="middle" font-weight="400">ATMEL</text><text x="0" y="9" font-size="8" fill="#a9b5bc" text-anchor="middle" font-weight="400">32U4</text></g><rect x="85" y="408" width="70" height="32" fill="#bec5ca" stroke="#78848e" stroke-width="2"/><text x="120" y="429" font-size="12" fill="#475865" text-anchor="middle" font-weight="400">16.000</text><rect x="84" y="109" width="62" height="28" fill="#252e36" stroke="none" stroke-width="1"/><rect x="92" y="101" width="8" height="8" fill="#c7ced3" stroke="none" stroke-width="1"/><rect x="130" y="101" width="8" height="8" fill="#c7ced3" stroke="none" stroke-width="1"/><rect x="82" y="168" width="17" height="28" fill="#cbbd9b" stroke="none" stroke-width="1"/><rect x="82" y="168" width="17" height="6" fill="#d2dbe0" stroke="none" stroke-width="1"/><rect x="82" y="190" width="17" height="6" fill="#d2dbe0" stroke="none" stroke-width="1"/><rect x="140" y="164" width="17" height="28" fill="#cbbd9b" stroke="none" stroke-width="1"/><rect x="140" y="164" width="17" height="6" fill="#d2dbe0" stroke="none" stroke-width="1"/><rect x="140" y="186" width="17" height="6" fill="#d2dbe0" stroke="none" stroke-width="1"/><rect x="88" y="212" width="17" height="28" fill="#cbbd9b" stroke="none" stroke-width="1"/><rect x="88" y="212" width="17" height="6" fill="#d2dbe0" stroke="none" stroke-width="1"/><rect x="88" y="234" width="17" height="6" fill="#d2dbe0" stroke="none" stroke-width="1"/><rect x="152" y="385" width="17" height="28" fill="#cbbd9b" stroke="none" stroke-width="1"/><rect x="152" y="385" width="17" height="6" fill="#d2dbe0" stroke="none" stroke-width="1"/><rect x="152" y="407" width="17" height="6" fill="#d2dbe0" stroke="none" stroke-width="1"/><rect x="79" y="474" width="17" height="28" fill="#cbbd9b" stroke="none" stroke-width="1"/><rect x="79" y="474" width="17" height="6" fill="#d2dbe0" stroke="none" stroke-width="1"/><rect x="79" y="496" width="17" height="6" fill="#d2dbe0" stroke="none" stroke-width="1"/><rect x="145" y="478" width="17" height="28" fill="#cbbd9b" stroke="none" stroke-width="1"/><rect x="145" y="478" width="17" height="6" fill="#d2dbe0" stroke="none" stroke-width="1"/><rect x="145" y="500" width="17" height="6" fill="#d2dbe0" stroke="none" stroke-width="1"/><circle cx="18" cy="110" r="10" fill="#cfab54" stroke="none" stroke-width="1"/><circle cx="18" cy="110" r="5" fill="#102f45" stroke="none" stroke-width="1"/><circle cx="222" cy="110" r="10" fill="#cfab54" stroke="none" stroke-width="1"/><circle cx="222" cy="110" r="5" fill="#102f45" stroke="none" stroke-width="1"/><text x="36" y="116" font-size="12" fill="#e5f0f5" text-anchor="start" font-weight="400">TX/1</text><text x="204" y="116" font-size="12" fill="#e5f0f5" text-anchor="end" font-weight="400">RAW</text><circle cx="18" cy="144" r="10" fill="#cfab54" stroke="none" stroke-width="1"/><circle cx="18" cy="144" r="5" fill="#102f45" stroke="none" stroke-width="1"/><circle cx="222" cy="144" r="10" fill="#cfab54" stroke="none" stroke-width="1"/><circle cx="222" cy="144" r="5" fill="#102f45" stroke="none" stroke-width="1"/><text x="36" y="150" font-size="12" fill="#e5f0f5" text-anchor="start" font-weight="400">RX/0</text><text x="204" y="150" font-size="12" fill="#e5f0f5" text-anchor="end" font-weight="400">GND</text><circle cx="18" cy="178" r="10" fill="#cfab54" stroke="none" stroke-width="1"/><circle cx="18" cy="178" r="5" fill="#102f45" stroke="none" stroke-width="1"/><circle cx="222" cy="178" r="10" fill="#cfab54" stroke="none" stroke-width="1"/><circle cx="222" cy="178" r="5" fill="#102f45" stroke="none" stroke-width="1"/><text x="36" y="184" font-size="12" fill="#e5f0f5" text-anchor="start" font-weight="400">GND</text><text x="204" y="184" font-size="12" fill="#e5f0f5" text-anchor="end" font-weight="400">RST</text><circle cx="18" cy="212" r="10" fill="#cfab54" stroke="none" stroke-width="1"/><circle cx="18" cy="212" r="5" fill="#102f45" stroke="none" stroke-width="1"/><circle cx="222" cy="212" r="10" fill="#cfab54" stroke="none" stroke-width="1"/><circle cx="222" cy="212" r="5" fill="#102f45" stroke="none" stroke-width="1"/><text x="36" y="218" font-size="12" fill="#e5f0f5" text-anchor="start" font-weight="400">GND</text><text x="204" y="218" font-size="12" fill="#e5f0f5" text-anchor="end" font-weight="400">VCC</text><circle cx="18" cy="246" r="10" fill="#cfab54" stroke="none" stroke-width="1"/><circle cx="18" cy="246" r="5" fill="#102f45" stroke="none" stroke-width="1"/><circle cx="222" cy="246" r="10" fill="#cfab54" stroke="none" stroke-width="1"/><circle cx="222" cy="246" r="5" fill="#102f45" stroke="none" stroke-width="1"/><text x="36" y="252" font-size="12" fill="#e5f0f5" text-anchor="start" font-weight="400">D2</text><text x="204" y="252" font-size="12" fill="#e5f0f5" text-anchor="end" font-weight="400">A3</text><circle cx="18" cy="280" r="10" fill="#cfab54" stroke="none" stroke-width="1"/><circle cx="18" cy="280" r="5" fill="#102f45" stroke="none" stroke-width="1"/><circle cx="222" cy="280" r="10" fill="#cfab54" stroke="none" stroke-width="1"/><circle cx="222" cy="280" r="5" fill="#102f45" stroke="none" stroke-width="1"/><text x="36" y="286" font-size="12" fill="#e5f0f5" text-anchor="start" font-weight="400">D3</text><text x="204" y="286" font-size="12" fill="#e5f0f5" text-anchor="end" font-weight="400">A2</text><circle cx="18" cy="314" r="10" fill="#cfab54" stroke="none" stroke-width="1"/><circle cx="18" cy="314" r="5" fill="#102f45" stroke="none" stroke-width="1"/><circle cx="222" cy="314" r="10" fill="#cfab54" stroke="none" stroke-width="1"/><circle cx="222" cy="314" r="5" fill="#102f45" stroke="none" stroke-width="1"/><text x="36" y="320" font-size="12" fill="#e5f0f5" text-anchor="start" font-weight="400">D4</text><text x="204" y="320" font-size="12" fill="#e5f0f5" text-anchor="end" font-weight="400">A1</text><circle cx="18" cy="348" r="10" fill="#cfab54" stroke="none" stroke-width="1"/><circle cx="18" cy="348" r="5" fill="#102f45" stroke="none" stroke-width="1"/><circle cx="222" cy="348" r="10" fill="#cfab54" stroke="none" stroke-width="1"/><circle cx="222" cy="348" r="5" fill="#102f45" stroke="none" stroke-width="1"/><text x="36" y="354" font-size="12" fill="#e5f0f5" text-anchor="start" font-weight="400">D5</text><text x="204" y="354" font-size="12" fill="#e5f0f5" text-anchor="end" font-weight="400">A0</text><circle cx="18" cy="382" r="10" fill="#cfab54" stroke="none" stroke-width="1"/><circle cx="18" cy="382" r="5" fill="#102f45" stroke="none" stroke-width="1"/><circle cx="222" cy="382" r="10" fill="#cfab54" stroke="none" stroke-width="1"/><circle cx="222" cy="382" r="5" fill="#102f45" stroke="none" stroke-width="1"/><text x="36" y="388" font-size="12" fill="#e5f0f5" text-anchor="start" font-weight="400">D6</text><text x="204" y="388" font-size="12" fill="#e5f0f5" text-anchor="end" font-weight="400">D15</text><circle cx="18" cy="416" r="10" fill="#cfab54" stroke="none" stroke-width="1"/><circle cx="18" cy="416" r="5" fill="#102f45" stroke="none" stroke-width="1"/><circle cx="222" cy="416" r="10" fill="#cfab54" stroke="none" stroke-width="1"/><circle cx="222" cy="416" r="5" fill="#102f45" stroke="none" stroke-width="1"/><text x="36" y="422" font-size="12" fill="#e5f0f5" text-anchor="start" font-weight="400">D7</text><text x="204" y="422" font-size="12" fill="#e5f0f5" text-anchor="end" font-weight="400">D14</text><circle cx="18" cy="450" r="10" fill="#cfab54" stroke="none" stroke-width="1"/><circle cx="18" cy="450" r="5" fill="#102f45" stroke="none" stroke-width="1"/><circle cx="222" cy="450" r="10" fill="#cfab54" stroke="none" stroke-width="1"/><circle cx="222" cy="450" r="5" fill="#102f45" stroke="none" stroke-width="1"/><text x="36" y="456" font-size="12" fill="#e5f0f5" text-anchor="start" font-weight="400">D8</text><text x="204" y="456" font-size="12" fill="#e5f0f5" text-anchor="end" font-weight="400">D16</text><circle cx="18" cy="484" r="10" fill="#cfab54" stroke="none" stroke-width="1"/><circle cx="18" cy="484" r="5" fill="#102f45" stroke="none" stroke-width="1"/><circle cx="222" cy="484" r="10" fill="#cfab54" stroke="none" stroke-width="1"/><circle cx="222" cy="484" r="5" fill="#102f45" stroke="none" stroke-width="1"/><text x="36" y="490" font-size="12" fill="#e5f0f5" text-anchor="start" font-weight="400">D9</text><text x="204" y="490" font-size="12" fill="#e5f0f5" text-anchor="end" font-weight="400">D10</text><text x="120" y="515" font-size="14" fill="#e5f0f5" text-anchor="middle" font-weight="400">5 V · 16 MHz</text></g><text x="380" y="292" font-size="20" fill="#172c3d" text-anchor="start" font-weight="700">Micro-USB</text><text x="380" y="322" font-size="18" fill="#526677" text-anchor="start" font-weight="400">The board on the left shows</text><text x="380" y="348" font-size="18" fill="#526677" text-anchor="start" font-weight="400">a typical pin layout.</text><g transform="translate(423 405) scale(0.53)"><rect x="0" y="0" width="240" height="535" fill="#155c82" stroke="#0d3c58" stroke-width="3"/><g transform="translate(120 -12) scale(1)"><rect x="-48" y="-5" width="96" height="60" fill="#acb5bd" stroke="#5c6770" stroke-width="2"/><rect x="-38" y="5" width="76" height="24" fill="#273440" stroke="none" stroke-width="1"/><rect x="-29" y="10" width="58" height="9" fill="#a5afb6" stroke="none" stroke-width="1"/><rect x="-46" y="35" width="12" height="20" fill="#d5dce0" stroke="none" stroke-width="1"/><rect x="34" y="35" width="12" height="20" fill="#d5dce0" stroke="none" stroke-width="1"/><rect x="-20" y="14" width="40" height="4" fill="#edf1f4" stroke="none" stroke-width="1"/></g><text x="120" y="78" font-size="21" fill="#edf7fa" text-anchor="middle" font-weight="700">PRO MICRO</text><g transform="translate(120 286) rotate(45)"><rect x="-24" y="-24" width="48" height="48" fill="#242c33" stroke="#89949c" stroke-width="2"/><rect x="-20" y="-30" width="3" height="6" fill="#bdc7cc" stroke="none" stroke-width="1"/><rect x="-20" y="24" width="3" height="6" fill="#bdc7cc" stroke="none" stroke-width="1"/><rect x="-30" y="-20" width="6" height="3" fill="#bdc7cc" stroke="none" stroke-width="1"/><rect x="24" y="-20" width="6" height="3" fill="#bdc7cc" stroke="none" stroke-width="1"/><rect x="-12" y="-30" width="3" height="6" fill="#bdc7cc" stroke="none" stroke-width="1"/><rect x="-12" y="24" width="3" height="6" fill="#bdc7cc" stroke="none" stroke-width="1"/><rect x="-30" y="-12" width="6" height="3" fill="#bdc7cc" stroke="none" stroke-width="1"/><rect x="24" y="-12" width="6" height="3" fill="#bdc7cc" stroke="none" stroke-width="1"/><rect x="-4" y="-30" width="3" height="6" fill="#bdc7cc" stroke="none" stroke-width="1"/><rect x="-4" y="24" width="3" height="6" fill="#bdc7cc" stroke="none" stroke-width="1"/><rect x="-30" y="-4" width="6" height="3" fill="#bdc7cc" stroke="none" stroke-width="1"/><rect x="24" y="-4" width="6" height="3" fill="#bdc7cc" stroke="none" stroke-width="1"/><rect x="4" y="-30" width="3" height="6" fill="#bdc7cc" stroke="none" stroke-width="1"/><rect x="4" y="24" width="3" height="6" fill="#bdc7cc" stroke="none" stroke-width="1"/><rect x="-30" y="4" width="6" height="3" fill="#bdc7cc" stroke="none" stroke-width="1"/><rect x="24" y="4" width="6" height="3" fill="#bdc7cc" stroke="none" stroke-width="1"/><rect x="12" y="-30" width="3" height="6" fill="#bdc7cc" stroke="none" stroke-width="1"/><rect x="12" y="24" width="3" height="6" fill="#bdc7cc" stroke="none" stroke-width="1"/><rect x="-30" y="12" width="6" height="3" fill="#bdc7cc" stroke="none" stroke-width="1"/><rect x="24" y="12" width="6" height="3" fill="#bdc7cc" stroke="none" stroke-width="1"/><rect x="20" y="-30" width="3" height="6" fill="#bdc7cc" stroke="none" stroke-width="1"/><rect x="20" y="24" width="3" height="6" fill="#bdc7cc" stroke="none" stroke-width="1"/><rect x="-30" y="20" width="6" height="3" fill="#bdc7cc" stroke="none" stroke-width="1"/><rect x="24" y="20" width="6" height="3" fill="#bdc7cc" stroke="none" stroke-width="1"/><text x="0" y="-5" font-size="8" fill="#a9b5bc" text-anchor="middle" font-weight="400">ATMEL</text><text x="0" y="9" font-size="8" fill="#a9b5bc" text-anchor="middle" font-weight="400">32U4</text></g><rect x="85" y="408" width="70" height="32" fill="#bec5ca" stroke="#78848e" stroke-width="2"/><text x="120" y="429" font-size="12" fill="#475865" text-anchor="middle" font-weight="400">16.000</text><rect x="84" y="109" width="62" height="28" fill="#252e36" stroke="none" stroke-width="1"/><rect x="92" y="101" width="8" height="8" fill="#c7ced3" stroke="none" stroke-width="1"/><rect x="130" y="101" width="8" height="8" fill="#c7ced3" stroke="none" stroke-width="1"/><rect x="82" y="168" width="17" height="28" fill="#cbbd9b" stroke="none" stroke-width="1"/><rect x="82" y="168" width="17" height="6" fill="#d2dbe0" stroke="none" stroke-width="1"/><rect x="82" y="190" width="17" height="6" fill="#d2dbe0" stroke="none" stroke-width="1"/><rect x="140" y="164" width="17" height="28" fill="#cbbd9b" stroke="none" stroke-width="1"/><rect x="140" y="164" width="17" height="6" fill="#d2dbe0" stroke="none" stroke-width="1"/><rect x="140" y="186" width="17" height="6" fill="#d2dbe0" stroke="none" stroke-width="1"/><rect x="88" y="212" width="17" height="28" fill="#cbbd9b" stroke="none" stroke-width="1"/><rect x="88" y="212" width="17" height="6" fill="#d2dbe0" stroke="none" stroke-width="1"/><rect x="88" y="234" width="17" height="6" fill="#d2dbe0" stroke="none" stroke-width="1"/><rect x="152" y="385" width="17" height="28" fill="#cbbd9b" stroke="none" stroke-width="1"/><rect x="152" y="385" width="17" height="6" fill="#d2dbe0" stroke="none" stroke-width="1"/><rect x="152" y="407" width="17" height="6" fill="#d2dbe0" stroke="none" stroke-width="1"/><rect x="79" y="474" width="17" height="28" fill="#cbbd9b" stroke="none" stroke-width="1"/><rect x="79" y="474" width="17" height="6" fill="#d2dbe0" stroke="none" stroke-width="1"/><rect x="79" y="496" width="17" height="6" fill="#d2dbe0" stroke="none" stroke-width="1"/><rect x="145" y="478" width="17" height="28" fill="#cbbd9b" stroke="none" stroke-width="1"/><rect x="145" y="478" width="17" height="6" fill="#d2dbe0" stroke="none" stroke-width="1"/><rect x="145" y="500" width="17" height="6" fill="#d2dbe0" stroke="none" stroke-width="1"/><circle cx="18" cy="110" r="10" fill="#cfab54" stroke="none" stroke-width="1"/><circle cx="18" cy="110" r="5" fill="#102f45" stroke="none" stroke-width="1"/><circle cx="222" cy="110" r="10" fill="#cfab54" stroke="none" stroke-width="1"/><circle cx="222" cy="110" r="5" fill="#102f45" stroke="none" stroke-width="1"/><circle cx="18" cy="144" r="10" fill="#cfab54" stroke="none" stroke-width="1"/><circle cx="18" cy="144" r="5" fill="#102f45" stroke="none" stroke-width="1"/><circle cx="222" cy="144" r="10" fill="#cfab54" stroke="none" stroke-width="1"/><circle cx="222" cy="144" r="5" fill="#102f45" stroke="none" stroke-width="1"/><circle cx="18" cy="178" r="10" fill="#cfab54" stroke="none" stroke-width="1"/><circle cx="18" cy="178" r="5" fill="#102f45" stroke="none" stroke-width="1"/><circle cx="222" cy="178" r="10" fill="#cfab54" stroke="none" stroke-width="1"/><circle cx="222" cy="178" r="5" fill="#102f45" stroke="none" stroke-width="1"/><circle cx="18" cy="212" r="10" fill="#cfab54" stroke="none" stroke-width="1"/><circle cx="18" cy="212" r="5" fill="#102f45" stroke="none" stroke-width="1"/><circle cx="222" cy="212" r="10" fill="#cfab54" stroke="none" stroke-width="1"/><circle cx="222" cy="212" r="5" fill="#102f45" stroke="none" stroke-width="1"/><circle cx="18" cy="246" r="10" fill="#cfab54" stroke="none" stroke-width="1"/><circle cx="18" cy="246" r="5" fill="#102f45" stroke="none" stroke-width="1"/><circle cx="222" cy="246" r="10" fill="#cfab54" stroke="none" stroke-width="1"/><circle cx="222" cy="246" r="5" fill="#102f45" stroke="none" stroke-width="1"/><circle cx="18" cy="280" r="10" fill="#cfab54" stroke="none" stroke-width="1"/><circle cx="18" cy="280" r="5" fill="#102f45" stroke="none" stroke-width="1"/><circle cx="222" cy="280" r="10" fill="#cfab54" stroke="none" stroke-width="1"/><circle cx="222" cy="280" r="5" fill="#102f45" stroke="none" stroke-width="1"/><circle cx="18" cy="314" r="10" fill="#cfab54" stroke="none" stroke-width="1"/><circle cx="18" cy="314" r="5" fill="#102f45" stroke="none" stroke-width="1"/><circle cx="222" cy="314" r="10" fill="#cfab54" stroke="none" stroke-width="1"/><circle cx="222" cy="314" r="5" fill="#102f45" stroke="none" stroke-width="1"/><circle cx="18" cy="348" r="10" fill="#cfab54" stroke="none" stroke-width="1"/><circle cx="18" cy="348" r="5" fill="#102f45" stroke="none" stroke-width="1"/><circle cx="222" cy="348" r="10" fill="#cfab54" stroke="none" stroke-width="1"/><circle cx="222" cy="348" r="5" fill="#102f45" stroke="none" stroke-width="1"/><circle cx="18" cy="382" r="10" fill="#cfab54" stroke="none" stroke-width="1"/><circle cx="18" cy="382" r="5" fill="#102f45" stroke="none" stroke-width="1"/><circle cx="222" cy="382" r="10" fill="#cfab54" stroke="none" stroke-width="1"/><circle cx="222" cy="382" r="5" fill="#102f45" stroke="none" stroke-width="1"/><circle cx="18" cy="416" r="10" fill="#cfab54" stroke="none" stroke-width="1"/><circle cx="18" cy="416" r="5" fill="#102f45" stroke="none" stroke-width="1"/><circle cx="222" cy="416" r="10" fill="#cfab54" stroke="none" stroke-width="1"/><circle cx="222" cy="416" r="5" fill="#102f45" stroke="none" stroke-width="1"/><circle cx="18" cy="450" r="10" fill="#cfab54" stroke="none" stroke-width="1"/><circle cx="18" cy="450" r="5" fill="#102f45" stroke="none" stroke-width="1"/><circle cx="222" cy="450" r="10" fill="#cfab54" stroke="none" stroke-width="1"/><circle cx="222" cy="450" r="5" fill="#102f45" stroke="none" stroke-width="1"/><circle cx="18" cy="484" r="10" fill="#cfab54" stroke="none" stroke-width="1"/><circle cx="18" cy="484" r="5" fill="#102f45" stroke="none" stroke-width="1"/><circle cx="222" cy="484" r="10" fill="#cfab54" stroke="none" stroke-width="1"/><circle cx="222" cy="484" r="5" fill="#102f45" stroke="none" stroke-width="1"/><text x="120" y="515" font-size="14" fill="#e5f0f5" text-anchor="middle" font-weight="400">5 V · 16 MHz</text></g><text x="486" y="725" font-size="19" fill="#172c3d" text-anchor="middle" font-weight="700">USB-C variant</text><text x="380" y="762" font-size="18" fill="#526677" text-anchor="start" font-weight="400">Check the printed pin names.</text><text x="380" y="791" font-size="18" fill="#526677" text-anchor="start" font-weight="400">USB type does not indicate 3.3 V / 5 V.</text><rect x="708" y="168" width="752" height="666" fill="#fff" stroke="#d9e2e9" stroke-width="2"/><rect x="708" y="168" width="6" height="666" fill="#2e6874" stroke="none" stroke-width="1"/><text x="734" y="208" font-size="20" fill="#2e6874" text-anchor="start" font-weight="700">02</text><text x="773" y="208" font-size="25" fill="#172c3d" text-anchor="start" font-weight="700">OLED display</text><text x="734" y="240" font-size="17" fill="#526677" text-anchor="start" font-weight="400">SSD1306 · 128 × 64 · 7-pin SPI module</text><rect x="794" y="315" width="580" height="322" fill="#147d9b" stroke="#10546d" stroke-width="3"/><circle cx="818" cy="339" r="11" fill="#c0cbd0" stroke="none" stroke-width="1"/><circle cx="818" cy="339" r="6" fill="#f2f6f8" stroke="none" stroke-width="1"/><circle cx="818" cy="613" r="11" fill="#c0cbd0" stroke="none" stroke-width="1"/><circle cx="818" cy="613" r="6" fill="#f2f6f8" stroke="none" stroke-width="1"/><circle cx="1350" cy="339" r="11" fill="#c0cbd0" stroke="none" stroke-width="1"/><circle cx="1350" cy="339" r="6" fill="#f2f6f8" stroke="none" stroke-width="1"/><circle cx="1350" cy="613" r="11" fill="#c0cbd0" stroke="none" stroke-width="1"/><circle cx="1350" cy="613" r="6" fill="#f2f6f8" stroke="none" stroke-width="1"/><rect x="838" y="366" width="492" height="217" fill="#b9c5c9" stroke="#334550" stroke-width="2"/><rect x="848" y="376" width="472" height="197" fill="#07151c" stroke="none" stroke-width="1"/><text x="1084" y="440" font-size="36" fill="#e0f7f2" text-anchor="middle" font-weight="700">ArduCade</text><rect x="858" y="539" width="14" height="8" fill="#d6eee8" stroke="none" stroke-width="1"/><rect x="874" y="539" width="14" height="8" fill="#d6eee8" stroke="none" stroke-width="1"/><rect x="890" y="539" width="14" height="8" fill="#d6eee8" stroke="none" stroke-width="1"/><rect x="906" y="539" width="14" height="8" fill="#d6eee8" stroke="none" stroke-width="1"/><rect x="922" y="539" width="14" height="8" fill="#d6eee8" stroke="none" stroke-width="1"/><rect x="938" y="539" width="14" height="8" fill="#d6eee8" stroke="none" stroke-width="1"/><rect x="954" y="539" width="14" height="8" fill="#d6eee8" stroke="none" stroke-width="1"/><rect x="970" y="539" width="14" height="8" fill="#d6eee8" stroke="none" stroke-width="1"/><rect x="986" y="539" width="14" height="8" fill="#d6eee8" stroke="none" stroke-width="1"/><rect x="1002" y="539" width="14" height="8" fill="#d6eee8" stroke="none" stroke-width="1"/><rect x="1018" y="539" width="14" height="8" fill="#d6eee8" stroke="none" stroke-width="1"/><rect x="1034" y="539" width="14" height="8" fill="#d6eee8" stroke="none" stroke-width="1"/><rect x="1050" y="539" width="14" height="8" fill="#d6eee8" stroke="none" stroke-width="1"/><rect x="1066" y="539" width="14" height="8" fill="#d6eee8" stroke="none" stroke-width="1"/><rect x="1082" y="539" width="14" height="8" fill="#d6eee8" stroke="none" stroke-width="1"/><rect x="1098" y="539" width="14" height="8" fill="#d6eee8" stroke="none" stroke-width="1"/><rect x="1114" y="539" width="14" height="8" fill="#d6eee8" stroke="none" stroke-width="1"/><rect x="1130" y="539" width="14" height="8" fill="#d6eee8" stroke="none" stroke-width="1"/><rect x="1146" y="539" width="14" height="8" fill="#d6eee8" stroke="none" stroke-width="1"/><rect x="1162" y="539" width="14" height="8" fill="#d6eee8" stroke="none" stroke-width="1"/><rect x="1178" y="539" width="14" height="8" fill="#d6eee8" stroke="none" stroke-width="1"/><rect x="1194" y="539" width="14" height="8" fill="#d6eee8" stroke="none" stroke-width="1"/><rect x="1210" y="539" width="14" height="8" fill="#d6eee8" stroke="none" stroke-width="1"/><rect x="1226" y="539" width="14" height="8" fill="#d6eee8" stroke="none" stroke-width="1"/><rect x="1242" y="539" width="14" height="8" fill="#d6eee8" stroke="none" stroke-width="1"/><rect x="1258" y="539" width="14" height="8" fill="#d6eee8" stroke="none" stroke-width="1"/><rect x="1274" y="539" width="14" height="8" fill="#d6eee8" stroke="none" stroke-width="1"/><rect x="1119" y="495" width="14" height="8" fill="#d6eee8" stroke="none" stroke-width="1"/><rect x="1135" y="495" width="14" height="8" fill="#d6eee8" stroke="none" stroke-width="1"/><rect x="1151" y="495" width="14" height="8" fill="#d6eee8" stroke="none" stroke-width="1"/><rect x="1167" y="495" width="14" height="8" fill="#d6eee8" stroke="none" stroke-width="1"/><rect x="1183" y="495" width="14" height="8" fill="#d6eee8" stroke="none" stroke-width="1"/><rect x="1199" y="495" width="14" height="8" fill="#d6eee8" stroke="none" stroke-width="1"/><path d="M938 536 L938 504 L952 504 L952 525" fill="none" stroke="#d6eee8" stroke-width="6" stroke-linejoin="miter"/><circle cx="945" cy="493" r="6" fill="#d6eee8" stroke="none" stroke-width="1"/><rect x="1024" y="610" width="120" height="32" fill="#8e6831" stroke="none" stroke-width="1"/><rect x="1044" y="610" width="80" height="32" fill="#3b342b" stroke="none" stroke-width="1"/><circle cx="846" cy="338" r="8" fill="#d5b86e" stroke="none" stroke-width="1"/><circle cx="846" cy="338" r="4" fill="#243d47" stroke="none" stroke-width="1"/><text x="846" y="363" font-size="14" fill="#eef7f8" text-anchor="middle" font-weight="700">GND</text><path d="M846 330 L846 302" fill="none" stroke="#394651" stroke-width="4" stroke-linejoin="miter"/><rect x="814" y="266" width="64" height="36" fill="#fff" stroke="#394651" stroke-width="2"/><text x="846" y="291" font-size="19" fill="#394651" text-anchor="middle" font-weight="700">GND</text><circle cx="925" cy="338" r="8" fill="#d5b86e" stroke="none" stroke-width="1"/><circle cx="925" cy="338" r="4" fill="#243d47" stroke="none" stroke-width="1"/><text x="925" y="363" font-size="14" fill="#eef7f8" text-anchor="middle" font-weight="700">VCC</text><path d="M925 330 L925 302" fill="none" stroke="#c73944" stroke-width="4" stroke-linejoin="miter"/><rect x="893" y="266" width="64" height="36" fill="#fff" stroke="#c73944" stroke-width="2"/><text x="925" y="291" font-size="19" fill="#c73944" text-anchor="middle" font-weight="700">VCC</text><circle cx="1004" cy="338" r="8" fill="#d5b86e" stroke="none" stroke-width="1"/><circle cx="1004" cy="338" r="4" fill="#243d47" stroke="none" stroke-width="1"/><text x="1004" y="363" font-size="14" fill="#eef7f8" text-anchor="middle" font-weight="700">CLK</text><path d="M1004 330 L1004 302" fill="none" stroke="#267cb8" stroke-width="4" stroke-linejoin="miter"/><rect x="972" y="266" width="64" height="36" fill="#fff" stroke="#267cb8" stroke-width="2"/><text x="1004" y="291" font-size="19" fill="#267cb8" text-anchor="middle" font-weight="700">D15</text><circle cx="1083" cy="338" r="8" fill="#d5b86e" stroke="none" stroke-width="1"/><circle cx="1083" cy="338" r="4" fill="#243d47" stroke="none" stroke-width="1"/><text x="1083" y="363" font-size="14" fill="#eef7f8" text-anchor="middle" font-weight="700">DIN</text><path d="M1083 330 L1083 302" fill="none" stroke="#149078" stroke-width="4" stroke-linejoin="miter"/><rect x="1051" y="266" width="64" height="36" fill="#fff" stroke="#149078" stroke-width="2"/><text x="1083" y="291" font-size="19" fill="#149078" text-anchor="middle" font-weight="700">D16</text><circle cx="1162" cy="338" r="8" fill="#d5b86e" stroke="none" stroke-width="1"/><circle cx="1162" cy="338" r="4" fill="#243d47" stroke="none" stroke-width="1"/><text x="1162" y="363" font-size="14" fill="#eef7f8" text-anchor="middle" font-weight="700">CS</text><path d="M1162 330 L1162 302" fill="none" stroke="#d08219" stroke-width="4" stroke-linejoin="miter"/><rect x="1130" y="266" width="64" height="36" fill="#fff" stroke="#d08219" stroke-width="2"/><text x="1162" y="291" font-size="19" fill="#d08219" text-anchor="middle" font-weight="700">D10</text><circle cx="1241" cy="338" r="8" fill="#d5b86e" stroke="none" stroke-width="1"/><circle cx="1241" cy="338" r="4" fill="#243d47" stroke="none" stroke-width="1"/><text x="1241" y="363" font-size="14" fill="#eef7f8" text-anchor="middle" font-weight="700">DC</text><path d="M1241 330 L1241 302" fill="none" stroke="#8257ac" stroke-width="4" stroke-linejoin="miter"/><rect x="1209" y="266" width="64" height="36" fill="#fff" stroke="#8257ac" stroke-width="2"/><text x="1241" y="291" font-size="19" fill="#8257ac" text-anchor="middle" font-weight="700">D4</text><circle cx="1320" cy="338" r="8" fill="#d5b86e" stroke="none" stroke-width="1"/><circle cx="1320" cy="338" r="4" fill="#243d47" stroke="none" stroke-width="1"/><text x="1320" y="363" font-size="14" fill="#eef7f8" text-anchor="middle" font-weight="700">RES</text><path d="M1320 330 L1320 302" fill="none" stroke="#bc538c" stroke-width="4" stroke-linejoin="miter"/><rect x="1288" y="266" width="64" height="36" fill="#fff" stroke="#bc538c" stroke-width="2"/><text x="1320" y="291" font-size="19" fill="#bc538c" text-anchor="middle" font-weight="700">D6</text><text x="734" y="690" font-size="18" fill="#526677" text-anchor="start" font-weight="400">Connect wires to these named pins on the Pro Micro.</text><text x="734" y="727" font-size="19" fill="#172c3d" text-anchor="start" font-weight="700">Pin order varies between display modules.</text><text x="734" y="758" font-size="18" fill="#526677" text-anchor="start" font-weight="400">The reference has 6 pins, with no visible CS. Verify SPI mode</text><text x="734" y="785" font-size="18" fill="#526677" text-anchor="start" font-weight="400">and the CS connection before using this profile.</text><text x="734" y="812" font-size="17" fill="#526677" text-anchor="start" font-weight="400">The display module must accept 5 V power and signals.</text><rect x="40" y="860" width="784" height="442" fill="#fff" stroke="#d9e2e9" stroke-width="2"/><rect x="40" y="860" width="6" height="442" fill="#2e6874" stroke="none" stroke-width="1"/><text x="66" y="900" font-size="20" fill="#2e6874" text-anchor="start" font-weight="700">03</text><text x="105" y="900" font-size="25" fill="#172c3d" text-anchor="start" font-weight="700">Six black game buttons</text><text x="66" y="932" font-size="17" fill="#526677" text-anchor="start" font-weight="400">Each button connects one input to GND when pressed.</text><path d="M108 961 L108 1234" fill="none" stroke="#394651" stroke-width="4" stroke-linejoin="miter"/><path d="M108 986 L184 986" fill="none" stroke="#394651" stroke-width="4" stroke-linejoin="miter"/><circle cx="108" cy="986" r="5" fill="#394651" stroke="none" stroke-width="1"/><path d="M256 986 L313 986" fill="none" stroke="#278488" stroke-width="4" stroke-linejoin="miter"/><rect x="313" y="968" width="70" height="36" fill="#fff" stroke="#278488" stroke-width="2"/><text x="348" y="993" font-size="19" fill="#278488" text-anchor="middle" font-weight="700">A0</text><rect x="177" y="979" width="14" height="14" fill="#b4a481" stroke="#776e5d" stroke-width="1"/><rect x="177" y="1015" width="14" height="14" fill="#b4a481" stroke="#776e5d" stroke-width="1"/><rect x="249" y="979" width="14" height="14" fill="#b4a481" stroke="#776e5d" stroke-width="1"/><rect x="249" y="1015" width="14" height="14" fill="#b4a481" stroke="#776e5d" stroke-width="1"/><rect x="190" y="974" width="60" height="60" fill="#20272d" stroke="#10161b" stroke-width="2"/><rect x="194" y="978" width="52" height="52" fill="#a8b0b5" stroke="#59636b" stroke-width="2"/><circle cx="220" cy="1004" r="20" fill="#14191e" stroke="#080c10" stroke-width="3"/><circle cx="215" cy="997" r="8" fill="#242c33" stroke="none" stroke-width="1"/><circle cx="201" cy="985" r="3" fill="#333e45" stroke="none" stroke-width="1"/><circle cx="201" cy="1023" r="3" fill="#333e45" stroke="none" stroke-width="1"/><circle cx="239" cy="985" r="3" fill="#333e45" stroke="none" stroke-width="1"/><circle cx="239" cy="1023" r="3" fill="#333e45" stroke="none" stroke-width="1"/><text x="220" y="959" font-size="17" fill="#172c3d" text-anchor="middle" font-weight="700">UP</text><path d="M486 961 L486 1234" fill="none" stroke="#394651" stroke-width="4" stroke-linejoin="miter"/><path d="M486 986 L562 986" fill="none" stroke="#394651" stroke-width="4" stroke-linejoin="miter"/><circle cx="486" cy="986" r="5" fill="#394651" stroke="none" stroke-width="1"/><path d="M634 986 L691 986" fill="none" stroke="#278488" stroke-width="4" stroke-linejoin="miter"/><rect x="691" y="968" width="70" height="36" fill="#fff" stroke="#278488" stroke-width="2"/><text x="726" y="993" font-size="19" fill="#278488" text-anchor="middle" font-weight="700">A3</text><rect x="555" y="979" width="14" height="14" fill="#b4a481" stroke="#776e5d" stroke-width="1"/><rect x="555" y="1015" width="14" height="14" fill="#b4a481" stroke="#776e5d" stroke-width="1"/><rect x="627" y="979" width="14" height="14" fill="#b4a481" stroke="#776e5d" stroke-width="1"/><rect x="627" y="1015" width="14" height="14" fill="#b4a481" stroke="#776e5d" stroke-width="1"/><rect x="568" y="974" width="60" height="60" fill="#20272d" stroke="#10161b" stroke-width="2"/><rect x="572" y="978" width="52" height="52" fill="#a8b0b5" stroke="#59636b" stroke-width="2"/><circle cx="598" cy="1004" r="20" fill="#14191e" stroke="#080c10" stroke-width="3"/><circle cx="593" cy="997" r="8" fill="#242c33" stroke="none" stroke-width="1"/><circle cx="579" cy="985" r="3" fill="#333e45" stroke="none" stroke-width="1"/><circle cx="579" cy="1023" r="3" fill="#333e45" stroke="none" stroke-width="1"/><circle cx="617" cy="985" r="3" fill="#333e45" stroke="none" stroke-width="1"/><circle cx="617" cy="1023" r="3" fill="#333e45" stroke="none" stroke-width="1"/><text x="598" y="959" font-size="17" fill="#172c3d" text-anchor="middle" font-weight="700">DOWN</text><path d="M108 961 L108 1234" fill="none" stroke="#394651" stroke-width="4" stroke-linejoin="miter"/><path d="M108 1086 L184 1086" fill="none" stroke="#394651" stroke-width="4" stroke-linejoin="miter"/><circle cx="108" cy="1086" r="5" fill="#394651" stroke="none" stroke-width="1"/><path d="M256 1086 L313 1086" fill="none" stroke="#278488" stroke-width="4" stroke-linejoin="miter"/><rect x="313" y="1068" width="70" height="36" fill="#fff" stroke="#278488" stroke-width="2"/><text x="348" y="1093" font-size="19" fill="#278488" text-anchor="middle" font-weight="700">A2</text><rect x="177" y="1079" width="14" height="14" fill="#b4a481" stroke="#776e5d" stroke-width="1"/><rect x="177" y="1115" width="14" height="14" fill="#b4a481" stroke="#776e5d" stroke-width="1"/><rect x="249" y="1079" width="14" height="14" fill="#b4a481" stroke="#776e5d" stroke-width="1"/><rect x="249" y="1115" width="14" height="14" fill="#b4a481" stroke="#776e5d" stroke-width="1"/><rect x="190" y="1074" width="60" height="60" fill="#20272d" stroke="#10161b" stroke-width="2"/><rect x="194" y="1078" width="52" height="52" fill="#a8b0b5" stroke="#59636b" stroke-width="2"/><circle cx="220" cy="1104" r="20" fill="#14191e" stroke="#080c10" stroke-width="3"/><circle cx="215" cy="1097" r="8" fill="#242c33" stroke="none" stroke-width="1"/><circle cx="201" cy="1085" r="3" fill="#333e45" stroke="none" stroke-width="1"/><circle cx="201" cy="1123" r="3" fill="#333e45" stroke="none" stroke-width="1"/><circle cx="239" cy="1085" r="3" fill="#333e45" stroke="none" stroke-width="1"/><circle cx="239" cy="1123" r="3" fill="#333e45" stroke="none" stroke-width="1"/><text x="220" y="1059" font-size="17" fill="#172c3d" text-anchor="middle" font-weight="700">LEFT</text><path d="M486 961 L486 1234" fill="none" stroke="#394651" stroke-width="4" stroke-linejoin="miter"/><path d="M486 1086 L562 1086" fill="none" stroke="#394651" stroke-width="4" stroke-linejoin="miter"/><circle cx="486" cy="1086" r="5" fill="#394651" stroke="none" stroke-width="1"/><path d="M634 1086 L691 1086" fill="none" stroke="#278488" stroke-width="4" stroke-linejoin="miter"/><rect x="691" y="1068" width="70" height="36" fill="#fff" stroke="#278488" stroke-width="2"/><text x="726" y="1093" font-size="19" fill="#278488" text-anchor="middle" font-weight="700">A1</text><rect x="555" y="1079" width="14" height="14" fill="#b4a481" stroke="#776e5d" stroke-width="1"/><rect x="555" y="1115" width="14" height="14" fill="#b4a481" stroke="#776e5d" stroke-width="1"/><rect x="627" y="1079" width="14" height="14" fill="#b4a481" stroke="#776e5d" stroke-width="1"/><rect x="627" y="1115" width="14" height="14" fill="#b4a481" stroke="#776e5d" stroke-width="1"/><rect x="568" y="1074" width="60" height="60" fill="#20272d" stroke="#10161b" stroke-width="2"/><rect x="572" y="1078" width="52" height="52" fill="#a8b0b5" stroke="#59636b" stroke-width="2"/><circle cx="598" cy="1104" r="20" fill="#14191e" stroke="#080c10" stroke-width="3"/><circle cx="593" cy="1097" r="8" fill="#242c33" stroke="none" stroke-width="1"/><circle cx="579" cy="1085" r="3" fill="#333e45" stroke="none" stroke-width="1"/><circle cx="579" cy="1123" r="3" fill="#333e45" stroke="none" stroke-width="1"/><circle cx="617" cy="1085" r="3" fill="#333e45" stroke="none" stroke-width="1"/><circle cx="617" cy="1123" r="3" fill="#333e45" stroke="none" stroke-width="1"/><text x="598" y="1059" font-size="17" fill="#172c3d" text-anchor="middle" font-weight="700">RIGHT</text><path d="M108 961 L108 1234" fill="none" stroke="#394651" stroke-width="4" stroke-linejoin="miter"/><path d="M108 1186 L184 1186" fill="none" stroke="#394651" stroke-width="4" stroke-linejoin="miter"/><circle cx="108" cy="1186" r="5" fill="#394651" stroke="none" stroke-width="1"/><path d="M256 1186 L313 1186" fill="none" stroke="#278488" stroke-width="4" stroke-linejoin="miter"/><rect x="313" y="1168" width="70" height="36" fill="#fff" stroke="#278488" stroke-width="2"/><text x="348" y="1193" font-size="19" fill="#278488" text-anchor="middle" font-weight="700">D7</text><rect x="177" y="1179" width="14" height="14" fill="#b4a481" stroke="#776e5d" stroke-width="1"/><rect x="177" y="1215" width="14" height="14" fill="#b4a481" stroke="#776e5d" stroke-width="1"/><rect x="249" y="1179" width="14" height="14" fill="#b4a481" stroke="#776e5d" stroke-width="1"/><rect x="249" y="1215" width="14" height="14" fill="#b4a481" stroke="#776e5d" stroke-width="1"/><rect x="190" y="1174" width="60" height="60" fill="#20272d" stroke="#10161b" stroke-width="2"/><rect x="194" y="1178" width="52" height="52" fill="#a8b0b5" stroke="#59636b" stroke-width="2"/><circle cx="220" cy="1204" r="20" fill="#14191e" stroke="#080c10" stroke-width="3"/><circle cx="215" cy="1197" r="8" fill="#242c33" stroke="none" stroke-width="1"/><circle cx="201" cy="1185" r="3" fill="#333e45" stroke="none" stroke-width="1"/><circle cx="201" cy="1223" r="3" fill="#333e45" stroke="none" stroke-width="1"/><circle cx="239" cy="1185" r="3" fill="#333e45" stroke="none" stroke-width="1"/><circle cx="239" cy="1223" r="3" fill="#333e45" stroke="none" stroke-width="1"/><text x="220" y="1159" font-size="17" fill="#172c3d" text-anchor="middle" font-weight="700">A</text><rect x="75" y="1234" width="66" height="36" fill="#fff" stroke="#394651" stroke-width="2"/><text x="108" y="1259" font-size="19" fill="#394651" text-anchor="middle" font-weight="700">GND</text><path d="M486 961 L486 1234" fill="none" stroke="#394651" stroke-width="4" stroke-linejoin="miter"/><path d="M486 1186 L562 1186" fill="none" stroke="#394651" stroke-width="4" stroke-linejoin="miter"/><circle cx="486" cy="1186" r="5" fill="#394651" stroke="none" stroke-width="1"/><path d="M634 1186 L691 1186" fill="none" stroke="#278488" stroke-width="4" stroke-linejoin="miter"/><rect x="691" y="1168" width="70" height="36" fill="#fff" stroke="#278488" stroke-width="2"/><text x="726" y="1193" font-size="19" fill="#278488" text-anchor="middle" font-weight="700">D8</text><rect x="555" y="1179" width="14" height="14" fill="#b4a481" stroke="#776e5d" stroke-width="1"/><rect x="555" y="1215" width="14" height="14" fill="#b4a481" stroke="#776e5d" stroke-width="1"/><rect x="627" y="1179" width="14" height="14" fill="#b4a481" stroke="#776e5d" stroke-width="1"/><rect x="627" y="1215" width="14" height="14" fill="#b4a481" stroke="#776e5d" stroke-width="1"/><rect x="568" y="1174" width="60" height="60" fill="#20272d" stroke="#10161b" stroke-width="2"/><rect x="572" y="1178" width="52" height="52" fill="#a8b0b5" stroke="#59636b" stroke-width="2"/><circle cx="598" cy="1204" r="20" fill="#14191e" stroke="#080c10" stroke-width="3"/><circle cx="593" cy="1197" r="8" fill="#242c33" stroke="none" stroke-width="1"/><circle cx="579" cy="1185" r="3" fill="#333e45" stroke="none" stroke-width="1"/><circle cx="579" cy="1223" r="3" fill="#333e45" stroke="none" stroke-width="1"/><circle cx="617" cy="1185" r="3" fill="#333e45" stroke="none" stroke-width="1"/><circle cx="617" cy="1223" r="3" fill="#333e45" stroke="none" stroke-width="1"/><text x="598" y="1159" font-size="17" fill="#172c3d" text-anchor="middle" font-weight="700">B</text><rect x="453" y="1234" width="66" height="36" fill="#fff" stroke="#394651" stroke-width="2"/><text x="486" y="1259" font-size="19" fill="#394651" text-anchor="middle" font-weight="700">GND</text><text x="68" y="1290" font-size="17" fill="#526677" text-anchor="start" font-weight="400">Internal pull-ups are enabled. No extra button resistors.</text><rect x="852" y="860" width="608" height="442" fill="#fff" stroke="#d9e2e9" stroke-width="2"/><rect x="852" y="860" width="6" height="442" fill="#2e6874" stroke="none" stroke-width="1"/><text x="878" y="900" font-size="20" fill="#2e6874" text-anchor="start" font-weight="700">04</text><text x="917" y="900" font-size="25" fill="#172c3d" text-anchor="start" font-weight="700">Sound and reset</text><text x="878" y="932" font-size="17" fill="#526677" text-anchor="start" font-weight="400">Separate circuits: OLED RES is not the board RST.</text><circle cx="974" cy="1013" r="57" fill="#151d23" stroke="#687782" stroke-width="3"/><circle cx="974" cy="1013" r="48" fill="#232c33" stroke="none" stroke-width="1"/><circle cx="974" cy="1007" r="12" fill="#080d12" stroke="#4d5a63" stroke-width="2"/><text x="974" y="1050" font-size="24" fill="#909da6" text-anchor="middle" font-weight="700">+</text><circle cx="955" cy="1080" r="6" fill="#c3b485" stroke="none" stroke-width="1"/><circle cx="993" cy="1080" r="6" fill="#c3b485" stroke="none" stroke-width="1"/><path d="M955 1080 L955 1116" fill="none" stroke="#bd682d" stroke-width="4" stroke-linejoin="miter"/><path d="M993 1080 L993 1092 L1135 1092" fill="none" stroke="#394651" stroke-width="4" stroke-linejoin="miter"/><rect x="920" y="1116" width="70" height="36" fill="#fff" stroke="#bd682d" stroke-width="2"/><text x="955" y="1141" font-size="19" fill="#bd682d" text-anchor="middle" font-weight="700">D5</text><rect x="1135" y="1074" width="70" height="36" fill="#fff" stroke="#394651" stroke-width="2"/><text x="1170" y="1099" font-size="19" fill="#394651" text-anchor="middle" font-weight="700">D9</text><text x="1074" y="991" font-size="19" fill="#172c3d" text-anchor="start" font-weight="700">Passive buzzer / piezo</text><text x="1074" y="1021" font-size="17" fill="#526677" text-anchor="start" font-weight="400">D5 outputs sound.</text><text x="1074" y="1047" font-size="17" fill="#526677" text-anchor="start" font-weight="400">D9 is held LOW.</text><rect x="935" y="1196" width="100" height="28" fill="#adb8bf" stroke="#5a6670" stroke-width="2"/><rect x="944" y="1190" width="82" height="40" fill="#222a31" stroke="none" stroke-width="1"/><rect x="952" y="1193" width="66" height="34" fill="#bdc7cd" stroke="none" stroke-width="1"/><rect x="964" y="1198" width="42" height="24" fill="#141b20" stroke="none" stroke-width="1"/><rect x="923" y="1205" width="12" height="10" fill="#b8c1c7" stroke="none" stroke-width="1"/><rect x="1035" y="1205" width="12" height="10" fill="#b8c1c7" stroke="none" stroke-width="1"/><path d="M923 1210 L896 1210 L896 1227" fill="none" stroke="#394651" stroke-width="4" stroke-linejoin="miter"/><path d="M1047 1210 L1124 1210" fill="none" stroke="#bc538c" stroke-width="4" stroke-linejoin="miter"/><rect x="861" y="1227" width="70" height="36" fill="#fff" stroke="#394651" stroke-width="2"/><text x="896" y="1252" font-size="19" fill="#394651" text-anchor="middle" font-weight="700">GND</text><rect x="1124" y="1192" width="70" height="36" fill="#fff" stroke="#bc538c" stroke-width="2"/><text x="1159" y="1217" font-size="19" fill="#bc538c" text-anchor="middle" font-weight="700">RST</text><text x="1256" y="1206" font-size="18" fill="#172c3d" text-anchor="middle" font-weight="700">RESET</text><text x="1256" y="1232" font-size="16" fill="#526677" text-anchor="middle" font-weight="400">2 pins</text><text x="878" y="1290" font-size="16" fill="#526677" text-anchor="start" font-weight="400">Appearance alone does not identify active / passive buzzers.</text><rect x="40" y="1328" width="1420" height="326" fill="#fff" stroke="#d9e2e9" stroke-width="2"/><rect x="40" y="1328" width="6" height="326" fill="#2e6874" stroke="none" stroke-width="1"/><text x="66" y="1368" font-size="20" fill="#2e6874" text-anchor="start" font-weight="700">05</text><text x="105" y="1368" font-size="25" fill="#172c3d" text-anchor="start" font-weight="700">Battery, switch and resistor</text><text x="66" y="1400" font-size="17" fill="#526677" text-anchor="start" font-weight="400">Reference components · not connected in this diagram</text><circle cx="159" cy="1494" r="52" fill="#17232a" stroke="#0b1318" stroke-width="3"/><circle cx="159" cy="1494" r="43" fill="#404b53" stroke="none" stroke-width="1"/><circle cx="159" cy="1494" r="35" fill="#bdc6cc" stroke="#707f89" stroke-width="2"/><rect x="150" y="1445" width="18" height="33" fill="#e3e9ed" stroke="#7e8b94" stroke-width="1"/><rect x="150" y="1511" width="18" height="33" fill="#e3e9ed" stroke="#7e8b94" stroke-width="1"/><text x="159" y="1502" font-size="27" fill="#52606b" text-anchor="middle" font-weight="700">+</text><rect x="153" y="1432" width="12" height="10" fill="#a9b5bb" stroke="none" stroke-width="1"/><rect x="153" y="1546" width="12" height="10" fill="#a9b5bb" stroke="none" stroke-width="1"/><circle cx="294" cy="1494" r="52" fill="#17232a" stroke="#0b1318" stroke-width="3"/><circle cx="294" cy="1494" r="43" fill="#404b53" stroke="none" stroke-width="1"/><circle cx="294" cy="1494" r="35" fill="#bdc6cc" stroke="#707f89" stroke-width="2"/><rect x="285" y="1445" width="18" height="33" fill="#e3e9ed" stroke="#7e8b94" stroke-width="1"/><rect x="285" y="1511" width="18" height="33" fill="#e3e9ed" stroke="#7e8b94" stroke-width="1"/><text x="294" y="1502" font-size="27" fill="#52606b" text-anchor="middle" font-weight="700">+</text><rect x="288" y="1432" width="12" height="10" fill="#a9b5bb" stroke="none" stroke-width="1"/><rect x="288" y="1546" width="12" height="10" fill="#a9b5bb" stroke="none" stroke-width="1"/><text x="226" y="1581" font-size="18" fill="#172c3d" text-anchor="middle" font-weight="700">2 × 3 V coin cells</text><rect x="454" y="1452" width="131" height="65" fill="#9ca9b2" stroke="#586774" stroke-width="2"/><rect x="450" y="1464" width="12" height="42" fill="#c5cfd5" stroke="none" stroke-width="1"/><rect x="581" y="1464" width="12" height="42" fill="#c5cfd5" stroke="none" stroke-width="1"/><rect x="476" y="1467" width="83" height="22" fill="#111a21" stroke="none" stroke-width="1"/><rect x="485" y="1462" width="29" height="35" fill="#202b33" stroke="none" stroke-width="1"/><rect x="470" y="1517" width="10" height="35" fill="#bda77c" stroke="#77684d" stroke-width="1"/><rect x="505" y="1517" width="10" height="35" fill="#bda77c" stroke="#77684d" stroke-width="1"/><rect x="540" y="1517" width="10" height="35" fill="#bda77c" stroke="#77684d" stroke-width="1"/><text x="520" y="1581" font-size="18" fill="#172c3d" text-anchor="middle" font-weight="700">3-pin power switch</text><path d="M671 1490 L712 1490" fill="none" stroke="#85939d" stroke-width="4" stroke-linejoin="miter"/><rect x="712" y="1473" width="115" height="34" fill="#d9c49b" stroke="#9c875b" stroke-width="2"/><path d="M827 1490 L866 1490" fill="none" stroke="#85939d" stroke-width="4" stroke-linejoin="miter"/><rect x="728" y="1473" width="7" height="34" fill="#734426" stroke="none" stroke-width="1"/><rect x="746" y="1473" width="7" height="34" fill="#22282d" stroke="none" stroke-width="1"/><rect x="768" y="1473" width="7" height="34" fill="#d7822d" stroke="none" stroke-width="1"/><rect x="808" y="1473" width="7" height="34" fill="#b5964c" stroke="none" stroke-width="1"/><text x="769" y="1550" font-size="18" fill="#172c3d" text-anchor="middle" font-weight="700">10 kΩ · reference only</text><text x="912" y="1464" font-size="21" fill="#172c3d" text-anchor="start" font-weight="700">Verify the battery wiring first.</text><text x="912" y="1496" font-size="18" fill="#526677" text-anchor="start" font-weight="400">Series: about 6 V. Parallel: about 3 V.</text><text x="912" y="1526" font-size="18" fill="#c73944" text-anchor="start" font-weight="700">Never connect 6 V directly to VCC.</text><text x="912" y="1556" font-size="17" fill="#526677" text-anchor="start" font-weight="400">No buzzer resistor value has been selected.</text><text x="912" y="1586" font-size="17" fill="#526677" text-anchor="start" font-weight="400">Pro Micro normally has a reset pull-up.</text><text x="48" y="1684" font-size="17" fill="#526677" text-anchor="start" font-weight="400">Typical components, not to scale. Follow the pin labels and datasheets for your own modules.</text></g></svg>
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Layer_1" xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 1500 1700">
+  <!-- Generator: Adobe Illustrator 30.8.1, SVG Export Plug-In . SVG Version: 2.1.4 Build 1)  -->
+  <defs>
+    <style>
+      .st0, .st1, .st2, .st3, .st4, .st5, .st6, .st7, .st8, .st9, .st10, .st11, .st12, .st13, .st14, .st15, .st16, .st17, .st18, .st19 {
+        stroke-width: 2px;
+      }
+
+      .st0, .st1, .st3, .st5, .st6, .st7, .st10, .st15, .st16, .st18 {
+        fill: #fff;
+      }
+
+      .st0, .st20 {
+        stroke: #bc538c;
+      }
+
+      .st21 {
+        fill: #d08219;
+      }
+
+      .st21, .st22, .st23, .st24, .st25, .st26, .st27, .st28, .st29, .st30, .st31, .st32, .st33, .st34, .st35, .st36, .st37, .st38, .st39, .st40, .st41, .st42, .st43, .st44, .st45, .st46, .st47, .st48, .st49, .st50, .st51, .st52, .st53, .st54 {
+        isolation: isolate;
+      }
+
+      .st21, .st22, .st23, .st25, .st26, .st28, .st30, .st33, .st34, .st35, .st37, .st38, .st40, .st42, .st43, .st45, .st46, .st47, .st48, .st49, .st50, .st52, .st53 {
+        font-family: Arial-BoldMT, Arial;
+        font-weight: 700;
+      }
+
+      .st21, .st22, .st34, .st40, .st42, .st46, .st48, .st49, .st50, .st52, .st54 {
+        font-size: 19px;
+      }
+
+      .st55 {
+        fill: #bdc7cd;
+      }
+
+      .st56 {
+        fill: #c0cbd0;
+      }
+
+      .st22, .st53 {
+        fill: #c73944;
+      }
+
+      .st57 {
+        fill: #b4a481;
+        stroke: #776e5d;
+      }
+
+      .st1 {
+        stroke: #d9e2e9;
+      }
+
+      .st58 {
+        fill: #202b33;
+      }
+
+      .st59, .st60 {
+        stroke-width: 1.1px;
+      }
+
+      .st59, .st60, .st61 {
+        stroke-miterlimit: 2.1;
+      }
+
+      .st59, .st12 {
+        fill: #acb5bd;
+        stroke: #5c6770;
+      }
+
+      .st23 {
+        fill: #edf7fa;
+        font-size: 15.8px;
+      }
+
+      .st2 {
+        fill: #adb8bf;
+        stroke: #5a6670;
+      }
+
+      .st62 {
+        stroke: #85939d;
+      }
+
+      .st62, .st63, .st64, .st65, .st20, .st66, .st67, .st68, .st69, .st70, .st71 {
+        fill: none;
+      }
+
+      .st62, .st63, .st64, .st65, .st20, .st66, .st67, .st69, .st70, .st71 {
+        stroke-width: 4px;
+      }
+
+      .st3, .st69 {
+        stroke: #8257ac;
+      }
+
+      .st72 {
+        fill: #232c33;
+      }
+
+      .st24, .st27, .st29, .st32, .st36, .st39, .st41, .st44, .st51, .st54 {
+        font-family: ArialMT, Arial;
+      }
+
+      .st24, .st32 {
+        font-size: 9px;
+      }
+
+      .st24, .st44 {
+        fill: #e5f0f5;
+      }
+
+      .st25 {
+        fill: #52606b;
+        font-size: 27px;
+      }
+
+      .st26 {
+        font-size: 37px;
+      }
+
+      .st26, .st28, .st30, .st33, .st36, .st38, .st46, .st47, .st54 {
+        fill: #172c3d;
+      }
+
+      .st27 {
+        fill: #a9b5bc;
+        font-size: 6px;
+      }
+
+      .st73 {
+        fill: #5c6770;
+      }
+
+      .st74 {
+        fill: #d5dce0;
+      }
+
+      .st75 {
+        fill: #3b342b;
+      }
+
+      .st28, .st51 {
+        font-size: 21px;
+      }
+
+      .st29 {
+        font-size: 16px;
+      }
+
+      .st29, .st39, .st41, .st51, .st76 {
+        fill: #526677;
+      }
+
+      .st77 {
+        fill: #bda77c;
+        stroke: #77684d;
+      }
+
+      .st78 {
+        fill: #c1cad1;
+      }
+
+      .st4 {
+        fill: #a8b0b5;
+        stroke: #59636b;
+      }
+
+      .st63, .st5 {
+        stroke: #267cb8;
+      }
+
+      .st79 {
+        fill: #07151c;
+      }
+
+      .st30 {
+        font-size: 25px;
+      }
+
+      .st80 {
+        fill: #333e45;
+      }
+
+      .st81 {
+        fill: #d7822d;
+      }
+
+      .st82 {
+        fill: #a9b5bb;
+      }
+
+      .st83 {
+        fill: #14191e;
+        stroke: #080c10;
+      }
+
+      .st83, .st84, .st85, .st86, .st87 {
+        stroke-width: 3px;
+      }
+
+      .st6, .st67 {
+        stroke: #278488;
+      }
+
+      .st88 {
+        fill: #102f45;
+      }
+
+      .st89 {
+        fill: #f2f6f8;
+      }
+
+      .st32 {
+        fill: #475865;
+      }
+
+      .st7, .st70 {
+        stroke: #149078;
+      }
+
+      .st33, .st36, .st41 {
+        font-size: 17px;
+      }
+
+      .st64, .st18 {
+        stroke: #c73944;
+      }
+
+      .st60, .st17 {
+        fill: #bec5ca;
+        stroke: #78848e;
+      }
+
+      .st8 {
+        fill: #9ca9b2;
+        stroke: #586774;
+      }
+
+      .st90 {
+        fill: #c7ced3;
+      }
+
+      .st91 {
+        fill: #141b20;
+      }
+
+      .st34 {
+        fill: #149078;
+      }
+
+      .st65, .st10 {
+        stroke: #394651;
+      }
+
+      .st92 {
+        fill: #8e6831;
+      }
+
+      .st35 {
+        fill: #eef7f8;
+        font-size: 14px;
+      }
+
+      .st93, .st94, .st95 {
+        fill: #242c33;
+      }
+
+      .st84, .st61 {
+        fill: #155c82;
+        stroke: #0d3c58;
+      }
+
+      .st9 {
+        fill: #080d12;
+        stroke: #4d5a63;
+      }
+
+      .st96 {
+        fill: #cfab54;
+      }
+
+      .st97 {
+        fill: #b8c1c7;
+      }
+
+      .st98, .st45 {
+        fill: #2e6874;
+      }
+
+      .st37 {
+        fill: #909da6;
+        font-size: 24px;
+      }
+
+      .st99 {
+        fill: #bdc7cc;
+      }
+
+      .st38, .st39, .st53 {
+        font-size: 18px;
+      }
+
+      .st100 {
+        fill: #252e36;
+      }
+
+      .st85 {
+        fill: #17232a;
+        stroke: #0b1318;
+      }
+
+      .st86 {
+        fill: #151d23;
+        stroke: #687782;
+      }
+
+      .st40 {
+        fill: #8257ac;
+      }
+
+      .st11 {
+        fill: #d9c49b;
+        stroke: #9c875b;
+      }
+
+      .st101 {
+        fill: #d2dbe0;
+      }
+
+      .st42, .st102 {
+        fill: #394651;
+      }
+
+      .st103 {
+        fill: #d5b86e;
+      }
+
+      .st43 {
+        fill: #e0f7f2;
+        font-size: 36px;
+      }
+
+      .st66, .st16 {
+        stroke: #d08219;
+      }
+
+      .st104 {
+        fill: #222a31;
+      }
+
+      .st94 {
+        stroke-miterlimit: 2.1;
+        stroke-width: 1.1px;
+      }
+
+      .st94, .st95 {
+        stroke: #89949c;
+      }
+
+      .st44 {
+        font-size: 10.5px;
+      }
+
+      .st45, .st47 {
+        font-size: 20px;
+      }
+
+      .st13 {
+        fill: #b9c5c9;
+        stroke: #334550;
+      }
+
+      .st105 {
+        fill: #734426;
+      }
+
+      .st106 {
+        fill: #111a21;
+      }
+
+      .st107 {
+        fill: #d6eee8;
+      }
+
+      .st87 {
+        fill: #147d9b;
+        stroke: #10546d;
+      }
+
+      .st48 {
+        fill: #bd682d;
+      }
+
+      .st108 {
+        fill: #c3b485;
+      }
+
+      .st49 {
+        fill: #bc538c;
+      }
+
+      .st14 {
+        fill: #bdc6cc;
+        stroke: #707f89;
+      }
+
+      .st15, .st71 {
+        stroke: #bd682d;
+      }
+
+      .st109 {
+        fill: #404b53;
+      }
+
+      .st50 {
+        fill: #278488;
+      }
+
+      .st68 {
+        stroke: #d6eee8;
+        stroke-width: 6px;
+      }
+
+      .st95 {
+        stroke-miterlimit: 4;
+        stroke-width: 2px;
+      }
+
+      .st61 {
+        stroke-width: 1.6px;
+      }
+
+      .st110 {
+        fill: #cbbd9b;
+      }
+
+      .st111 {
+        fill: #c5cfd5;
+      }
+
+      .st112 {
+        fill: #22282d;
+      }
+
+      .st113 {
+        fill: #243d47;
+      }
+
+      .st114 {
+        fill: #b5964c;
+      }
+
+      .st52 {
+        fill: #267cb8;
+      }
+
+      .st19 {
+        fill: #20272d;
+        stroke: #10161b;
+      }
+
+      .st115 {
+        fill: #e3e9ed;
+        stroke: #7e8b94;
+      }
+    </style>
+  </defs>
+  <rect class="st89" width="1500" height="1700"/>
+  <g>
+    <g class="st31">
+      <g class="st31">
+        <text class="st26" transform="translate(48 61)"><tspan x="0" y="0">PRO MICRO + SSD1306</tspan></text>
+      </g>
+    </g>
+    <g class="st31">
+      <g class="st31">
+        <text class="st51" transform="translate(48 95)"><tspan x="0" y="0">ArduCade · SPI · 5 V / 16 MHz · components viewed from above</tspan></text>
+      </g>
+    </g>
+    <g class="st31">
+      <g class="st31">
+        <text class="st54" transform="translate(48 133)"><tspan x="0" y="0">Wires end at named Pro Micro pins. Matching pin names mean the same connection.</tspan></text>
+      </g>
+    </g>
+    <path class="st65" d="M690,88h30"/>
+    <g class="st31">
+      <g class="st31">
+        <text class="st36" transform="translate(729 95)"><tspan x="0" y="0">GND</tspan></text>
+      </g>
+    </g>
+    <path class="st64" d="M800,88h30"/>
+    <g class="st31">
+      <g class="st31">
+        <text class="st36" transform="translate(839 95)"><tspan x="0" y="0">VCC</tspan></text>
+      </g>
+    </g>
+    <path class="st63" d="M910,88h30"/>
+    <g class="st31">
+      <g class="st31">
+        <text class="st36" transform="translate(949 95)"><tspan x="0" y="0">CLK</tspan></text>
+      </g>
+    </g>
+    <path class="st70" d="M1020,88h30"/>
+    <g class="st31">
+      <g class="st31">
+        <text class="st36" transform="translate(1059 95)"><tspan x="0" y="0">DIN</tspan></text>
+      </g>
+    </g>
+    <path class="st66" d="M1130,88h30"/>
+    <g class="st31">
+      <g class="st31">
+        <text class="st36" transform="translate(1169 95)"><tspan x="0" y="0">CS</tspan></text>
+      </g>
+    </g>
+    <path class="st69" d="M1240,88h30"/>
+    <g class="st31">
+      <g class="st31">
+        <text class="st36" transform="translate(1279 95)"><tspan x="0" y="0">DC</tspan></text>
+      </g>
+    </g>
+    <path class="st20" d="M1350,88h30"/>
+    <g class="st31">
+      <g class="st31">
+        <text class="st36" transform="translate(1389 95)"><tspan x="0" y="0">RES</tspan></text>
+      </g>
+    </g>
+    <rect class="st1" x="40" y="168" width="640" height="666"/>
+    <rect class="st98" x="40" y="168" width="6" height="666"/>
+    <g class="st31">
+      <g class="st31">
+        <text class="st45" transform="translate(66 208)"><tspan x="0" y="0">01</tspan></text>
+      </g>
+    </g>
+    <g class="st31">
+      <g class="st31">
+        <text class="st30" transform="translate(105 208)"><tspan x="0" y="0">Arduino Pro Micro</tspan></text>
+      </g>
+    </g>
+    <g class="st31">
+      <g class="st31">
+        <text class="st41" transform="translate(66 240)"><tspan x="0" y="0">Find the pins on your board; the USB connector may vary.</tspan></text>
+      </g>
+    </g>
+    <g>
+      <rect class="st84" x="107.4" y="413.8" width="180.4" height="402.2"/>
+      <g>
+        <rect class="st74" x="183.4" y="446.1" width="3" height="7.5"/>
+        <rect class="st74" x="188.4" y="446.1" width="3" height="7.5"/>
+        <rect class="st74" x="193.6" y="446.1" width="3" height="7.5"/>
+        <rect class="st74" x="198.7" y="446.1" width="3" height="7.5"/>
+        <rect class="st74" x="208.9" y="446.1" width="3" height="7.5"/>
+        <rect class="st74" x="203.8" y="446.1" width="3" height="7.5"/>
+        <rect class="st74" x="154" y="421.6" width="15" height="9"/>
+        <rect class="st74" x="226.2" y="421.7" width="15" height="9"/>
+        <polygon class="st12" points="160.5 401 167 401 169.3 398.3 224 398.3 226.2 401 232.7 401 232.7 446.1 160.5 446.1 160.5 401"/>
+        <g>
+          <rect class="st73" x="218" y="417.9" width="4.3" height="8.3"/>
+          <rect class="st73" x="216.7" y="411.2" width="6.8" height="6.7"/>
+          <rect class="st73" x="170.8" y="417.9" width="4.3" height="8.3"/>
+          <rect class="st73" x="169.6" y="411.2" width="6.8" height="6.7"/>
+        </g>
+        <polygon class="st78" points="169.8 399.3 167.3 402 225.8 402 223.6 399.3 169.8 399.3"/>
+        <rect class="st73" x="217.4" y="441.8" width="2.8" height="4.3"/>
+        <rect class="st73" x="173.1" y="441.8" width="2.8" height="4.3"/>
+        <rect class="st73" x="192.3" y="441.8" width="10.8" height="4.3"/>
+      </g>
+      <g class="st31">
+        <g class="st31">
+          <text class="st23" transform="translate(152 472.4)"><tspan x="0" y="0">PRO MICRO</tspan></text>
+        </g>
+      </g>
+      <g>
+        <rect class="st95" x="179.7" y="610.8" width="36.1" height="36.1" transform="translate(-386.7 324) rotate(-45)"/>
+        <rect class="st99" x="199.9" y="603.6" width="4.5" height="2.3" transform="translate(-368.4 320.1) rotate(-45)"/>
+        <rect class="st99" x="171.2" y="632.2" width="4.5" height="2.3" transform="translate(-397 308.1) rotate(-45)"/>
+        <rect class="st99" x="192" y="602.3" width="2.3" height="4.5" transform="translate(-370.9 313.6) rotate(-45)"/>
+        <rect class="st99" x="220.7" y="631" width="2.3" height="4.5" transform="translate(-382.8 342.3) rotate(-45)"/>
+        <rect class="st99" x="204.2" y="607.7" width="4.5" height="2.3" transform="translate(-370.1 324.3) rotate(-45)"/>
+        <rect class="st99" x="175.4" y="636.4" width="4.5" height="2.3" transform="translate(-398.8 312.4) rotate(-45)"/>
+        <rect class="st99" x="187.7" y="606.6" width="2.3" height="4.5" transform="translate(-375.2 311.9) rotate(-45)"/>
+        <rect class="st99" x="216.4" y="635.3" width="2.3" height="4.5" transform="translate(-387.1 340.6) rotate(-45)"/>
+        <rect class="st99" x="208.5" y="612" width="4.5" height="2.3" transform="translate(-371.8 328.6) rotate(-45)"/>
+        <rect class="st99" x="179.8" y="640.6" width="4.5" height="2.3" transform="translate(-400.5 316.7) rotate(-45)"/>
+        <rect class="st99" x="183.5" y="610.8" width="2.3" height="4.5" transform="translate(-379.4 310.1) rotate(-45)"/>
+        <rect class="st99" x="212.2" y="639.5" width="2.3" height="4.5" transform="translate(-391.3 338.8) rotate(-45)"/>
+        <rect class="st99" x="212.7" y="616.2" width="4.5" height="2.3" transform="translate(-373.6 332.8) rotate(-45)"/>
+        <rect class="st99" x="184" y="644.9" width="4.5" height="2.3" transform="translate(-402.3 320.9) rotate(-45)"/>
+        <rect class="st99" x="179.3" y="615.2" width="2.3" height="4.5" transform="translate(-383.8 308.4) rotate(-45)"/>
+        <rect class="st99" x="208" y="643.9" width="2.3" height="4.5" transform="translate(-395.7 337.1) rotate(-45)"/>
+        <rect class="st99" x="216.9" y="620.5" width="4.5" height="2.3" transform="translate(-375.4 337) rotate(-45)"/>
+        <rect class="st99" x="188.2" y="649.2" width="4.5" height="2.3" transform="translate(-404.1 325.2) rotate(-45)"/>
+        <rect class="st99" x="175" y="619.4" width="2.3" height="4.5" transform="translate(-388 306.6) rotate(-45)"/>
+        <rect class="st99" x="203.7" y="648.1" width="2.3" height="4.5" transform="translate(-399.9 335.3) rotate(-45)"/>
+        <rect class="st99" x="221.2" y="624.7" width="4.5" height="2.3" transform="translate(-377.1 341.3) rotate(-45)"/>
+        <rect class="st99" x="192.6" y="653.4" width="4.5" height="2.3" transform="translate(-405.8 329.5) rotate(-45)"/>
+        <rect class="st99" x="170.7" y="623.6" width="2.3" height="4.5" transform="translate(-392.2 304.8) rotate(-45)"/>
+        <rect class="st99" x="199.4" y="652.3" width="2.3" height="4.5" transform="translate(-404.1 333.5) rotate(-45)"/>
+        <g class="st31">
+          <g class="st31">
+            <text class="st27" transform="translate(193.4 619.2) rotate(45)"><tspan x="0" y="0">ATMEL</tspan></text>
+          </g>
+        </g>
+        <g class="st31">
+          <g class="st31">
+            <text class="st27" transform="translate(187.8 628.5) rotate(45)"><tspan x="0" y="0">32U4</tspan></text>
+          </g>
+        </g>
+      </g>
+      <rect class="st17" x="171.3" y="720.5" width="52.6" height="24.1"/>
+      <g class="st31">
+        <g class="st31">
+          <text class="st32" transform="translate(183.8 736.3)"><tspan x="0" y="0">16.000</tspan></text>
+        </g>
+      </g>
+      <rect class="st100" x="170.6" y="495.7" width="46.6" height="21.1"/>
+      <rect class="st90" x="176.6" y="489.7" width="6" height="6"/>
+      <rect class="st90" x="205.2" y="489.7" width="6" height="6"/>
+      <rect class="st110" x="169.1" y="540.1" width="12.8" height="21.1"/>
+      <rect class="st101" x="169.1" y="540.1" width="12.8" height="4.5"/>
+      <rect class="st101" x="169.1" y="556.6" width="12.8" height="4.5"/>
+      <rect class="st110" x="212.7" y="537.1" width="12.8" height="21.1"/>
+      <rect class="st101" x="212.7" y="537.1" width="12.8" height="4.5"/>
+      <rect class="st101" x="212.7" y="553.6" width="12.8" height="4.5"/>
+      <rect class="st110" x="173.6" y="573.2" width="12.8" height="21.1"/>
+      <rect class="st101" x="173.6" y="573.2" width="12.8" height="4.5"/>
+      <rect class="st101" x="173.6" y="589.7" width="12.8" height="4.5"/>
+      <g>
+        <rect class="st110" x="221.7" y="690.4" width="12.8" height="21.1"/>
+        <rect class="st101" x="221.7" y="690.4" width="12.8" height="4.5"/>
+        <rect class="st101" x="221.7" y="707" width="12.8" height="4.5"/>
+      </g>
+      <rect class="st110" x="166.8" y="770.1" width="12.8" height="21.1"/>
+      <rect class="st101" x="166.8" y="770.1" width="12.8" height="4.5"/>
+      <rect class="st101" x="166.8" y="786.7" width="12.8" height="4.5"/>
+      <rect class="st110" x="216.4" y="773.1" width="12.8" height="21.1"/>
+      <rect class="st101" x="216.4" y="773.1" width="12.8" height="4.5"/>
+      <rect class="st101" x="216.4" y="789.7" width="12.8" height="4.5"/>
+      <circle class="st96" cx="121" cy="496.5" r="7.5"/>
+      <circle class="st88" cx="121" cy="496.5" r="3.8"/>
+      <circle class="st96" cx="274.3" cy="496.5" r="7.5"/>
+      <circle class="st88" cx="274.3" cy="496.5" r="3.8"/>
+      <circle class="st96" cx="121" cy="522" r="7.5"/>
+      <circle class="st88" cx="121" cy="522" r="3.8"/>
+      <circle class="st96" cx="274.3" cy="522" r="7.5"/>
+      <circle class="st88" cx="274.3" cy="522" r="3.8"/>
+      <circle class="st96" cx="121" cy="547.6" r="7.5"/>
+      <circle class="st88" cx="121" cy="547.6" r="3.8"/>
+      <circle class="st96" cx="274.3" cy="547.6" r="7.5"/>
+      <circle class="st88" cx="274.3" cy="547.6" r="3.8"/>
+      <circle class="st96" cx="121" cy="573.2" r="7.5"/>
+      <circle class="st88" cx="121" cy="573.2" r="3.8"/>
+      <circle class="st96" cx="274.3" cy="573.2" r="7.5"/>
+      <circle class="st88" cx="274.3" cy="573.2" r="3.8"/>
+      <circle class="st96" cx="121" cy="598.7" r="7.5"/>
+      <circle class="st88" cx="121" cy="598.7" r="3.8"/>
+      <circle class="st96" cx="274.3" cy="598.7" r="7.5"/>
+      <circle class="st88" cx="274.3" cy="598.7" r="3.8"/>
+      <circle class="st96" cx="121" cy="624.3" r="7.5"/>
+      <circle class="st88" cx="121" cy="624.3" r="3.8"/>
+      <circle class="st96" cx="274.3" cy="624.3" r="7.5"/>
+      <circle class="st88" cx="274.3" cy="624.3" r="3.8"/>
+      <circle class="st96" cx="121" cy="649.8" r="7.5"/>
+      <circle class="st88" cx="121" cy="649.8" r="3.8"/>
+      <circle class="st96" cx="274.3" cy="649.8" r="7.5"/>
+      <circle class="st88" cx="274.3" cy="649.8" r="3.8"/>
+      <circle class="st96" cx="121" cy="675.4" r="7.5"/>
+      <circle class="st88" cx="121" cy="675.4" r="3.8"/>
+      <circle class="st96" cx="274.3" cy="675.4" r="7.5"/>
+      <circle class="st88" cx="274.3" cy="675.4" r="3.8"/>
+      <circle class="st96" cx="121" cy="701" r="7.5"/>
+      <circle class="st88" cx="121" cy="701" r="3.8"/>
+      <circle class="st96" cx="274.3" cy="701" r="7.5"/>
+      <circle class="st88" cx="274.3" cy="701" r="3.8"/>
+      <circle class="st96" cx="121" cy="726.5" r="7.5"/>
+      <circle class="st88" cx="121" cy="726.5" r="3.8"/>
+      <circle class="st96" cx="274.3" cy="726.5" r="7.5"/>
+      <circle class="st88" cx="274.3" cy="726.5" r="3.8"/>
+      <circle class="st96" cx="121" cy="752.1" r="7.5"/>
+      <circle class="st88" cx="121" cy="752.1" r="3.8"/>
+      <circle class="st96" cx="274.3" cy="752.1" r="7.5"/>
+      <circle class="st88" cx="274.3" cy="752.1" r="3.8"/>
+      <circle class="st96" cx="121" cy="777.7" r="7.5"/>
+      <circle class="st88" cx="121" cy="777.7" r="3.8"/>
+      <circle class="st96" cx="274.3" cy="777.7" r="7.5"/>
+      <circle class="st88" cx="274.3" cy="777.7" r="3.8"/>
+      <g>
+        <g class="st31">
+          <g class="st31">
+            <text class="st24" transform="translate(134.5 501)"><tspan x="0" y="0">TX/1</tspan></text>
+          </g>
+        </g>
+        <g class="st31">
+          <g class="st31">
+            <text class="st24" transform="translate(134.5 526.6)"><tspan x="0" y="0">RX/0</tspan></text>
+          </g>
+        </g>
+        <g class="st31">
+          <g class="st31">
+            <text class="st24" transform="translate(134.5 552.1)"><tspan x="0" y="0">GND</tspan></text>
+          </g>
+        </g>
+        <g class="st31">
+          <g class="st31">
+            <text class="st24" transform="translate(134.5 577.7)"><tspan x="0" y="0">GND</tspan></text>
+          </g>
+        </g>
+        <g class="st31">
+          <g class="st31">
+            <text class="st24" transform="translate(134.5 603.2)"><tspan x="0" y="0">D2</tspan></text>
+          </g>
+        </g>
+        <g class="st31">
+          <g class="st31">
+            <text class="st24" transform="translate(134.5 628.8)"><tspan x="0" y="0">D3</tspan></text>
+          </g>
+        </g>
+        <g class="st31">
+          <g class="st31">
+            <text class="st24" transform="translate(134.5 654.4)"><tspan x="0" y="0">D4</tspan></text>
+          </g>
+        </g>
+        <g class="st31">
+          <g class="st31">
+            <text class="st24" transform="translate(134.5 679.9)"><tspan x="0" y="0">D5</tspan></text>
+          </g>
+        </g>
+        <g class="st31">
+          <g class="st31">
+            <text class="st24" transform="translate(134.5 705.5)"><tspan x="0" y="0">D6</tspan></text>
+          </g>
+        </g>
+        <g class="st31">
+          <g class="st31">
+            <text class="st24" transform="translate(134.5 731)"><tspan x="0" y="0">D7</tspan></text>
+          </g>
+        </g>
+        <g class="st31">
+          <g class="st31">
+            <text class="st24" transform="translate(134.5 756.6)"><tspan x="0" y="0">D8</tspan></text>
+          </g>
+        </g>
+        <g class="st31">
+          <g class="st31">
+            <text class="st24" transform="translate(134.5 782.2)"><tspan x="0" y="0">D9</tspan></text>
+          </g>
+        </g>
+      </g>
+      <g>
+        <g class="st31">
+          <g class="st31">
+            <text class="st24" transform="translate(240.1 501)"><tspan x="0" y="0">RAW</tspan></text>
+          </g>
+        </g>
+        <g class="st31">
+          <g class="st31">
+            <text class="st24" transform="translate(240.7 526.6)"><tspan x="0" y="0">GND</tspan></text>
+          </g>
+        </g>
+        <g class="st31">
+          <g class="st31">
+            <text class="st24" transform="translate(242.7 552.1)"><tspan x="0" y="0">RST</tspan></text>
+          </g>
+        </g>
+        <g class="st31">
+          <g class="st31">
+            <text class="st24" transform="translate(241.7 577.7)"><tspan x="0" y="0">VCC</tspan></text>
+          </g>
+        </g>
+        <g class="st31">
+          <g class="st31">
+            <text class="st24" transform="translate(249.8 603.2)"><tspan x="0" y="0">A3</tspan></text>
+          </g>
+        </g>
+        <g class="st31">
+          <g class="st31">
+            <text class="st24" transform="translate(249.8 628.8)"><tspan x="0" y="0">A2</tspan></text>
+          </g>
+        </g>
+        <g class="st31">
+          <g class="st31">
+            <text class="st24" transform="translate(249.8 654.4)"><tspan x="0" y="0">A1</tspan></text>
+          </g>
+        </g>
+        <g class="st31">
+          <g class="st31">
+            <text class="st24" transform="translate(249.8 679.9)"><tspan x="0" y="0">A0</tspan></text>
+          </g>
+        </g>
+        <g class="st31">
+          <g class="st31">
+            <text class="st24" transform="translate(244.2 705.5)"><tspan x="0" y="0">D15</tspan></text>
+          </g>
+        </g>
+        <g class="st31">
+          <g class="st31">
+            <text class="st24" transform="translate(244.2 731)"><tspan x="0" y="0">D14</tspan></text>
+          </g>
+        </g>
+        <g class="st31">
+          <g class="st31">
+            <text class="st24" transform="translate(244.2 756.6)"><tspan x="0" y="0">D16</tspan></text>
+          </g>
+        </g>
+        <g class="st31">
+          <g class="st31">
+            <text class="st24" transform="translate(244.2 782.2)"><tspan x="0" y="0">D10</tspan></text>
+          </g>
+        </g>
+      </g>
+      <g class="st31">
+        <g class="st31">
+          <text class="st44" transform="translate(166.9 808.1)"><tspan x="0" y="0">5 V · 16 MHz</tspan></text>
+        </g>
+      </g>
+    </g>
+    <g>
+      <g class="st31">
+        <g class="st31">
+          <text class="st47" transform="translate(102.7 300)"><tspan x="0" y="0">Micro-USB</tspan></text>
+        </g>
+      </g>
+      <g class="st31">
+        <path class="st76" d="M107.3,325.2v-11.4h-4.2v-1.5h10.2v1.5h-4.3v11.4h-1.7Z"/>
+        <path class="st76" d="M114.9,325.2v-12.9h1.6v4.6c.7-.9,1.7-1.3,2.8-1.3s1.3.1,1.8.4.9.6,1.1,1.1.3,1.2.3,2.1v5.9h-1.6v-5.9c0-.8-.2-1.4-.5-1.7-.3-.4-.8-.5-1.5-.5s-.9.1-1.3.4c-.4.2-.7.6-.9,1s-.3,1-.3,1.7v5.1h-1.6,0Z"/>
+        <path class="st76" d="M131.3,322.2l1.6.2c-.3,1-.7,1.7-1.4,2.2s-1.6.8-2.7.8-2.4-.4-3.2-1.3c-.8-.8-1.2-2-1.2-3.5s.4-2.8,1.2-3.7,1.9-1.3,3.1-1.3,2.3.4,3.1,1.3,1.2,2,1.2,3.6,0,.2,0,.4h-7c0,1,.3,1.8.9,2.4s1.2.8,2,.8,1.1-.2,1.5-.5.7-.8,1-1.5h-.1ZM126.1,319.7h5.2c0-.8-.3-1.4-.6-1.8-.5-.6-1.2-.9-2-.9s-1.3.2-1.8.7-.8,1.1-.8,2h0Z"/>
+        <path class="st76" d="M141.3,325.2h-1.5v-12.9h1.6v4.6c.7-.8,1.5-1.3,2.6-1.3s1.1.1,1.6.3.9.6,1.3,1c.3.4.6.9.8,1.5s.3,1.2.3,1.9c0,1.6-.4,2.8-1.2,3.7s-1.7,1.3-2.8,1.3-2-.5-2.6-1.4v1.2h-.1ZM141.3,320.5c0,1.1.2,1.9.5,2.4.5.8,1.2,1.2,2,1.2s1.3-.3,1.8-.9.8-1.5.8-2.7-.2-2.1-.7-2.7-1.1-.9-1.8-.9-1.3.3-1.8.9-.8,1.5-.8,2.6h0Z"/>
+        <path class="st76" d="M149.3,320.5c0-1.7.5-3,1.4-3.8.8-.7,1.8-1,2.9-1s2.3.4,3.1,1.3,1.2,2,1.2,3.5-.2,2.1-.5,2.8c-.4.7-.9,1.2-1.6,1.6s-1.4.6-2.3.6c-1.3,0-2.4-.4-3.2-1.3s-1.2-2-1.2-3.6h.2ZM150.9,320.5c0,1.2.3,2.1.8,2.7s1.2.9,2,.9,1.4-.3,2-.9.8-1.5.8-2.7-.3-2-.8-2.6-1.2-.9-2-.9-1.4.3-2,.9-.8,1.5-.8,2.7h0Z"/>
+        <path class="st76" d="M166,324.1c-.6.5-1.1.8-1.7,1.1s-1.1.3-1.7.3c-1,0-1.8-.2-2.4-.8-.6-.5-.8-1.1-.8-1.9s.1-.9.3-1.3.5-.7.8-.9.7-.4,1.1-.5c.3,0,.8-.2,1.4-.2,1.3-.2,2.2-.3,2.8-.5v-.4c0-.6-.1-1.1-.4-1.4s-1-.5-1.8-.5-1.3.1-1.6.4-.6.7-.8,1.4l-1.5-.2c.1-.7.4-1.2.7-1.6s.8-.7,1.4-.9c.6-.2,1.3-.3,2.1-.3s1.4,0,1.9.3.9.4,1.1.7c.2.3.4.6.5,1.1v3.6c0,1.5,0,2.4.1,2.8,0,.4.2.8.4,1.1h-1.7c-.2-.3-.3-.7-.3-1.2v-.2h0ZM165.9,320.5c-.6.2-1.4.4-2.6.6-.7,0-1.1.2-1.4.3s-.5.3-.6.5-.2.5-.2.8.2.8.5,1.1.8.4,1.4.4,1.2-.1,1.6-.4.8-.6,1-1.1c.2-.4.3-.9.3-1.6v-.6h0Z"/>
+        <path class="st76" d="M169.9,325.2v-9.3h1.4v1.4c.4-.7.7-1.1,1-1.3s.6-.3,1-.3,1.1.2,1.6.5l-.5,1.5c-.4-.2-.8-.3-1.2-.3s-.7.1-.9.3-.5.5-.6.9c-.2.6-.3,1.2-.3,1.8v4.9h-1.6.1Z"/>
+        <path class="st76" d="M182,325.2v-1.2c-.6.9-1.5,1.4-2.6,1.4s-1.4-.2-2.1-.6-1.1-1-1.5-1.7c-.3-.7-.5-1.6-.5-2.5s.2-1.8.5-2.5.8-1.3,1.4-1.7,1.3-.6,2.1-.6,1.1.1,1.5.4c.4.2.8.5,1.1.9v-4.6h1.6v12.9h-1.5v-.2h0ZM177,320.6c0,1.2.3,2.1.8,2.7s1.1.9,1.8.9,1.3-.3,1.8-.8.7-1.4.7-2.6-.2-2.2-.7-2.8-1.1-.9-1.8-.9-1.3.3-1.8.9-.7,1.5-.7,2.7h-.1Z"/>
+        <path class="st76" d="M190.3,320.5c0-1.7.5-3,1.4-3.8.8-.7,1.8-1,2.9-1s2.3.4,3.1,1.3,1.2,2,1.2,3.5-.2,2.1-.5,2.8c-.4.7-.9,1.2-1.6,1.6s-1.4.6-2.3.6c-1.3,0-2.4-.4-3.2-1.3s-1.2-2-1.2-3.6h.2ZM192,320.5c0,1.2.3,2.1.8,2.7s1.2.9,2,.9,1.4-.3,2-.9.8-1.5.8-2.7-.3-2-.8-2.6-1.2-.9-2-.9-1.4.3-2,.9-.8,1.5-.8,2.7h0Z"/>
+        <path class="st76" d="M200.9,325.2v-9.3h1.4v1.3c.7-1,1.7-1.5,3-1.5s1.1.1,1.6.3c.5.2.8.5,1.1.8s.4.7.5,1.2v7.2h-1.6v-5.7c0-.6,0-1.1-.2-1.4s-.3-.6-.7-.8c-.3-.2-.7-.3-1.1-.3-.7,0-1.3.2-1.7.6s-.7,1.2-.7,2.4v5.1h-1.6Z"/>
+        <path class="st76" d="M219.4,323.8l.2,1.4c-.4,0-.8.1-1.2.1-.6,0-1,0-1.3-.3s-.5-.4-.7-.7-.2-.9-.2-1.9v-5.4h-1.2v-1.2h1.2v-2.3l1.6-.9v3.3h1.6v1.2h-1.6v6.4c0,.2.1.2.3.3s.3.1.5.1h.8,0Z"/>
+        <path class="st76" d="M220.9,325.2v-12.9h1.6v4.6c.7-.9,1.7-1.3,2.8-1.3s1.3.1,1.8.4.9.6,1.1,1.1.3,1.2.3,2.1v5.9h-1.6v-5.9c0-.8-.2-1.4-.5-1.7-.3-.4-.8-.5-1.5-.5s-.9.1-1.3.4c-.4.2-.7.6-.9,1s-.3,1-.3,1.7v5.1h-1.6.1,0Z"/>
+        <path class="st76" d="M237.3,322.2l1.6.2c-.3,1-.7,1.7-1.4,2.2s-1.6.8-2.7.8-2.4-.4-3.2-1.3c-.8-.8-1.2-2-1.2-3.5s.4-2.8,1.2-3.7,1.9-1.3,3.1-1.3,2.3.4,3.1,1.3,1.2,2,1.2,3.6,0,.2,0,.4h-7c0,1,.3,1.8.9,2.4s1.2.8,2,.8,1.1-.2,1.5-.5.7-.8,1-1.5h-.1ZM232.1,319.7h5.2c0-.8-.3-1.4-.6-1.8-.5-.6-1.2-.9-2-.9s-1.3.2-1.8.7-.8,1.1-.8,2h0Z"/>
+        <path class="st76" d="M245.9,325.2v-12.9h1.6v12.9h-1.6Z"/>
+        <path class="st76" d="M256.4,322.2l1.6.2c-.3,1-.7,1.7-1.4,2.2s-1.6.8-2.7.8-2.4-.4-3.2-1.3c-.8-.8-1.2-2-1.2-3.5s.4-2.8,1.2-3.7,1.9-1.3,3.1-1.3,2.3.4,3.1,1.3,1.2,2,1.2,3.6,0,.2,0,.4h-7c0,1,.3,1.8.9,2.4s1.2.8,2,.8,1.1-.2,1.5-.5.7-.8,1-1.5h-.1ZM251.2,319.7h5.2c0-.8-.3-1.4-.6-1.8-.5-.6-1.2-.9-2-.9s-1.3.2-1.8.7-.8,1.1-.8,2h0Z"/>
+        <path class="st76" d="M260.4,325.2v-8.1h-1.4v-1.2h1.4v-1c0-.6,0-1.1.2-1.4.2-.4.4-.7.8-1s.9-.4,1.6-.4.9,0,1.5.2l-.2,1.4h-.9c-.5,0-.8.1-1,.3s-.3.6-.3,1.2v.9h1.8v1.2h-1.8v8.1h-1.6v-.2h-.1Z"/>
+        <path class="st76" d="M268.4,323.8l.2,1.4c-.4,0-.8.1-1.2.1-.6,0-1,0-1.3-.3s-.5-.4-.7-.7-.2-.9-.2-1.9v-5.4h-1.2v-1.2h1.2v-2.3l1.6-.9v3.3h1.6v1.2h-1.6v6.4q0,.2.3.3t.5.1h.8Z"/>
+        <path class="st76" d="M103.2,344l1.6-.2c0,.6.3,1.1.7,1.4s1,.5,1.7.5,1.3-.1,1.6-.4.5-.6.5-1-.2-.6-.5-.8c-.2-.1-.8-.3-1.6-.5-1.2-.3-2-.5-2.4-.8s-.8-.5-1-.9-.3-.8-.3-1.3,0-.8.3-1.2c.2-.4.4-.6.8-.9.2-.2.6-.3,1-.5s.9-.2,1.4-.2,1.4.1,1.9.3,1,.5,1.2.9c.3.4.4.8.5,1.4l-1.5.2c0-.5-.3-.9-.6-1.1s-.8-.4-1.4-.4-1.2.1-1.6.4-.5.5-.5.8,0,.4.2.6c0,.2.3.3.6.4.2,0,.6.2,1.4.4,1.1.3,1.9.5,2.3.7s.8.5,1,.8.4.8.4,1.4-.2,1-.5,1.5-.8.8-1.3,1.1c-.6.3-1.2.4-2,.4-1.2,0-2.1-.3-2.8-.8s-1-1.3-1.2-2.2h.1Z"/>
+        <path class="st76" d="M112.9,346.8v-12.9h1.6v4.6c.7-.9,1.7-1.3,2.8-1.3s1.3.1,1.8.4.9.6,1.1,1.1.3,1.2.3,2.1v5.9h-1.6v-5.9c0-.8-.2-1.4-.5-1.7-.3-.4-.8-.5-1.5-.5s-.9.1-1.3.4c-.4.2-.7.6-.9,1s-.3,1-.3,1.7v5.1h-1.6,0Z"/>
+        <path class="st76" d="M122.3,342.1c0-1.7.5-3,1.4-3.8.8-.7,1.8-1,2.9-1s2.3.4,3.1,1.3,1.2,2,1.2,3.5-.2,2.1-.5,2.8c-.4.7-.9,1.2-1.6,1.6s-1.4.6-2.3.6c-1.3,0-2.4-.4-3.2-1.3s-1.2-2-1.2-3.6h.2ZM123.9,342.1c0,1.2.3,2.1.8,2.7s1.2.9,2,.9,1.4-.3,2-.9.8-1.5.8-2.7-.3-2-.8-2.6-1.2-.9-2-.9-1.4.3-2,.9-.8,1.5-.8,2.7h0Z"/>
+        <path class="st76" d="M134.6,346.8l-2.9-9.3h1.6l1.5,5.4.6,2s.2-.7.5-1.9l1.5-5.5h1.6l1.4,5.4.5,1.8.5-1.8,1.6-5.4h1.5l-2.9,9.3h-1.6l-1.5-5.6-.4-1.6-1.9,7.2h-1.7,0Z"/>
+        <path class="st76" d="M145.3,344l1.6-.2c0,.6.3,1.1.7,1.4s1,.5,1.7.5,1.3-.1,1.6-.4.5-.6.5-1-.2-.6-.5-.8c-.2-.1-.8-.3-1.6-.5-1.2-.3-2-.5-2.4-.8s-.8-.5-1-.9-.3-.8-.3-1.3,0-.8.3-1.2c.2-.4.4-.6.8-.9.2-.2.6-.3,1-.5s.9-.2,1.4-.2,1.4.1,1.9.3,1,.5,1.2.9c.3.4.4.8.5,1.4l-1.5.2c0-.5-.3-.9-.6-1.1s-.8-.4-1.4-.4-1.2.1-1.6.4-.5.5-.5.8,0,.4.2.6c.1.2.3.3.6.4.2,0,.6.2,1.4.4,1.1.3,1.9.5,2.3.7s.8.5,1,.8.4.8.4,1.4-.2,1-.5,1.5-.8.8-1.3,1.1c-.6.3-1.2.4-2,.4-1.2,0-2.1-.3-2.8-.8s-1-1.3-1.2-2.2h.1Z"/>
+        <path class="st76" d="M166,345.7c-.6.5-1.1.8-1.7,1.1s-1.1.3-1.7.3c-1,0-1.8-.2-2.4-.8-.6-.5-.8-1.1-.8-1.9s.1-.9.3-1.3.5-.7.8-.9.7-.4,1.1-.5c.3,0,.8-.2,1.4-.2,1.3-.2,2.2-.3,2.8-.5v-.4c0-.6-.1-1.1-.4-1.4s-1-.5-1.8-.5-1.3.1-1.6.4-.6.7-.8,1.4l-1.5-.2c.1-.7.4-1.2.7-1.6s.8-.7,1.4-.9c.6-.2,1.3-.3,2.1-.3s1.4,0,1.9.3.9.4,1.1.7c.2.3.4.6.5,1.1v3.6c0,1.5,0,2.4.1,2.8,0,.4.2.8.4,1.1h-1.7c-.2-.3-.3-.7-.3-1.2v-.2h0ZM165.8,342.1c-.6.2-1.4.4-2.6.6-.7,0-1.1.2-1.4.3s-.5.3-.6.5-.2.5-.2.8.2.8.5,1.1.8.4,1.4.4,1.2-.1,1.6-.4.8-.6,1-1.1c.2-.4.3-.9.3-1.6v-.6h0Z"/>
+        <path class="st76" d="M178.4,345.4l.2,1.4c-.4,0-.8.1-1.2.1-.6,0-1,0-1.3-.3s-.5-.4-.7-.7-.2-.9-.2-1.9v-5.4h-1.2v-1.2h1.2v-2.3l1.6-.9v3.3h1.6v1.2h-1.6v6.4c0,.2.1.2.3.3s.3.1.5.1h.8,0Z"/>
+        <path class="st76" d="M179.8,350.4l-.2-1.5c.3,0,.6.1.9.1s.6,0,.8-.2.4-.3.5-.5c0-.2.3-.6.5-1.2,0,0,0-.2.1-.4l-3.5-9.4h1.7l1.9,5.4c.3.7.5,1.4.7,2.2.2-.7.4-1.4.7-2.1l2-5.4h1.6l-3.6,9.5c-.4,1-.7,1.7-.9,2.1-.3.5-.6.9-1,1.1s-.8.4-1.3.4-.6,0-1-.2h.1Z"/>
+        <path class="st76" d="M188.9,350.4v-12.9h1.4v1.2c.3-.5.7-.8,1.2-1.1.4-.2.9-.4,1.6-.4s1.5.2,2.1.6,1.1,1,1.4,1.7.5,1.6.5,2.5-.2,1.8-.5,2.6c-.3.8-.8,1.4-1.5,1.8s-1.3.6-2.1.6-1-.1-1.4-.3-.8-.5-1-.8v4.5h-1.7ZM190.3,342.2c0,1.2.2,2.1.7,2.7s1.1.9,1.8.9,1.3-.3,1.8-.9.8-1.5.8-2.8-.2-2.1-.7-2.7-1.1-.9-1.8-.9-1.3.3-1.8.9-.8,1.5-.8,2.7h0Z"/>
+        <path class="st76" d="M198.9,335.7v-1.8h1.6v1.8h-1.6ZM198.9,346.8v-9.3h1.6v9.3h-1.6Z"/>
+        <path class="st76" d="M209,343.4l1.6.2c-.2,1.1-.6,1.9-1.3,2.5s-1.6.9-2.6.9-2.3-.4-3.1-1.3c-.8-.8-1.2-2-1.2-3.6s.2-1.9.5-2.6.8-1.3,1.5-1.7c.7-.4,1.4-.6,2.2-.6s1.8.3,2.5.8,1.1,1.2,1.2,2.2l-1.5.2c-.1-.6-.4-1.1-.8-1.4s-.8-.5-1.3-.5c-.8,0-1.4.3-1.9.9s-.7,1.5-.7,2.7.2,2.2.7,2.7,1.1.9,1.9.9,1.1-.2,1.6-.6.7-1,.8-1.8h-.1,0Z"/>
+        <path class="st76" d="M218,345.7c-.6.5-1.1.8-1.7,1.1s-1.1.3-1.7.3c-1,0-1.8-.2-2.4-.8-.6-.5-.8-1.1-.8-1.9s.1-.9.3-1.3.5-.7.8-.9.7-.4,1.1-.5c.3,0,.8-.2,1.4-.2,1.3-.2,2.2-.3,2.8-.5v-.4c0-.6-.1-1.1-.4-1.4s-1-.5-1.8-.5-1.3.1-1.6.4-.6.7-.8,1.4l-1.5-.2c.1-.7.4-1.2.7-1.6s.8-.7,1.4-.9c.6-.2,1.3-.3,2.1-.3s1.4,0,1.9.3.9.4,1.1.7c.2.3.4.6.5,1.1v3.6c0,1.5,0,2.4.1,2.8,0,.4.2.8.4,1.1h-1.7c-.2-.3-.3-.7-.3-1.2v-.2h0ZM217.9,342.1c-.6.2-1.4.4-2.6.6-.7,0-1.1.2-1.4.3s-.5.3-.6.5-.2.5-.2.8.2.8.5,1.1.8.4,1.4.4,1.2-.1,1.6-.4.8-.6,1-1.1c.2-.4.3-.9.3-1.6v-.6h0Z"/>
+        <path class="st76" d="M221.9,346.8v-12.9h1.6v12.9h-1.6Z"/>
+        <path class="st76" d="M230.9,350.4v-12.9h1.4v1.2c.3-.5.7-.8,1.2-1.1.4-.2.9-.4,1.6-.4s1.5.2,2.1.6,1.1,1,1.4,1.7.5,1.6.5,2.5-.2,1.8-.5,2.6c-.3.8-.8,1.4-1.5,1.8s-1.3.6-2.1.6-1-.1-1.4-.3-.8-.5-1-.8v4.5h-1.7ZM232.4,342.2c0,1.2.2,2.1.7,2.7s1.1.9,1.8.9,1.3-.3,1.8-.9.8-1.5.8-2.8-.2-2.1-.7-2.7-1.1-.9-1.8-.9-1.3.3-1.8.9-.8,1.5-.8,2.7h0Z"/>
+        <path class="st76" d="M240.9,335.7v-1.8h1.6v1.8h-1.6ZM240.9,346.8v-9.3h1.6v9.3h-1.6Z"/>
+        <path class="st76" d="M244.9,346.8v-9.3h1.4v1.3c.7-1,1.7-1.5,3-1.5s1.1.1,1.6.3c.5.2.8.5,1.1.8s.4.7.5,1.2v7.2h-1.6v-5.7c0-.6,0-1.1-.2-1.4s-.3-.6-.7-.8c-.3-.2-.7-.3-1.1-.3-.7,0-1.3.2-1.7.6s-.7,1.2-.7,2.4v5.1h-1.6Z"/>
+        <path class="st76" d="M259.9,346.8v-12.9h1.6v12.9h-1.6Z"/>
+        <path class="st76" d="M270,345.7c-.6.5-1.1.8-1.7,1.1s-1.1.3-1.7.3c-1,0-1.8-.2-2.4-.8-.6-.5-.8-1.1-.8-1.9s0-.9.3-1.3.5-.7.8-.9.7-.4,1.1-.5c.3,0,.8-.2,1.4-.2,1.3-.2,2.2-.3,2.8-.5v-.4c0-.6,0-1.1-.4-1.4-.4-.4-1-.5-1.8-.5s-1.3.1-1.6.4-.6.7-.8,1.4l-1.5-.2c0-.7.4-1.2.7-1.6s.8-.7,1.4-.9c.6-.2,1.3-.3,2.1-.3s1.4,0,1.9.3.9.4,1.1.7c.2.3.4.6.5,1.1v6.4c0,.4.2.8.4,1.1h-1.7c-.2-.3-.3-.7-.3-1.2v-.2h.2ZM269.9,342.1c-.6.2-1.4.4-2.6.6-.7,0-1.1.2-1.4.3s-.5.3-.6.5-.2.5-.2.8.2.8.5,1.1.8.4,1.4.4,1.2-.1,1.6-.4.8-.6,1-1.1c.2-.4.3-.9.3-1.6v-.6h0Z"/>
+        <path class="st76" d="M273.9,350.4l-.2-1.5c.3,0,.6.1.9.1s.6,0,.8-.2.4-.3.5-.5c0-.2.3-.6.5-1.2v-.4l-3.5-9.4h1.7l1.9,5.4c.3.7.5,1.4.7,2.2.2-.7.4-1.4.7-2.1l2-5.4h1.6l-3.6,9.5c-.4,1-.7,1.7-.9,2.1-.3.5-.6.9-1,1.1s-.8.4-1.3.4-.6,0-1-.2h.2Z"/>
+        <path class="st76" d="M282.4,342.1c0-1.7.5-3,1.4-3.8.8-.7,1.8-1,2.9-1s2.3.4,3.1,1.3,1.2,2,1.2,3.5-.2,2.1-.5,2.8c-.4.7-.9,1.2-1.6,1.6s-1.4.6-2.3.6c-1.3,0-2.4-.4-3.2-1.3s-1.2-2-1.2-3.6h.2ZM284,342.1c0,1.2.3,2.1.8,2.7s1.2.9,2,.9,1.4-.3,2-.9.8-1.5.8-2.7-.3-2-.8-2.6-1.2-.9-2-.9-1.4.3-2,.9-.8,1.5-.8,2.7h0Z"/>
+        <path class="st76" d="M299.1,346.8v-1.4c-.7,1.1-1.7,1.6-3,1.6s-1.1-.1-1.5-.3-.8-.5-1.1-.8-.4-.7-.5-1.2v-7.3h1.6v6.9c0,.4.3.7.6,1,.3.2.7.4,1.2.4s.9-.1,1.3-.4.7-.6.9-1,.3-1,.3-1.8v-5h1.6v9.3h-1.4Z"/>
+        <path class="st76" d="M306.4,345.4l.2,1.4c-.4,0-.8.1-1.2.1-.6,0-1,0-1.3-.3s-.5-.4-.7-.7-.2-.9-.2-1.9v-5.4h-1.2v-1.2h1.2v-2.3l1.6-.9v3.3h1.6v1.2h-1.6v6.4q0,.2.3.3t.5.1h.8Z"/>
+        <path class="st76" d="M308.4,346.8v-1.8h1.8v1.8h-1.8Z"/>
+      </g>
+    </g>
+    <g>
+      <rect class="st61" x="375.3" y="413.8" width="180.4" height="402.2"/>
+      <g>
+        <rect class="st74" x="421.9" y="434.1" width="15" height="9"/>
+        <g>
+          <rect class="st74" x="441" y="446.1" width="3" height="7.5"/>
+          <rect class="st74" x="432.6" y="446.1" width="5.8" height="7.5"/>
+          <rect class="st74" x="492.6" y="446.1" width="5.8" height="7.5"/>
+          <rect class="st74" x="446.2" y="446.1" width="3" height="7.5"/>
+          <rect class="st74" x="451.3" y="446.1" width="3" height="7.5"/>
+          <rect class="st74" x="456.4" y="446.1" width="3" height="7.5"/>
+          <rect class="st74" x="466.5" y="446.1" width="3" height="7.5"/>
+          <rect class="st74" x="476.8" y="446.1" width="3" height="7.5"/>
+          <rect class="st74" x="487" y="446.1" width="3" height="7.5"/>
+          <rect class="st74" x="481.9" y="446.1" width="3" height="7.5"/>
+          <rect class="st74" x="471.7" y="446.1" width="3" height="7.5"/>
+          <rect class="st74" x="461.4" y="446.1" width="3" height="7.5"/>
+        </g>
+        <rect class="st74" x="422" y="419" width="15" height="9"/>
+        <rect class="st74" x="494.1" y="434.1" width="15" height="9"/>
+        <rect class="st74" x="494.2" y="419" width="15" height="9"/>
+        <rect class="st59" x="429.4" y="401" width="72.2" height="45.1"/>
+        <rect class="st78" x="432.5" y="401.8" width="3.4" height="43.6"/>
+        <rect class="st78" x="495.3" y="401.8" width="3.4" height="43.6"/>
+      </g>
+      <g class="st31">
+        <g class="st31">
+          <text class="st23" transform="translate(419.9 472.4)"><tspan x="0" y="0">PRO MICRO</tspan></text>
+        </g>
+      </g>
+      <g>
+        <rect class="st94" x="447.5" y="610.7" width="36.1" height="36.1" transform="translate(-308.3 513.4) rotate(-45)"/>
+        <rect class="st99" x="467.8" y="603.5" width="4.5" height="2.3" transform="translate(-289.9 509.5) rotate(-45)"/>
+        <rect class="st99" x="439.1" y="632.2" width="4.5" height="2.3" transform="translate(-318.6 497.6) rotate(-45)"/>
+        <rect class="st99" x="459.9" y="602.4" width="2.3" height="4.5" transform="translate(-292.5 503.1) rotate(-45)"/>
+        <rect class="st99" x="488.6" y="631.1" width="2.3" height="4.5" transform="translate(-304.4 531.8) rotate(-45)"/>
+        <rect class="st99" x="472" y="607.7" width="4.5" height="2.3" transform="translate(-291.6 513.7) rotate(-45)"/>
+        <rect class="st99" x="443.3" y="636.4" width="4.5" height="2.3" transform="translate(-320.3 501.8) rotate(-45)"/>
+        <rect class="st99" x="455.5" y="606.7" width="2.3" height="4.5" transform="translate(-296.8 501.2) rotate(-45)"/>
+        <rect class="st99" x="484.3" y="635.3" width="2.3" height="4.5" transform="translate(-308.6 530) rotate(-45)"/>
+        <rect class="st99" x="476.3" y="612" width="4.5" height="2.3" transform="translate(-293.4 518) rotate(-45)"/>
+        <rect class="st99" x="447.6" y="640.7" width="4.5" height="2.3" transform="translate(-322.1 506.1) rotate(-45)"/>
+        <rect class="st99" x="451.4" y="610.8" width="2.3" height="4.5" transform="translate(-301 499.6) rotate(-45)"/>
+        <rect class="st99" x="480.1" y="639.5" width="2.3" height="4.5" transform="translate(-312.9 528.3) rotate(-45)"/>
+        <rect class="st99" x="480.5" y="616.2" width="4.5" height="2.3" transform="translate(-295.1 522.2) rotate(-45)"/>
+        <rect class="st99" x="451.8" y="644.9" width="4.5" height="2.3" transform="translate(-323.8 510.3) rotate(-45)"/>
+        <rect class="st99" x="447" y="615.1" width="2.3" height="4.5" transform="translate(-305.3 497.7) rotate(-45)"/>
+        <rect class="st99" x="475.8" y="643.8" width="2.3" height="4.5" transform="translate(-317.1 526.5) rotate(-45)"/>
+        <rect class="st99" x="484.8" y="620.5" width="4.5" height="2.3" transform="translate(-296.9 526.5) rotate(-45)"/>
+        <rect class="st99" x="456.1" y="649.2" width="4.5" height="2.3" transform="translate(-325.6 514.6) rotate(-45)"/>
+        <rect class="st99" x="442.8" y="619.4" width="2.3" height="4.5" transform="translate(-309.5 496) rotate(-45)"/>
+        <rect class="st99" x="471.5" y="648" width="2.3" height="4.5" transform="translate(-321.3 524.7) rotate(-45)"/>
+        <rect class="st99" x="489" y="624.7" width="4.5" height="2.3" transform="translate(-298.7 530.7) rotate(-45)"/>
+        <rect class="st99" x="460.3" y="653.5" width="4.5" height="2.3" transform="translate(-327.4 518.8) rotate(-45)"/>
+        <rect class="st99" x="438.5" y="623.6" width="2.3" height="4.5" transform="translate(-313.8 494.2) rotate(-45)"/>
+        <rect class="st99" x="467.2" y="652.3" width="2.3" height="4.5" transform="translate(-325.7 522.9) rotate(-45)"/>
+        <g class="st31">
+          <g class="st31">
+            <text class="st27" transform="translate(461.2 619.2) rotate(45)"><tspan x="0" y="0">ATMEL</tspan></text>
+          </g>
+        </g>
+        <g class="st31">
+          <g class="st31">
+            <text class="st27" transform="translate(455.6 628.5) rotate(45)"><tspan x="0" y="0">32U4</tspan></text>
+          </g>
+        </g>
+      </g>
+      <rect class="st60" x="439.2" y="720.5" width="52.6" height="24.1"/>
+      <g class="st31">
+        <g class="st31">
+          <text class="st32" transform="translate(451.7 736.3)"><tspan x="0" y="0">16.000</tspan></text>
+        </g>
+      </g>
+      <rect class="st100" x="438.5" y="495.7" width="46.6" height="21.1"/>
+      <rect class="st90" x="444.5" y="489.7" width="6" height="6"/>
+      <rect class="st90" x="473" y="489.7" width="6" height="6"/>
+      <rect class="st110" x="437" y="540.1" width="12.8" height="21.1"/>
+      <rect class="st101" x="437" y="540.1" width="12.8" height="4.5"/>
+      <rect class="st101" x="437" y="556.6" width="12.8" height="4.5"/>
+      <rect class="st110" x="480.6" y="537.1" width="12.8" height="21.1"/>
+      <rect class="st101" x="480.6" y="537.1" width="12.8" height="4.5"/>
+      <rect class="st101" x="480.6" y="553.6" width="12.8" height="4.5"/>
+      <rect class="st110" x="441.5" y="573.2" width="12.8" height="21.1"/>
+      <rect class="st101" x="441.5" y="573.2" width="12.8" height="4.5"/>
+      <rect class="st101" x="441.5" y="589.7" width="12.8" height="4.5"/>
+      <g>
+        <rect class="st110" x="496" y="692.7" width="12.8" height="21.1"/>
+        <rect class="st101" x="496" y="692.7" width="12.8" height="4.5"/>
+        <rect class="st101" x="496" y="709.2" width="12.8" height="4.5"/>
+      </g>
+      <rect class="st110" x="434.7" y="770.1" width="12.8" height="21.1"/>
+      <rect class="st101" x="434.7" y="770.1" width="12.8" height="4.5"/>
+      <rect class="st101" x="434.7" y="786.7" width="12.8" height="4.5"/>
+      <rect class="st110" x="484.3" y="773.1" width="12.8" height="21.1"/>
+      <rect class="st101" x="484.3" y="773.1" width="12.8" height="4.5"/>
+      <rect class="st101" x="484.3" y="789.7" width="12.8" height="4.5"/>
+      <circle class="st96" cx="388.8" cy="496.5" r="7.5"/>
+      <circle class="st88" cx="388.8" cy="496.5" r="3.8"/>
+      <circle class="st96" cx="542.2" cy="496.5" r="7.5"/>
+      <circle class="st88" cx="542.2" cy="496.5" r="3.8"/>
+      <circle class="st96" cx="388.8" cy="522" r="7.5"/>
+      <circle class="st88" cx="388.8" cy="522" r="3.8"/>
+      <circle class="st96" cx="542.2" cy="522" r="7.5"/>
+      <circle class="st88" cx="542.2" cy="522" r="3.8"/>
+      <circle class="st96" cx="388.8" cy="547.6" r="7.5"/>
+      <circle class="st88" cx="388.8" cy="547.6" r="3.8"/>
+      <circle class="st96" cx="542.2" cy="547.6" r="7.5"/>
+      <circle class="st88" cx="542.2" cy="547.6" r="3.8"/>
+      <circle class="st96" cx="388.8" cy="573.2" r="7.5"/>
+      <circle class="st88" cx="388.8" cy="573.2" r="3.8"/>
+      <circle class="st96" cx="542.2" cy="573.2" r="7.5"/>
+      <circle class="st88" cx="542.2" cy="573.2" r="3.8"/>
+      <circle class="st96" cx="388.8" cy="598.7" r="7.5"/>
+      <circle class="st88" cx="388.8" cy="598.7" r="3.8"/>
+      <circle class="st96" cx="542.2" cy="598.7" r="7.5"/>
+      <circle class="st88" cx="542.2" cy="598.7" r="3.8"/>
+      <circle class="st96" cx="388.8" cy="624.3" r="7.5"/>
+      <circle class="st88" cx="388.8" cy="624.3" r="3.8"/>
+      <circle class="st96" cx="542.2" cy="624.3" r="7.5"/>
+      <circle class="st88" cx="542.2" cy="624.3" r="3.8"/>
+      <circle class="st96" cx="388.8" cy="649.8" r="7.5"/>
+      <circle class="st88" cx="388.8" cy="649.8" r="3.8"/>
+      <circle class="st96" cx="542.2" cy="649.8" r="7.5"/>
+      <circle class="st88" cx="542.2" cy="649.8" r="3.8"/>
+      <circle class="st96" cx="388.8" cy="675.4" r="7.5"/>
+      <circle class="st88" cx="388.8" cy="675.4" r="3.8"/>
+      <circle class="st96" cx="542.2" cy="675.4" r="7.5"/>
+      <circle class="st88" cx="542.2" cy="675.4" r="3.8"/>
+      <circle class="st96" cx="388.8" cy="701" r="7.5"/>
+      <circle class="st88" cx="388.8" cy="701" r="3.8"/>
+      <circle class="st96" cx="542.2" cy="701" r="7.5"/>
+      <circle class="st88" cx="542.2" cy="701" r="3.8"/>
+      <circle class="st96" cx="388.8" cy="726.5" r="7.5"/>
+      <circle class="st88" cx="388.8" cy="726.5" r="3.8"/>
+      <circle class="st96" cx="542.2" cy="726.5" r="7.5"/>
+      <circle class="st88" cx="542.2" cy="726.5" r="3.8"/>
+      <circle class="st96" cx="388.8" cy="752.1" r="7.5"/>
+      <circle class="st88" cx="388.8" cy="752.1" r="3.8"/>
+      <circle class="st96" cx="542.2" cy="752.1" r="7.5"/>
+      <circle class="st88" cx="542.2" cy="752.1" r="3.8"/>
+      <circle class="st96" cx="388.8" cy="777.7" r="7.5"/>
+      <circle class="st88" cx="388.8" cy="777.7" r="3.8"/>
+      <circle class="st96" cx="542.2" cy="777.7" r="7.5"/>
+      <circle class="st88" cx="542.2" cy="777.7" r="3.8"/>
+      <g class="st31">
+        <g class="st31">
+          <text class="st44" transform="translate(434.8 808.1)"><tspan x="0" y="0">5 V · 16 MHz</tspan></text>
+        </g>
+      </g>
+      <g>
+        <g class="st31">
+          <g class="st31">
+            <text class="st24" transform="translate(402 499.4)"><tspan x="0" y="0">TX/1</tspan></text>
+          </g>
+        </g>
+        <g class="st31">
+          <g class="st31">
+            <text class="st24" transform="translate(402 525)"><tspan x="0" y="0">RX/0</tspan></text>
+          </g>
+        </g>
+        <g class="st31">
+          <g class="st31">
+            <text class="st24" transform="translate(402 550.5)"><tspan x="0" y="0">GND</tspan></text>
+          </g>
+        </g>
+        <g class="st31">
+          <g class="st31">
+            <text class="st24" transform="translate(402 576.1)"><tspan x="0" y="0">GND</tspan></text>
+          </g>
+        </g>
+        <g class="st31">
+          <g class="st31">
+            <text class="st24" transform="translate(402 601.6)"><tspan x="0" y="0">D2</tspan></text>
+          </g>
+        </g>
+        <g class="st31">
+          <g class="st31">
+            <text class="st24" transform="translate(402 627.2)"><tspan x="0" y="0">D3</tspan></text>
+          </g>
+        </g>
+        <g class="st31">
+          <g class="st31">
+            <text class="st24" transform="translate(402 652.8)"><tspan x="0" y="0">D4</tspan></text>
+          </g>
+        </g>
+        <g class="st31">
+          <g class="st31">
+            <text class="st24" transform="translate(402 678.3)"><tspan x="0" y="0">D5</tspan></text>
+          </g>
+        </g>
+        <g class="st31">
+          <g class="st31">
+            <text class="st24" transform="translate(402 703.9)"><tspan x="0" y="0">D6</tspan></text>
+          </g>
+        </g>
+        <g class="st31">
+          <g class="st31">
+            <text class="st24" transform="translate(402 729.4)"><tspan x="0" y="0">D7</tspan></text>
+          </g>
+        </g>
+        <g class="st31">
+          <g class="st31">
+            <text class="st24" transform="translate(402 755)"><tspan x="0" y="0">D8</tspan></text>
+          </g>
+        </g>
+        <g class="st31">
+          <g class="st31">
+            <text class="st24" transform="translate(402 780.6)"><tspan x="0" y="0">D9</tspan></text>
+          </g>
+        </g>
+      </g>
+      <g>
+        <g class="st31">
+          <g class="st31">
+            <text class="st24" transform="translate(507.6 499.4)"><tspan x="0" y="0">RAW</tspan></text>
+          </g>
+        </g>
+        <g class="st31">
+          <g class="st31">
+            <text class="st24" transform="translate(508.2 525)"><tspan x="0" y="0">GND</tspan></text>
+          </g>
+        </g>
+        <g class="st31">
+          <g class="st31">
+            <text class="st24" transform="translate(510.2 550.5)"><tspan x="0" y="0">RST</tspan></text>
+          </g>
+        </g>
+        <g class="st31">
+          <g class="st31">
+            <text class="st24" transform="translate(509.2 576.1)"><tspan x="0" y="0">VCC</tspan></text>
+          </g>
+        </g>
+        <g class="st31">
+          <g class="st31">
+            <text class="st24" transform="translate(517.3 601.6)"><tspan x="0" y="0">A3</tspan></text>
+          </g>
+        </g>
+        <g class="st31">
+          <g class="st31">
+            <text class="st24" transform="translate(517.3 627.2)"><tspan x="0" y="0">A2</tspan></text>
+          </g>
+        </g>
+        <g class="st31">
+          <g class="st31">
+            <text class="st24" transform="translate(517.3 652.8)"><tspan x="0" y="0">A1</tspan></text>
+          </g>
+        </g>
+        <g class="st31">
+          <g class="st31">
+            <text class="st24" transform="translate(517.3 678.3)"><tspan x="0" y="0">A0</tspan></text>
+          </g>
+        </g>
+        <g class="st31">
+          <g class="st31">
+            <text class="st24" transform="translate(511.7 703.9)"><tspan x="0" y="0">D15</tspan></text>
+          </g>
+        </g>
+        <g class="st31">
+          <g class="st31">
+            <text class="st24" transform="translate(511.7 729.4)"><tspan x="0" y="0">D14</tspan></text>
+          </g>
+        </g>
+        <g class="st31">
+          <g class="st31">
+            <text class="st24" transform="translate(511.7 755)"><tspan x="0" y="0">D16</tspan></text>
+          </g>
+        </g>
+        <g class="st31">
+          <g class="st31">
+            <text class="st24" transform="translate(511.7 780.6)"><tspan x="0" y="0">D10</tspan></text>
+          </g>
+        </g>
+      </g>
+    </g>
+    <g>
+      <g class="st31">
+        <g class="st31">
+          <text class="st46" transform="translate(375.3 300)"><tspan x="0" y="0">USB-C variant</tspan></text>
+        </g>
+      </g>
+      <g class="st31">
+        <g class="st31">
+          <text class="st39" transform="translate(375.3 325.2)"><tspan x="0" y="0">Check the printed pin names.</tspan></text>
+        </g>
+        <g class="st31">
+          <text class="st39" transform="translate(375.3 346.8)"><tspan x="0" y="0">USB type does not indicate</tspan></text>
+        </g>
+        <g class="st31">
+          <text class="st39" transform="translate(375.3 368.4)"><tspan x="0" y="0">3.3 V / 5 V.</tspan></text>
+        </g>
+      </g>
+    </g>
+    <rect class="st1" x="708" y="168" width="752" height="666"/>
+    <rect class="st98" x="708" y="168" width="6" height="666"/>
+    <g class="st31">
+      <g class="st31">
+        <text class="st45" transform="translate(734 208)"><tspan x="0" y="0">02</tspan></text>
+      </g>
+    </g>
+    <g class="st31">
+      <g class="st31">
+        <text class="st30" transform="translate(773 208)"><tspan x="0" y="0">OLED display</tspan></text>
+      </g>
+    </g>
+    <g class="st31">
+      <g class="st31">
+        <text class="st41" transform="translate(734 240)"><tspan x="0" y="0">SSD1306 · 128 × 64 · 7-pin SPI module</tspan></text>
+      </g>
+    </g>
+    <rect class="st87" x="794" y="315" width="580" height="322"/>
+    <circle class="st56" cx="818" cy="339" r="11"/>
+    <circle class="st89" cx="818" cy="339" r="6"/>
+    <circle class="st56" cx="818" cy="613" r="11"/>
+    <circle class="st89" cx="818" cy="613" r="6"/>
+    <circle class="st56" cx="1350" cy="339" r="11"/>
+    <circle class="st89" cx="1350" cy="339" r="6"/>
+    <circle class="st56" cx="1350" cy="613" r="11"/>
+    <circle class="st89" cx="1350" cy="613" r="6"/>
+    <rect class="st13" x="838" y="366" width="492" height="217"/>
+    <rect class="st79" x="848" y="376" width="472" height="197"/>
+    <g class="st31">
+      <g class="st31">
+        <text class="st43" transform="translate(998 440)"><tspan x="0" y="0">ArduCade</tspan></text>
+      </g>
+    </g>
+    <rect class="st107" x="858" y="539" width="14" height="8"/>
+    <rect class="st107" x="874" y="539" width="14" height="8"/>
+    <rect class="st107" x="890" y="539" width="14" height="8"/>
+    <rect class="st107" x="906" y="539" width="14" height="8"/>
+    <rect class="st107" x="922" y="539" width="14" height="8"/>
+    <rect class="st107" x="938" y="539" width="14" height="8"/>
+    <rect class="st107" x="954" y="539" width="14" height="8"/>
+    <rect class="st107" x="970" y="539" width="14" height="8"/>
+    <rect class="st107" x="986" y="539" width="14" height="8"/>
+    <rect class="st107" x="1002" y="539" width="14" height="8"/>
+    <rect class="st107" x="1018" y="539" width="14" height="8"/>
+    <rect class="st107" x="1034" y="539" width="14" height="8"/>
+    <rect class="st107" x="1050" y="539" width="14" height="8"/>
+    <rect class="st107" x="1066" y="539" width="14" height="8"/>
+    <rect class="st107" x="1082" y="539" width="14" height="8"/>
+    <rect class="st107" x="1098" y="539" width="14" height="8"/>
+    <rect class="st107" x="1114" y="539" width="14" height="8"/>
+    <rect class="st107" x="1130" y="539" width="14" height="8"/>
+    <rect class="st107" x="1146" y="539" width="14" height="8"/>
+    <rect class="st107" x="1162" y="539" width="14" height="8"/>
+    <rect class="st107" x="1178" y="539" width="14" height="8"/>
+    <rect class="st107" x="1194" y="539" width="14" height="8"/>
+    <rect class="st107" x="1210" y="539" width="14" height="8"/>
+    <rect class="st107" x="1226" y="539" width="14" height="8"/>
+    <rect class="st107" x="1242" y="539" width="14" height="8"/>
+    <rect class="st107" x="1258" y="539" width="14" height="8"/>
+    <rect class="st107" x="1274" y="539" width="14" height="8"/>
+    <rect class="st107" x="1119" y="495" width="14" height="8"/>
+    <rect class="st107" x="1135" y="495" width="14" height="8"/>
+    <rect class="st107" x="1151" y="495" width="14" height="8"/>
+    <rect class="st107" x="1167" y="495" width="14" height="8"/>
+    <rect class="st107" x="1183" y="495" width="14" height="8"/>
+    <rect class="st107" x="1199" y="495" width="14" height="8"/>
+    <path class="st68" d="M938,536v-32h14v21"/>
+    <circle class="st107" cx="945" cy="493" r="6"/>
+    <rect class="st92" x="1024" y="610" width="120" height="32"/>
+    <rect class="st75" x="1044" y="610" width="80" height="32"/>
+    <circle class="st103" cx="846" cy="338" r="8"/>
+    <circle class="st113" cx="846" cy="338" r="4"/>
+    <g class="st31">
+      <g class="st31">
+        <text class="st35" transform="translate(830.4 363)"><tspan x="0" y="0">GND</tspan></text>
+      </g>
+    </g>
+    <path class="st65" d="M846,330v-28"/>
+    <rect class="st10" x="814" y="266" width="64" height="36"/>
+    <g class="st31">
+      <g class="st31">
+        <text class="st42" transform="translate(824.9 291)"><tspan x="0" y="0">GND</tspan></text>
+      </g>
+    </g>
+    <circle class="st103" cx="925" cy="338" r="8"/>
+    <circle class="st113" cx="925" cy="338" r="4"/>
+    <g class="st31">
+      <g class="st31">
+        <text class="st35" transform="translate(910.2 363)"><tspan x="0" y="0">VCC</tspan></text>
+      </g>
+    </g>
+    <path class="st64" d="M925,330v-28"/>
+    <rect class="st18" x="893" y="266" width="64" height="36"/>
+    <g class="st31">
+      <g class="st31">
+        <text class="st22" transform="translate(904.9 291)"><tspan x="0" y="0">VCC</tspan></text>
+      </g>
+    </g>
+    <circle class="st103" cx="1004" cy="338" r="8"/>
+    <circle class="st113" cx="1004" cy="338" r="4"/>
+    <g class="st31">
+      <g class="st31">
+        <text class="st35" transform="translate(989.6 363)"><tspan x="0" y="0">CLK</tspan></text>
+      </g>
+    </g>
+    <path class="st63" d="M1004,330v-28"/>
+    <rect class="st5" x="972" y="266" width="64" height="36"/>
+    <g class="st31">
+      <g class="st31">
+        <text class="st52" transform="translate(986.6 291)"><tspan x="0" y="0">D15</tspan></text>
+      </g>
+    </g>
+    <circle class="st103" cx="1083" cy="338" r="8"/>
+    <circle class="st113" cx="1083" cy="338" r="4"/>
+    <g class="st31">
+      <g class="st31">
+        <text class="st35" transform="translate(1070.9448 363)"><tspan x="0" y="0">DIN</tspan></text>
+      </g>
+    </g>
+    <path class="st70" d="M1083,330v-28"/>
+    <rect class="st7" x="1051" y="266" width="64" height="36"/>
+    <g class="st31">
+      <g class="st31">
+        <text class="st34" transform="translate(1065.5725 291)"><tspan x="0" y="0">D16</tspan></text>
+      </g>
+    </g>
+    <circle class="st103" cx="1162" cy="338" r="8"/>
+    <circle class="st113" cx="1162" cy="338" r="4"/>
+    <g class="st31">
+      <g class="st31">
+        <text class="st35" transform="translate(1152.2759 363)"><tspan x="0" y="0">CS</tspan></text>
+      </g>
+    </g>
+    <path class="st66" d="M1162,330v-28"/>
+    <rect class="st16" x="1130" y="266" width="64" height="36"/>
+    <g class="st31">
+      <g class="st31">
+        <text class="st21" transform="translate(1144.5725 291)"><tspan x="0" y="0">D10</tspan></text>
+      </g>
+    </g>
+    <circle class="st103" cx="1241" cy="338" r="8"/>
+    <circle class="st113" cx="1241" cy="338" r="4"/>
+    <g class="st31">
+      <g class="st31">
+        <text class="st35" transform="translate(1230.8896 363)"><tspan x="0" y="0">DC</tspan></text>
+      </g>
+    </g>
+    <path class="st69" d="M1241,330v-28"/>
+    <rect class="st3" x="1209" y="266" width="64" height="36"/>
+    <g class="st31">
+      <g class="st31">
+        <text class="st40" transform="translate(1228.856 291)"><tspan x="0" y="0">D4</tspan></text>
+      </g>
+    </g>
+    <circle class="st103" cx="1320" cy="338" r="8"/>
+    <circle class="st113" cx="1320" cy="338" r="4"/>
+    <g class="st31">
+      <g class="st31">
+        <text class="st35" transform="translate(1305.6069 363)"><tspan x="0" y="0">RES</tspan></text>
+      </g>
+    </g>
+    <path class="st20" d="M1320,330v-28"/>
+    <rect class="st0" x="1288" y="266" width="64" height="36"/>
+    <g class="st31">
+      <g class="st31">
+        <text class="st49" transform="translate(1307.856 291)"><tspan x="0" y="0">D6</tspan></text>
+      </g>
+    </g>
+    <g class="st31">
+      <g class="st31">
+        <text class="st39" transform="translate(734 690)"><tspan x="0" y="0">Connect wires to these named pins on the Pro Micro.</tspan></text>
+      </g>
+    </g>
+    <g class="st31">
+      <g class="st31">
+        <text class="st46" transform="translate(734 727)"><tspan x="0" y="0">Pin order varies between display modules.</tspan></text>
+      </g>
+    </g>
+    <g class="st31">
+      <g class="st31">
+        <text class="st39" transform="translate(734 758)"><tspan x="0" y="0">The reference has 6 pins, with no visible CS. Verify SPI mode</tspan></text>
+      </g>
+    </g>
+    <g class="st31">
+      <g class="st31">
+        <text class="st39" transform="translate(734 785)"><tspan x="0" y="0">and the CS connection before using this profile.</tspan></text>
+      </g>
+    </g>
+    <g class="st31">
+      <g class="st31">
+        <text class="st41" transform="translate(734 812)"><tspan x="0" y="0">The display module must accept 5 V power and signals.</tspan></text>
+      </g>
+    </g>
+    <rect class="st1" x="40" y="860" width="784" height="442"/>
+    <rect class="st98" x="40" y="860" width="6" height="442"/>
+    <g class="st31">
+      <g class="st31">
+        <text class="st45" transform="translate(66 900)"><tspan x="0" y="0">03</tspan></text>
+      </g>
+    </g>
+    <g class="st31">
+      <g class="st31">
+        <text class="st30" transform="translate(105 900)"><tspan x="0" y="0">Six black game buttons</tspan></text>
+      </g>
+    </g>
+    <g class="st31">
+      <g class="st31">
+        <text class="st41" transform="translate(66 932)"><tspan x="0" y="0">Each button connects one input to GND when pressed.</tspan></text>
+      </g>
+    </g>
+    <path class="st65" d="M108,961v273"/>
+    <path class="st65" d="M108,986h76"/>
+    <circle class="st102" cx="108" cy="986" r="5"/>
+    <path class="st67" d="M256,986h57"/>
+    <rect class="st6" x="313" y="968" width="70" height="36"/>
+    <g class="st31">
+      <g class="st31">
+        <text class="st50" transform="translate(335.9 993)"><tspan x="0" y="0">A0</tspan></text>
+      </g>
+    </g>
+    <rect class="st57" x="177" y="979" width="14" height="14"/>
+    <rect class="st57" x="177" y="1015" width="14" height="14"/>
+    <rect class="st57" x="249" y="979" width="14" height="14"/>
+    <rect class="st57" x="249" y="1015" width="14" height="14"/>
+    <rect class="st19" x="190" y="974" width="60" height="60"/>
+    <rect class="st4" x="194" y="978" width="52" height="52"/>
+    <circle class="st83" cx="220" cy="1004" r="20"/>
+    <circle class="st93" cx="215" cy="997" r="8"/>
+    <circle class="st80" cx="201" cy="985" r="3"/>
+    <circle class="st80" cx="201" cy="1023" r="3"/>
+    <circle class="st80" cx="239" cy="985" r="3"/>
+    <circle class="st80" cx="239" cy="1023" r="3"/>
+    <g class="st31">
+      <g class="st31">
+        <text class="st33" transform="translate(208.2 959)"><tspan x="0" y="0">UP</tspan></text>
+      </g>
+    </g>
+    <path class="st65" d="M486,961v273"/>
+    <path class="st65" d="M486,986h76"/>
+    <circle class="st102" cx="486" cy="986" r="5"/>
+    <path class="st67" d="M634,986h57"/>
+    <rect class="st6" x="691" y="968" width="70" height="36"/>
+    <g class="st31">
+      <g class="st31">
+        <text class="st50" transform="translate(713.9 993)"><tspan x="0" y="0">A3</tspan></text>
+      </g>
+    </g>
+    <rect class="st57" x="555" y="979" width="14" height="14"/>
+    <rect class="st57" x="555" y="1015" width="14" height="14"/>
+    <rect class="st57" x="627" y="979" width="14" height="14"/>
+    <rect class="st57" x="627" y="1015" width="14" height="14"/>
+    <rect class="st19" x="568" y="974" width="60" height="60"/>
+    <rect class="st4" x="572" y="978" width="52" height="52"/>
+    <circle class="st83" cx="598" cy="1004" r="20"/>
+    <circle class="st93" cx="593" cy="997" r="8"/>
+    <circle class="st80" cx="579" cy="985" r="3"/>
+    <circle class="st80" cx="579" cy="1023" r="3"/>
+    <circle class="st80" cx="617" cy="985" r="3"/>
+    <circle class="st80" cx="617" cy="1023" r="3"/>
+    <g class="st31">
+      <g class="st31">
+        <text class="st33" transform="translate(571.1 959)"><tspan x="0" y="0">DOWN</tspan></text>
+      </g>
+    </g>
+    <path class="st65" d="M108,961v273"/>
+    <path class="st65" d="M108,1086h76"/>
+    <circle class="st102" cx="108" cy="1086" r="5"/>
+    <path class="st67" d="M256,1086h57"/>
+    <rect class="st6" x="313" y="1068" width="70" height="36"/>
+    <g class="st31">
+      <g class="st31">
+        <text class="st50" transform="translate(335.856 1093)"><tspan x="0" y="0">A2</tspan></text>
+      </g>
+    </g>
+    <rect class="st57" x="177" y="1079" width="14" height="14"/>
+    <rect class="st57" x="177" y="1115" width="14" height="14"/>
+    <rect class="st57" x="249" y="1079" width="14" height="14"/>
+    <rect class="st57" x="249" y="1115" width="14" height="14"/>
+    <rect class="st19" x="190" y="1074" width="60" height="60"/>
+    <rect class="st4" x="194" y="1078" width="52" height="52"/>
+    <circle class="st83" cx="220" cy="1104" r="20"/>
+    <circle class="st93" cx="215" cy="1097" r="8"/>
+    <circle class="st80" cx="201" cy="1085" r="3"/>
+    <circle class="st80" cx="201" cy="1123" r="3"/>
+    <circle class="st80" cx="239" cy="1085" r="3"/>
+    <circle class="st80" cx="239" cy="1123" r="3"/>
+    <g class="st31">
+      <g class="st31">
+        <text class="st33" transform="translate(198.7542 1059)"><tspan x="0" y="0">LEFT</tspan></text>
+      </g>
+    </g>
+    <path class="st65" d="M486,961v273"/>
+    <path class="st65" d="M486,1086h76"/>
+    <circle class="st102" cx="486" cy="1086" r="5"/>
+    <path class="st67" d="M634,1086h57"/>
+    <rect class="st6" x="691" y="1068" width="70" height="36"/>
+    <g class="st31">
+      <g class="st31">
+        <text class="st50" transform="translate(713.856 1093)"><tspan x="0" y="0">A1</tspan></text>
+      </g>
+    </g>
+    <rect class="st57" x="555" y="1079" width="14" height="14"/>
+    <rect class="st57" x="555" y="1115" width="14" height="14"/>
+    <rect class="st57" x="627" y="1079" width="14" height="14"/>
+    <rect class="st57" x="627" y="1115" width="14" height="14"/>
+    <rect class="st19" x="568" y="1074" width="60" height="60"/>
+    <rect class="st4" x="572" y="1078" width="52" height="52"/>
+    <circle class="st83" cx="598" cy="1104" r="20"/>
+    <circle class="st93" cx="593" cy="1097" r="8"/>
+    <circle class="st80" cx="579" cy="1085" r="3"/>
+    <circle class="st80" cx="579" cy="1123" r="3"/>
+    <circle class="st80" cx="617" cy="1085" r="3"/>
+    <circle class="st80" cx="617" cy="1123" r="3"/>
+    <g class="st31">
+      <g class="st31">
+        <text class="st33" transform="translate(571.5579 1059)"><tspan x="0" y="0">RIGHT</tspan></text>
+      </g>
+    </g>
+    <path class="st65" d="M108,961v247"/>
+    <path class="st65" d="M108,1186h76"/>
+    <circle class="st102" cx="108" cy="1186" r="5"/>
+    <path class="st67" d="M256,1186h57"/>
+    <rect class="st6" x="313" y="1168" width="70" height="36"/>
+    <g class="st31">
+      <g class="st31">
+        <text class="st50" transform="translate(335.856 1193)"><tspan x="0" y="0">D7</tspan></text>
+      </g>
+    </g>
+    <rect class="st57" x="177" y="1179" width="14" height="14"/>
+    <rect class="st57" x="177" y="1215" width="14" height="14"/>
+    <rect class="st57" x="249" y="1179" width="14" height="14"/>
+    <rect class="st57" x="249" y="1215" width="14" height="14"/>
+    <rect class="st19" x="190" y="1174" width="60" height="60"/>
+    <rect class="st4" x="194" y="1178" width="52" height="52"/>
+    <circle class="st83" cx="220" cy="1204" r="20"/>
+    <circle class="st93" cx="215" cy="1197" r="8"/>
+    <circle class="st80" cx="201" cy="1185" r="3"/>
+    <circle class="st80" cx="201" cy="1223" r="3"/>
+    <circle class="st80" cx="239" cy="1185" r="3"/>
+    <circle class="st80" cx="239" cy="1223" r="3"/>
+    <g class="st31">
+      <g class="st31">
+        <text class="st33" transform="translate(213.8616 1159)"><tspan x="0" y="0">A</tspan></text>
+      </g>
+    </g>
+    <rect class="st10" x="75" y="1208" width="66" height="36"/>
+    <g class="st31">
+      <g class="st31">
+        <text class="st42" transform="translate(86.8894 1233)"><tspan x="0" y="0">GND</tspan></text>
+      </g>
+    </g>
+    <path class="st65" d="M486,961v250"/>
+    <path class="st65" d="M486,1186h76"/>
+    <circle class="st102" cx="486" cy="1186" r="5"/>
+    <path class="st67" d="M634,1186h57"/>
+    <rect class="st6" x="691" y="1168" width="70" height="36"/>
+    <g class="st31">
+      <g class="st31">
+        <text class="st50" transform="translate(713.856 1193)"><tspan x="0" y="0">D8</tspan></text>
+      </g>
+    </g>
+    <rect class="st57" x="555" y="1179" width="14" height="14"/>
+    <rect class="st57" x="555" y="1215" width="14" height="14"/>
+    <rect class="st57" x="627" y="1179" width="14" height="14"/>
+    <rect class="st57" x="627" y="1215" width="14" height="14"/>
+    <rect class="st19" x="568" y="1174" width="60" height="60"/>
+    <rect class="st4" x="572" y="1178" width="52" height="52"/>
+    <circle class="st83" cx="598" cy="1204" r="20"/>
+    <circle class="st93" cx="593" cy="1197" r="8"/>
+    <circle class="st80" cx="579" cy="1185" r="3"/>
+    <circle class="st80" cx="579" cy="1223" r="3"/>
+    <circle class="st80" cx="617" cy="1185" r="3"/>
+    <circle class="st80" cx="617" cy="1223" r="3"/>
+    <g class="st31">
+      <g class="st31">
+        <text class="st33" transform="translate(591.8616 1159)"><tspan x="0" y="0">B</tspan></text>
+      </g>
+    </g>
+    <rect class="st10" x="453" y="1211" width="66" height="36"/>
+    <g class="st31">
+      <g class="st31">
+        <text class="st42" transform="translate(464.8894 1236)"><tspan x="0" y="0">GND</tspan></text>
+      </g>
+    </g>
+    <g class="st31">
+      <g class="st31">
+        <text class="st41" transform="translate(68 1290)"><tspan x="0" y="0">Internal pull-ups are enabled. No extra button resistors.</tspan></text>
+      </g>
+    </g>
+    <rect class="st1" x="852" y="860" width="608" height="442"/>
+    <rect class="st98" x="852" y="860" width="6" height="442"/>
+    <g class="st31">
+      <g class="st31">
+        <text class="st45" transform="translate(878 900)"><tspan x="0" y="0">04</tspan></text>
+      </g>
+    </g>
+    <g class="st31">
+      <g class="st31">
+        <text class="st30" transform="translate(917 900)"><tspan x="0" y="0">Sound and reset</tspan></text>
+      </g>
+    </g>
+    <g class="st31">
+      <g class="st31">
+        <text class="st41" transform="translate(878 932)"><tspan x="0" y="0">Separate circuits: OLED RES is not the board RST.</tspan></text>
+      </g>
+    </g>
+    <circle class="st108" cx="955" cy="1080" r="6"/>
+    <circle class="st108" cx="993" cy="1080" r="6"/>
+    <path class="st71" d="M955,1080v36"/>
+    <path class="st65" d="M993,1080v22.8h142"/>
+    <rect class="st15" x="920" y="1116" width="70" height="36"/>
+    <g class="st31">
+      <g class="st31">
+        <text class="st48" transform="translate(942.856 1141)"><tspan x="0" y="0">D5</tspan></text>
+      </g>
+    </g>
+    <rect class="st10" x="1135" y="1084.8" width="70" height="36"/>
+    <g class="st31">
+      <g class="st31">
+        <text class="st42" transform="translate(1157.856 1109.8239)"><tspan x="0" y="0">D9</tspan></text>
+      </g>
+    </g>
+    <g class="st31">
+      <g class="st31">
+        <text class="st46" transform="translate(1060.675 985)"><tspan x="0" y="0">Passive buzzer / piezo</tspan></text>
+      </g>
+    </g>
+    <g class="st31">
+      <g class="st31">
+        <text class="st41" transform="translate(1060.675 1015)"><tspan x="0" y="0">D5 outputs sound.</tspan></text>
+      </g>
+    </g>
+    <g class="st31">
+      <g class="st31">
+        <text class="st41" transform="translate(1060.675 1041)"><tspan x="0" y="0">D9 is held LOW.</tspan></text>
+      </g>
+    </g>
+    <g>
+      <rect class="st2" x="981.5" y="1191.5" width="100" height="28"/>
+      <rect class="st104" x="990.5" y="1185.5" width="82" height="40"/>
+      <rect class="st55" x="998.5" y="1188.5" width="66" height="34"/>
+      <rect class="st91" x="1010.5" y="1193.5" width="42" height="24"/>
+      <rect class="st97" x="969.5" y="1200.5" width="11.1" height="10"/>
+      <rect class="st97" x="1082.5" y="1200.5" width="11" height="10"/>
+      <path class="st65" d="M969.5,1205.5h-41v17"/>
+      <path class="st20" d="M1093.5,1205.5h77"/>
+      <rect class="st10" x="893.5" y="1222.5" width="70" height="36"/>
+      <g class="st31">
+        <g class="st31">
+          <text class="st42" transform="translate(907.4354 1247.5)"><tspan x="0" y="0">GND</tspan></text>
+        </g>
+      </g>
+      <rect class="st0" x="1170.5" y="1187.5" width="70" height="36"/>
+      <g class="st31">
+        <g class="st31">
+          <text class="st49" transform="translate(1186.5 1212.5)"><tspan x="0" y="0">RST</tspan></text>
+        </g>
+      </g>
+    </g>
+    <g class="st31">
+      <g class="st31">
+        <text class="st38" transform="translate(1270.0837 1199.5)"><tspan x="0" y="0">RESET</tspan></text>
+      </g>
+    </g>
+    <g class="st31">
+      <g class="st31">
+        <text class="st29" transform="translate(1278.7419 1225.5)"><tspan x="0" y="0">2 pins</tspan></text>
+      </g>
+    </g>
+    <g class="st31">
+      <g class="st31">
+        <text class="st29" transform="translate(878 1290)"><tspan x="0" y="0">Appearance alone does not identify active / passive buzzers.</tspan></text>
+      </g>
+    </g>
+    <rect class="st1" x="40" y="1328" width="1420" height="326"/>
+    <rect class="st98" x="40" y="1328" width="6" height="326"/>
+    <g class="st31">
+      <g class="st31">
+        <text class="st45" transform="translate(66 1368)"><tspan x="0" y="0">05</tspan></text>
+      </g>
+    </g>
+    <g class="st31">
+      <g class="st31">
+        <text class="st30" transform="translate(105 1368)"><tspan x="0" y="0">Battery, switch and resistor</tspan></text>
+      </g>
+    </g>
+    <g class="st31">
+      <g class="st31">
+        <text class="st41" transform="translate(66 1400)"><tspan x="0" y="0">Reference components · not connected in this diagram</tspan></text>
+      </g>
+    </g>
+    <circle class="st85" cx="159" cy="1494" r="52"/>
+    <circle class="st109" cx="159" cy="1494" r="43"/>
+    <circle class="st14" cx="159" cy="1494" r="35"/>
+    <rect class="st115" x="150" y="1445" width="18" height="33"/>
+    <rect class="st115" x="150" y="1511" width="18" height="33"/>
+    <g class="st31">
+      <g class="st31">
+        <text class="st25" transform="translate(151.1162 1502)"><tspan x="0" y="0">+</tspan></text>
+      </g>
+    </g>
+    <rect class="st82" x="153" y="1432" width="12" height="10"/>
+    <rect class="st82" x="153" y="1546" width="12" height="10"/>
+    <circle class="st85" cx="294" cy="1494" r="52"/>
+    <circle class="st109" cx="294" cy="1494" r="43"/>
+    <circle class="st14" cx="294" cy="1494" r="35"/>
+    <rect class="st115" x="285" y="1445" width="18" height="33"/>
+    <rect class="st115" x="285" y="1511" width="18" height="33"/>
+    <g class="st31">
+      <g class="st31">
+        <text class="st25" transform="translate(286.1162 1502)"><tspan x="0" y="0">+</tspan></text>
+      </g>
+    </g>
+    <rect class="st82" x="288" y="1432" width="12" height="10"/>
+    <rect class="st82" x="288" y="1546" width="12" height="10"/>
+    <g class="st31">
+      <g class="st31">
+        <text class="st38" transform="translate(153.71 1581)"><tspan x="0" y="0">2 × 3 V coin cells</tspan></text>
+      </g>
+    </g>
+    <rect class="st8" x="454" y="1452" width="131" height="65"/>
+    <rect class="st111" x="450" y="1464" width="12" height="42"/>
+    <rect class="st111" x="581" y="1464" width="12" height="42"/>
+    <rect class="st106" x="476" y="1467" width="83" height="22"/>
+    <rect class="st58" x="485" y="1462" width="29" height="35"/>
+    <rect class="st77" x="470" y="1517" width="10" height="35"/>
+    <rect class="st77" x="505" y="1517" width="10" height="35"/>
+    <rect class="st77" x="540" y="1517" width="10" height="35"/>
+    <g class="st31">
+      <g class="st31">
+        <text class="st38" transform="translate(438.9912 1581)"><tspan x="0" y="0">3-pin power switch</tspan></text>
+      </g>
+    </g>
+    <path class="st62" d="M671,1490h41"/>
+    <rect class="st11" x="712" y="1473" width="115" height="34"/>
+    <path class="st62" d="M827,1490h39"/>
+    <rect class="st105" x="728" y="1473" width="7" height="34"/>
+    <rect class="st112" x="746" y="1473" width="7" height="34"/>
+    <rect class="st81" x="768" y="1473" width="7" height="34"/>
+    <rect class="st114" x="808" y="1473" width="7" height="34"/>
+    <g class="st31">
+      <g class="st31">
+        <text class="st38" transform="translate(674.7417 1550)"><tspan x="0" y="0">10 kΩ · reference only</tspan></text>
+      </g>
+    </g>
+    <g class="st31">
+      <g class="st31">
+        <text class="st28" transform="translate(912 1464)"><tspan x="0" y="0">Verify the battery wiring first.</tspan></text>
+      </g>
+    </g>
+    <g class="st31">
+      <g class="st31">
+        <text class="st39" transform="translate(912 1496)"><tspan x="0" y="0">Series: about 6 V. Parallel: about 3 V.</tspan></text>
+      </g>
+    </g>
+    <g class="st31">
+      <g class="st31">
+        <text class="st53" transform="translate(912 1526)"><tspan x="0" y="0">Never connect 6 V directly to VCC.</tspan></text>
+      </g>
+    </g>
+    <g class="st31">
+      <g class="st31">
+        <text class="st41" transform="translate(912 1556)"><tspan x="0" y="0">No buzzer resistor value has been selected.</tspan></text>
+      </g>
+    </g>
+    <g class="st31">
+      <g class="st31">
+        <text class="st41" transform="translate(912 1586)"><tspan x="0" y="0">Pro Micro normally has a reset pull-up.</tspan></text>
+      </g>
+    </g>
+    <g class="st31">
+      <g class="st31">
+        <text class="st41" transform="translate(48 1684)"><tspan x="0" y="0">Typical components, not to scale. Follow the pin labels and datasheets for your own modules.</tspan></text>
+      </g>
+    </g>
+    <rect class="st108" x="991.1" y="1062.6" width="3.7" height="17.4"/>
+    <rect class="st108" x="953.1" y="1062.6" width="3.7" height="17.4"/>
+    <circle class="st86" cx="974" cy="1013" r="57"/>
+    <circle class="st72" cx="974" cy="1013" r="48"/>
+    <circle class="st9" cx="974" cy="1007" r="12"/>
+    <g class="st31">
+      <g class="st31">
+        <text class="st37" transform="translate(966.9922 1050)"><tspan x="0" y="0">+</tspan></text>
+      </g>
+    </g>
+  </g>
+</svg>

@@ -8,7 +8,7 @@
     "dev": "npm run gen && vite",
     "build": "npm run gen && tsc --noEmit && vite build",
     "preview": "vite preview",
-    "gen": "node scripts/gen-core.mjs && tsx scripts/build-templates.ts && tsx scripts/build-docs-wiring.ts && tsx scripts/build-attiny-docs.ts && node scripts/copy-compiler.mjs",
+    "gen": "node scripts/gen-core.mjs && tsx scripts/build-templates.ts && node scripts/copy-compiler.mjs",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "check-locales": "node scripts/check-locales.mjs"

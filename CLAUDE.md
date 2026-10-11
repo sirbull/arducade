@@ -6,3 +6,8 @@
 - Apply this rule to dialogs, buttons, cards, simulator shells, thumbnails, exported cartridge artwork, SVGs, and canvas drawings.
 - All user workflows must work with touch on iPad and other tablets as well as mouse and keyboard. Keyboard shortcuts must have an accessible on-screen alternative.
 - Simulator touch controls must support simultaneous button presses and release inputs on pointer cancellation, focus loss, and dialog close.
+
+# Documentation artwork
+
+- The SVG files in `public/docs/` are drawn by hand in Adobe Illustrator by the project owner. They are the only source for these pictures.
+- Never regenerate, overwrite, move, rename, convert or delete files in `public/docs/`, and never add a script or build step that writes there. If a picture needs to change, stop and ask the project owner first.

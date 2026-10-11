@@ -1,4 +1,6 @@
 // Both ATtiny illustrations read the same pin configuration used by compilation.
+// Not used: public/docs/ holds hand-drawn Illustrator artwork. Never write there; ask the owner first.
+throw new Error('public/docs/ is hand-drawn artwork; this script must not overwrite it.');
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { SECRET_PROFILES } from '../src/hw/profile';
 import { getChip } from '../src/hw/chips';

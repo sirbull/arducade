@@ -6,7 +6,16 @@
   RewriteCond %{HTTPS} !=on
   RewriteCond %{HTTP:X-Forwarded-Proto} !=https
   RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+  # The documentation page (docs) is drawn by index.html.
+  RewriteRule ^docs$ index.html [L]
 </IfModule>
+
+# docs/ also holds the documentation pictures: keep Apache from turning the
+# docs page address into the folder address docs/.
+<If "%{REQUEST_URI} =~ m#/docs$#">
+  DirectorySlash Off
+</If>
 
 # File types the browser needs to know.
 AddType application/wasm .wasm

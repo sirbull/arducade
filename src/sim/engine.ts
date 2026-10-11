@@ -288,6 +288,8 @@ export class Engine {
   }
 
   /** Loop guard, called at the top of every loop body. */
+  resetLoopGuard() { this.loopCount = 0; }
+
   loopGuard = () => {
     if (++this.loopCount > 200000) throw new LoopError();
   };

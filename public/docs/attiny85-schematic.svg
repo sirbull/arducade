@@ -1,1 +1,294 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="1400" viewBox="0 0 1400 1400" role="img" aria-labelledby="title desc"><title id="title">ATtiny85 · electrical schematic</title><desc id="desc">Electrical schematic for ArduCade ATtiny85 Pico. Named nets connect the same ports. One switched CR2032, a 100 nF bypass capacitor, SSD1306 SDA on PB3 and SCL on PB4, active-low buttons on PB0 and PB2, passive piezo on PB1, and reserved reset on pin 1.</desc><rect x="0" y="0" width="1400" height="1400" fill="#f2f6f8" stroke="none" stroke-width="1"/><g font-family="Arial, Helvetica, sans-serif"><text x="40" y="58" font-size="36" fill="#172c3d" text-anchor="start" font-weight="700">ATtiny85 · electrical schematic</text><text x="40" y="96" font-size="21" fill="#536777" text-anchor="start" font-weight="400">ArduCade · ATtiny85 Pico · 8 MHz internal clock · one 3 V battery</text><text x="40" y="132" font-size="18" fill="#172c3d" text-anchor="start" font-weight="400">Matching net names mean an electrical connection. ArduCade buttons are active LOW, unlike the reference PDF.</text><rect x="40" y="155" width="1320" height="273" fill="#fff" stroke="#d9e2e9" stroke-width="2"/><rect x="40" y="155" width="6" height="273" fill="#2e6874" stroke="none" stroke-width="1"/><text x="64" y="193" font-size="20" fill="#2e6874" text-anchor="start" font-weight="700">01</text><text x="106" y="193" font-size="24" fill="#172c3d" text-anchor="start" font-weight="700">Power</text><text x="64" y="224" font-size="17" fill="#536777" text-anchor="start" font-weight="400">One 3 V battery. The switch interrupts positive; negative is common GND.</text><text x="110" y="282" font-size="20" fill="#172c3d" text-anchor="start" font-weight="700">B1 · CR2032</text><path d="M145 316 L227 316" fill="none" stroke="#c73944" stroke-width="4" stroke-linejoin="miter"/><path d="M145 359 L227 359" fill="none" stroke="#394651" stroke-width="4" stroke-linejoin="miter"/><path d="M145 316 L145 331" fill="none" stroke="#c73944" stroke-width="4" stroke-linejoin="miter"/><path d="M145 343 L145 359" fill="none" stroke="#394651" stroke-width="4" stroke-linejoin="miter"/><path d="M123 331 L167 331" fill="none" stroke="#172c3d" stroke-width="3" stroke-linejoin="miter"/><path d="M132 343 L158 343" fill="none" stroke="#172c3d" stroke-width="3" stroke-linejoin="miter"/><path d="M125 306 L125 326" fill="none" stroke="#c73944" stroke-width="3" stroke-linejoin="miter"/><path d="M116 316 L134 316" fill="none" stroke="#c73944" stroke-width="3" stroke-linejoin="miter"/><path d="M116 359 L134 359" fill="none" stroke="#394651" stroke-width="3" stroke-linejoin="miter"/><circle cx="282" cy="316" r="5" fill="#fff" stroke="#c73944" stroke-width="2"/><circle cx="383" cy="316" r="5" fill="#fff" stroke="#c73944" stroke-width="2"/><path d="M227 316 L277 316" fill="none" stroke="#c73944" stroke-width="4" stroke-linejoin="miter"/><path d="M287 316 L363 288" fill="none" stroke="#c73944" stroke-width="3" stroke-linejoin="miter"/><path d="M388 316 L450 316" fill="none" stroke="#c73944" stroke-width="4" stroke-linejoin="miter"/><rect x="450" y="298" width="96" height="36" fill="#fff" stroke="#c73944" stroke-width="2"/><text x="498" y="323" font-size="18" fill="#c73944" text-anchor="middle" font-weight="700">VCC</text><text x="278" y="270" font-size="19" fill="#172c3d" text-anchor="start" font-weight="700">SW1 · SPDT</text><text x="278" y="404" font-size="17" fill="#536777" text-anchor="start" font-weight="400">One outer pin + centre pin; third pin is unused.</text><rect x="227" y="341" width="96" height="36" fill="#fff" stroke="#394651" stroke-width="2"/><text x="275" y="366" font-size="18" fill="#394651" text-anchor="middle" font-weight="700">GND</text><text x="697" y="270" font-size="20" fill="#172c3d" text-anchor="start" font-weight="700">C1 · 100 nF ceramic</text><rect x="685" y="298" width="96" height="36" fill="#fff" stroke="#c73944" stroke-width="2"/><text x="733" y="323" font-size="18" fill="#c73944" text-anchor="middle" font-weight="700">VCC</text><path d="M781 316 L859 316" fill="none" stroke="#c73944" stroke-width="4" stroke-linejoin="miter"/><path d="M859 280 L859 352" fill="none" stroke="#172c3d" stroke-width="3" stroke-linejoin="miter"/><path d="M873 280 L873 352" fill="none" stroke="#172c3d" stroke-width="3" stroke-linejoin="miter"/><path d="M873 316 L961 316" fill="none" stroke="#394651" stroke-width="4" stroke-linejoin="miter"/><rect x="961" y="298" width="96" height="36" fill="#fff" stroke="#394651" stroke-width="2"/><text x="1009" y="323" font-size="18" fill="#394651" text-anchor="middle" font-weight="700">GND</text><text x="697" y="380" font-size="17" fill="#536777" text-anchor="start" font-weight="400">Place the capacitor close to DIP pins 8 and 4.</text><rect x="40" y="456" width="622" height="539" fill="#fff" stroke="#d9e2e9" stroke-width="2"/><rect x="40" y="456" width="6" height="539" fill="#2e6874" stroke="none" stroke-width="1"/><text x="64" y="494" font-size="20" fill="#2e6874" text-anchor="start" font-weight="700">02</text><text x="106" y="494" font-size="24" fill="#172c3d" text-anchor="start" font-weight="700">ATtiny85 · DIP-8</text><text x="64" y="525" font-size="17" fill="#536777" text-anchor="start" font-weight="400">Top view. Keep PB5/RESET for programming.</text><rect x="243" y="580" width="200" height="333" fill="#eef3f6" stroke="#172c3d" stroke-width="2"/><text x="343" y="627" font-size="21" fill="#172c3d" text-anchor="middle" font-weight="700">U1 · ATtiny85</text><circle cx="260" cy="595" r="5" fill="#172c3d" stroke="none" stroke-width="1"/><text x="263" y="693" font-size="17" fill="#172c3d" text-anchor="start" font-weight="700">1  PB5</text><path d="M201 686 L243 686" fill="none" stroke="#536777" stroke-width="4" stroke-linejoin="miter"/><rect x="65" y="668" width="136" height="36" fill="#fff" stroke="#536777" stroke-width="2"/><text x="133" y="693" font-size="18" fill="#536777" text-anchor="middle" font-weight="700">RESET</text><text x="423" y="693" font-size="17" fill="#172c3d" text-anchor="end" font-weight="700">8  VCC</text><path d="M443 686 L487 686" fill="none" stroke="#c73944" stroke-width="4" stroke-linejoin="miter"/><rect x="487" y="668" width="136" height="36" fill="#fff" stroke="#c73944" stroke-width="2"/><text x="555" y="693" font-size="18" fill="#c73944" text-anchor="middle" font-weight="700">VCC</text><text x="263" y="757" font-size="17" fill="#172c3d" text-anchor="start" font-weight="700">2  PB3</text><path d="M201 750 L243 750" fill="none" stroke="#149078" stroke-width="4" stroke-linejoin="miter"/><rect x="65" y="732" width="136" height="36" fill="#fff" stroke="#149078" stroke-width="2"/><text x="133" y="757" font-size="18" fill="#149078" text-anchor="middle" font-weight="700">OLED_SDA</text><text x="423" y="757" font-size="17" fill="#172c3d" text-anchor="end" font-weight="700">7  PB2</text><path d="M443 750 L487 750" fill="none" stroke="#8257ac" stroke-width="4" stroke-linejoin="miter"/><rect x="487" y="732" width="136" height="36" fill="#fff" stroke="#8257ac" stroke-width="2"/><text x="555" y="757" font-size="18" fill="#8257ac" text-anchor="middle" font-weight="700">RIGHT</text><text x="263" y="821" font-size="17" fill="#172c3d" text-anchor="start" font-weight="700">3  PB4</text><path d="M201 814 L243 814" fill="none" stroke="#267cb8" stroke-width="4" stroke-linejoin="miter"/><rect x="65" y="796" width="136" height="36" fill="#fff" stroke="#267cb8" stroke-width="2"/><text x="133" y="821" font-size="18" fill="#267cb8" text-anchor="middle" font-weight="700">OLED_SCL</text><text x="423" y="821" font-size="17" fill="#172c3d" text-anchor="end" font-weight="700">6  PB1</text><path d="M443 814 L487 814" fill="none" stroke="#bd682d" stroke-width="4" stroke-linejoin="miter"/><rect x="487" y="796" width="136" height="36" fill="#fff" stroke="#bd682d" stroke-width="2"/><text x="555" y="821" font-size="18" fill="#bd682d" text-anchor="middle" font-weight="700">SOUND</text><text x="263" y="885" font-size="17" fill="#172c3d" text-anchor="start" font-weight="700">4  GND</text><path d="M201 878 L243 878" fill="none" stroke="#394651" stroke-width="4" stroke-linejoin="miter"/><rect x="65" y="860" width="136" height="36" fill="#fff" stroke="#394651" stroke-width="2"/><text x="133" y="885" font-size="18" fill="#394651" text-anchor="middle" font-weight="700">GND</text><text x="423" y="885" font-size="17" fill="#172c3d" text-anchor="end" font-weight="700">5  PB0</text><path d="M443 878 L487 878" fill="none" stroke="#8257ac" stroke-width="4" stroke-linejoin="miter"/><rect x="487" y="860" width="136" height="36" fill="#fff" stroke="#8257ac" stroke-width="2"/><text x="555" y="885" font-size="18" fill="#8257ac" text-anchor="middle" font-weight="700">LEFT</text><text x="64" y="966" font-size="17" fill="#536777" text-anchor="start" font-weight="400">PB3 / PB4 provide software I2C in ArduCade.</text><rect x="690" y="456" width="670" height="539" fill="#fff" stroke="#d9e2e9" stroke-width="2"/><rect x="690" y="456" width="6" height="539" fill="#2e6874" stroke="none" stroke-width="1"/><text x="714" y="494" font-size="20" fill="#2e6874" text-anchor="start" font-weight="700">03</text><text x="756" y="494" font-size="24" fill="#172c3d" text-anchor="start" font-weight="700">Display and sound</text><text x="714" y="525" font-size="17" fill="#536777" text-anchor="start" font-weight="400">SSD1306 · onboard I2C pull-ups · address 0x3C</text><rect x="939" y="585" width="372" height="263" fill="#eef3f6" stroke="#172c3d" stroke-width="2"/><text x="1125" y="624" font-size="23" fill="#172c3d" text-anchor="middle" font-weight="700">OLED · 128 × 64</text><rect x="714" y="652" width="152" height="36" fill="#fff" stroke="#c73944" stroke-width="2"/><text x="790" y="677" font-size="18" fill="#c73944" text-anchor="middle" font-weight="700">VCC</text><path d="M866 670 L939 670" fill="none" stroke="#c73944" stroke-width="4" stroke-linejoin="miter"/><text x="958" y="677" font-size="18" fill="#172c3d" text-anchor="start" font-weight="700">VCC</text><rect x="714" y="698" width="152" height="36" fill="#fff" stroke="#394651" stroke-width="2"/><text x="790" y="723" font-size="18" fill="#394651" text-anchor="middle" font-weight="700">GND</text><path d="M866 716 L939 716" fill="none" stroke="#394651" stroke-width="4" stroke-linejoin="miter"/><text x="958" y="723" font-size="18" fill="#172c3d" text-anchor="start" font-weight="700">GND</text><rect x="714" y="744" width="152" height="36" fill="#fff" stroke="#267cb8" stroke-width="2"/><text x="790" y="769" font-size="18" fill="#267cb8" text-anchor="middle" font-weight="700">OLED_SCL</text><path d="M866 762 L939 762" fill="none" stroke="#267cb8" stroke-width="4" stroke-linejoin="miter"/><text x="958" y="769" font-size="18" fill="#172c3d" text-anchor="start" font-weight="700">SCL</text><rect x="714" y="790" width="152" height="36" fill="#fff" stroke="#149078" stroke-width="2"/><text x="790" y="815" font-size="18" fill="#149078" text-anchor="middle" font-weight="700">OLED_SDA</text><path d="M866 808 L939 808" fill="none" stroke="#149078" stroke-width="4" stroke-linejoin="miter"/><text x="958" y="815" font-size="18" fill="#172c3d" text-anchor="start" font-weight="700">SDA</text><rect x="714" y="910" width="126" height="36" fill="#fff" stroke="#bd682d" stroke-width="2"/><text x="777" y="935" font-size="18" fill="#bd682d" text-anchor="middle" font-weight="700">SOUND</text><path d="M840 928 L947 928" fill="none" stroke="#bd682d" stroke-width="4" stroke-linejoin="miter"/><rect x="947" y="910" width="34" height="36" fill="#fff" stroke="#172c3d" stroke-width="2"/><path d="M981 910L1013 893V963L981 946Z" fill="#eef3f6" stroke="#172c3d" stroke-width="2"/><path d="M1013 928 L1133 928" fill="none" stroke="#394651" stroke-width="4" stroke-linejoin="miter"/><rect x="1133" y="910" width="102" height="36" fill="#fff" stroke="#394651" stroke-width="2"/><text x="1184" y="935" font-size="18" fill="#394651" text-anchor="middle" font-weight="700">GND</text><text x="927" y="983" font-size="17" fill="#536777" text-anchor="start" font-weight="400">Passive piezo · not a low-impedance speaker</text><rect x="40" y="1023" width="1320" height="305" fill="#fff" stroke="#d9e2e9" stroke-width="2"/><rect x="40" y="1023" width="6" height="305" fill="#2e6874" stroke="none" stroke-width="1"/><text x="64" y="1061" font-size="20" fill="#2e6874" text-anchor="start" font-weight="700">04</text><text x="106" y="1061" font-size="24" fill="#172c3d" text-anchor="start" font-weight="700">Buttons to ground</text><text x="64" y="1092" font-size="17" fill="#536777" text-anchor="start" font-weight="400">Internal pull-ups are enabled. No external 1 kΩ resistors in this version.</text><text x="92" y="1141" font-size="21" fill="#172c3d" text-anchor="start" font-weight="700">SW2 · left</text><rect x="92" y="1154" width="110" height="36" fill="#fff" stroke="#8257ac" stroke-width="2"/><text x="147" y="1179" font-size="18" fill="#8257ac" text-anchor="middle" font-weight="700">LEFT</text><path d="M202 1172 L268 1172" fill="none" stroke="#8257ac" stroke-width="4" stroke-linejoin="miter"/><circle cx="273" cy="1172" r="4" fill="#fff" stroke="#172c3d" stroke-width="2"/><circle cx="339" cy="1172" r="4" fill="#fff" stroke="#172c3d" stroke-width="2"/><path d="M276 1158 L335 1158" fill="none" stroke="#172c3d" stroke-width="3" stroke-linejoin="miter"/><path d="M343 1172 L412 1172" fill="none" stroke="#394651" stroke-width="4" stroke-linejoin="miter"/><rect x="412" y="1154" width="110" height="36" fill="#fff" stroke="#394651" stroke-width="2"/><text x="467" y="1179" font-size="18" fill="#394651" text-anchor="middle" font-weight="700">GND</text><text x="722" y="1141" font-size="21" fill="#172c3d" text-anchor="start" font-weight="700">SW3 · right</text><rect x="722" y="1154" width="110" height="36" fill="#fff" stroke="#8257ac" stroke-width="2"/><text x="777" y="1179" font-size="18" fill="#8257ac" text-anchor="middle" font-weight="700">RIGHT</text><path d="M832 1172 L898 1172" fill="none" stroke="#8257ac" stroke-width="4" stroke-linejoin="miter"/><circle cx="903" cy="1172" r="4" fill="#fff" stroke="#172c3d" stroke-width="2"/><circle cx="969" cy="1172" r="4" fill="#fff" stroke="#172c3d" stroke-width="2"/><path d="M906 1158 L965 1158" fill="none" stroke="#172c3d" stroke-width="3" stroke-linejoin="miter"/><path d="M973 1172 L1042 1172" fill="none" stroke="#394651" stroke-width="4" stroke-linejoin="miter"/><rect x="1042" y="1154" width="110" height="36" fill="#fff" stroke="#394651" stroke-width="2"/><text x="1097" y="1179" font-size="18" fill="#394651" text-anchor="middle" font-weight="700">GND</text><text x="64" y="1250" font-size="19" fill="#172c3d" text-anchor="start" font-weight="400">Released: HIGH. Pressed: LOW. Both buttons together produce A in the game engine.</text><text x="64" y="1288" font-size="18" fill="#536777" text-anchor="start" font-weight="400">The reference uses buttons to VCC + 1 kΩ to GND. Do not copy that arrangement for ArduCade.</text><text x="40" y="1376" font-size="17" fill="#536777" text-anchor="start" font-weight="400">Checked against the ArduCade profile and Microchip DIP pinout. PB5/RESET is not a third game button.</text></g></svg>
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Layer_1" xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 1400 1400">
+  <!-- Generator: Adobe Illustrator 30.8.1, SVG Export Plug-In . SVG Version: 2.1.4 Build 1)  -->
+  <defs>
+    <style>
+      .st0, .st1, .st2, .st3, .st4, .st5, .st6, .st7, .st8, .st9, .st10, .st11, .st12, .st13, .st14, .st15, .st16, .st17, .st18, .st19, .st20 {
+        isolation: isolate;
+      }
+
+      .st0, .st1, .st3, .st17 {
+        fill: #536777;
+      }
+
+      .st0, .st2, .st3, .st5, .st6, .st8, .st11, .st12, .st14, .st19 {
+        font-size: 18px;
+      }
+
+      .st0, .st2, .st4, .st5, .st6, .st7, .st8, .st9, .st10, .st11, .st12, .st13, .st15, .st16, .st18, .st19 {
+        font-family: Arial-BoldMT, Arial;
+        font-weight: 700;
+      }
+
+      .st21, .st22, .st23 {
+        stroke: #172c3d;
+      }
+
+      .st21, .st24, .st25, .st26, .st27, .st28, .st29, .st30, .st31, .st32 {
+        fill: none;
+      }
+
+      .st21, .st27, .st28 {
+        stroke-width: 3px;
+      }
+
+      .st33 {
+        stroke: #d9e2e9;
+      }
+
+      .st33, .st22, .st34, .st35, .st36, .st37, .st38, .st39, .st23, .st40 {
+        stroke-width: 2px;
+      }
+
+      .st33, .st34, .st35, .st36, .st37, .st38, .st39, .st23, .st40 {
+        fill: #fff;
+      }
+
+      .st22 {
+        fill: #eef3f6;
+      }
+
+      .st1, .st3, .st14, .st17, .st20 {
+        font-family: ArialMT, Arial;
+      }
+
+      .st1, .st4 {
+        font-size: 21px;
+      }
+
+      .st2 {
+        fill: #149078;
+      }
+
+      .st34, .st30 {
+        stroke: #8257ac;
+      }
+
+      .st24, .st25, .st26, .st29, .st30, .st31, .st32 {
+        stroke-width: 4px;
+      }
+
+      .st24, .st40 {
+        stroke: #536777;
+      }
+
+      .st4, .st7, .st9, .st10, .st41, .st11, .st14, .st15, .st16, .st18, .st20 {
+        fill: #172c3d;
+      }
+
+      .st5 {
+        fill: #267cb8;
+      }
+
+      .st25, .st35 {
+        stroke: #267cb8;
+      }
+
+      .st6 {
+        fill: #bd682d;
+      }
+
+      .st42 {
+        fill: #f2f6f8;
+      }
+
+      .st36, .st31 {
+        stroke: #149078;
+      }
+
+      .st7, .st17 {
+        font-size: 17px;
+      }
+
+      .st26, .st27, .st39 {
+        stroke: #c73944;
+      }
+
+      .st8 {
+        fill: #394651;
+      }
+
+      .st28, .st29, .st37 {
+        stroke: #394651;
+      }
+
+      .st9 {
+        font-size: 23px;
+      }
+
+      .st10 {
+        font-size: 24px;
+      }
+
+      .st43, .st13 {
+        fill: #2e6874;
+      }
+
+      .st12 {
+        fill: #8257ac;
+      }
+
+      .st13, .st16 {
+        font-size: 20px;
+      }
+
+      .st15, .st20 {
+        font-size: 19px;
+      }
+
+      .st38, .st32 {
+        stroke: #bd682d;
+      }
+
+      .st18 {
+        font-size: 36px;
+      }
+
+      .st19 {
+        fill: #c73944;
+      }
+    </style>
+  </defs>
+  <rect class="st42" width="1400" height="1400"/>
+  <g>
+    <text class="st18" transform="translate(40 58)"><tspan x="0" y="0">ATtiny85 · electrical schematic</tspan></text>
+    <text class="st1" transform="translate(40 96)"><tspan x="0" y="0">ArduCade · ATtiny85 Pico · 8 MHz internal clock · one 3 V battery</tspan></text>
+    <text class="st14" transform="translate(40 132)"><tspan x="0" y="0">Matching net names mean an electrical connection. ArduCade buttons are active LOW, unlike the reference PDF.</tspan></text>
+    <rect class="st33" x="40" y="155" width="1320" height="273"/>
+    <rect class="st43" x="40" y="155" width="6" height="273"/>
+    <text class="st13" transform="translate(64 193)"><tspan x="0" y="0">01</tspan></text>
+    <text class="st10" transform="translate(106 193)"><tspan x="0" y="0">Power</tspan></text>
+    <text class="st17" transform="translate(64 224)"><tspan x="0" y="0">One 3 V battery. The switch interrupts positive; negative is common GND.</tspan></text>
+    <text class="st16" transform="translate(110 282)"><tspan x="0" y="0">B1 · CR2032</tspan></text>
+    <path class="st26" d="M277,316h-132v15"/>
+    <path class="st29" d="M145,343v16h82"/>
+    <path class="st21" d="M123,331h44"/>
+    <path class="st21" d="M132,343h26"/>
+    <path class="st27" d="M125,306v20"/>
+    <path class="st27" d="M116,316h18"/>
+    <path class="st28" d="M116,359h18"/>
+    <circle class="st39" cx="282" cy="316" r="5"/>
+    <circle class="st39" cx="383" cy="316" r="5"/>
+    <path class="st27" d="M287,316l76-28"/>
+    <path class="st26" d="M388,316h62"/>
+    <rect class="st39" x="450" y="298" width="96" height="36"/>
+    <text class="st19" transform="translate(479 323)"><tspan x="0" y="0">VCC</tspan></text>
+    <text class="st15" transform="translate(278 270)"><tspan x="0" y="0">SW1 · SPDT</tspan></text>
+    <text class="st17" transform="translate(278 404)"><tspan x="0" y="0">One outer pin + centre pin; third pin is unused.</tspan></text>
+    <rect class="st37" x="227" y="341" width="96" height="36"/>
+    <text class="st8" transform="translate(255 366)"><tspan x="0" y="0">GND</tspan></text>
+    <text class="st16" transform="translate(697 270)"><tspan x="0" y="0">C1 · 100 nF ceramic</tspan></text>
+    <rect class="st39" x="685" y="298" width="96" height="36"/>
+    <text class="st19" transform="translate(714 323)"><tspan x="0" y="0">VCC</tspan></text>
+    <path class="st26" d="M781,316h78"/>
+    <path class="st21" d="M859,280v72"/>
+    <path class="st21" d="M873,280v72"/>
+    <path class="st29" d="M873,316h88"/>
+    <rect class="st37" x="961" y="298" width="96" height="36"/>
+    <text class="st8" transform="translate(989 323)"><tspan x="0" y="0">GND</tspan></text>
+    <text class="st17" transform="translate(697 380)"><tspan x="0" y="0">Place the capacitor close to DIP pins 8 and 4.</tspan></text>
+    <rect class="st33" x="40" y="456" width="622" height="539"/>
+    <rect class="st43" x="40" y="456" width="6" height="539"/>
+    <text class="st13" transform="translate(64 494)"><tspan x="0" y="0">02</tspan></text>
+    <text class="st10" transform="translate(106 494)"><tspan x="0" y="0">ATtiny85 · DIP-8</tspan></text>
+    <text class="st17" transform="translate(64 525)"><tspan x="0" y="0">Top view. Keep PB5/RESET for programming.</tspan></text>
+    <rect class="st22" x="243" y="580" width="200" height="333"/>
+    <text class="st4" transform="translate(277.1 627)"><tspan x="0" y="0">U1 · ATtiny85</tspan></text>
+    <circle class="st41" cx="260" cy="595" r="5"/>
+    <text class="st7" transform="translate(263 693)"><tspan x="0" y="0">1 PB5</tspan></text>
+    <path class="st24" d="M201,686h42"/>
+    <rect class="st40" x="65" y="668" width="136" height="36"/>
+    <text class="st0" transform="translate(103 693)"><tspan x="0" y="0">RESET</tspan></text>
+    <text class="st7" transform="translate(372.9 693)"><tspan x="0" y="0">8 VCC</tspan></text>
+    <path class="st26" d="M443,686h44"/>
+    <rect class="st39" x="487" y="668" width="136" height="36"/>
+    <text class="st19" transform="translate(536 693)"><tspan x="0" y="0">VCC</tspan></text>
+    <text class="st7" transform="translate(263 757)"><tspan x="0" y="0">2 PB3</tspan></text>
+    <path class="st31" d="M201,750h42"/>
+    <rect class="st36" x="65" y="732" width="136" height="36"/>
+    <text class="st2" transform="translate(84 757)"><tspan x="0" y="0">OLED_SDA</tspan></text>
+    <text class="st7" transform="translate(375.8 757)"><tspan x="0" y="0">7 PB2</tspan></text>
+    <path class="st30" d="M443,750h44"/>
+    <rect class="st34" x="487" y="732" width="136" height="36"/>
+    <text class="st12" transform="translate(527 757)"><tspan x="0" y="0">RIGHT</tspan></text>
+    <text class="st7" transform="translate(263 821)"><tspan x="0" y="0">3 PB4</tspan></text>
+    <path class="st25" d="M201,814h42"/>
+    <rect class="st35" x="65" y="796" width="136" height="36"/>
+    <text class="st5" transform="translate(85 821)"><tspan x="0" y="0">OLED_SCL</tspan></text>
+    <text class="st7" transform="translate(375.8 821)"><tspan x="0" y="0">6 PB1</tspan></text>
+    <path class="st32" d="M443,814h44"/>
+    <rect class="st38" x="487" y="796" width="136" height="36"/>
+    <text class="st6" transform="translate(522.5 821)"><tspan x="0" y="0">SOUND</tspan></text>
+    <text class="st7" transform="translate(263 885)"><tspan x="0" y="0">4 GND</tspan></text>
+    <path class="st29" d="M201,878h42"/>
+    <rect class="st37" x="65" y="860" width="136" height="36"/>
+    <text class="st8" transform="translate(113 885)"><tspan x="0" y="0">GND</tspan></text>
+    <text class="st7" transform="translate(375.8 885)"><tspan x="0" y="0">5 PB0</tspan></text>
+    <path class="st30" d="M443,878h44"/>
+    <rect class="st34" x="487" y="860" width="136" height="36"/>
+    <text class="st12" transform="translate(532.5 885)"><tspan x="0" y="0">LEFT</tspan></text>
+    <text class="st17" transform="translate(64 966)"><tspan x="0" y="0">PB3 / PB4 provide software I2C in ArduCade.</tspan></text>
+    <rect class="st33" x="690" y="456" width="670" height="539"/>
+    <rect class="st43" x="690" y="456" width="6" height="539"/>
+    <text class="st13" transform="translate(714 494)"><tspan x="0" y="0">03</tspan></text>
+    <text class="st10" transform="translate(756 494)"><tspan x="0" y="0">Display and sound</tspan></text>
+    <text class="st17" transform="translate(714 525)"><tspan x="0" y="0">SSD1306 · onboard I2C pull-ups · address 0x3C</tspan></text>
+    <rect class="st22" x="939" y="585" width="372" height="263"/>
+    <text class="st9" transform="translate(1037.7505 624)"><tspan x="0" y="0">OLED · 128 × 64</tspan></text>
+    <rect class="st39" x="714" y="652" width="152" height="36"/>
+    <text class="st19" transform="translate(771 677)"><tspan x="0" y="0">VCC</tspan></text>
+    <path class="st26" d="M866,670h73"/>
+    <text class="st11" transform="translate(958 677)"><tspan x="0" y="0">VCC</tspan></text>
+    <rect class="st37" x="714" y="698" width="152" height="36"/>
+    <text class="st8" transform="translate(770 723)"><tspan x="0" y="0">GND</tspan></text>
+    <path class="st29" d="M866,716h73"/>
+    <text class="st11" transform="translate(958 723)"><tspan x="0" y="0">GND</tspan></text>
+    <rect class="st35" x="714" y="744" width="152" height="36"/>
+    <text class="st5" transform="translate(742 769)"><tspan x="0" y="0">OLED_SCL</tspan></text>
+    <path class="st25" d="M866,762h73"/>
+    <text class="st11" transform="translate(958 769)"><tspan x="0" y="0">SCL</tspan></text>
+    <rect class="st36" x="714" y="790" width="152" height="36"/>
+    <text class="st2" transform="translate(741 815)"><tspan x="0" y="0">OLED_SDA</tspan></text>
+    <path class="st31" d="M866,808h73"/>
+    <text class="st11" transform="translate(958 815)"><tspan x="0" y="0">SDA</tspan></text>
+    <g>
+      <rect class="st38" x="714" y="892" width="126" height="36"/>
+      <text class="st6" transform="translate(744.5 917)"><tspan x="0" y="0">SOUND</tspan></text>
+      <path class="st32" d="M840,910h107"/>
+      <rect class="st23" x="947" y="892" width="34" height="36"/>
+      <path class="st22" d="M981,892l32-17v70l-32-17v-36Z"/>
+      <path class="st29" d="M1013,910h120"/>
+      <rect class="st37" x="1133" y="892" width="102" height="36"/>
+      <text class="st8" transform="translate(1164.0005 917)"><tspan x="0" y="0">GND</tspan></text>
+    </g>
+    <text class="st17" transform="translate(927 983)"><tspan x="0" y="0">Passive piezo · not a low-impedance speaker</tspan></text>
+    <rect class="st33" x="40" y="1023" width="1320" height="305"/>
+    <rect class="st43" x="40" y="1023" width="6" height="305"/>
+    <text class="st13" transform="translate(64 1061)"><tspan x="0" y="0">04</tspan></text>
+    <text class="st10" transform="translate(106 1061)"><tspan x="0" y="0">Buttons to ground</tspan></text>
+    <text class="st17" transform="translate(64 1092)"><tspan x="0" y="0">Internal pull-ups are enabled. No external 1 kΩ resistors in this version.</tspan></text>
+    <text class="st4" transform="translate(92 1141)"><tspan x="0" y="0">SW2 · left</tspan></text>
+    <rect class="st34" x="92" y="1154" width="110" height="36"/>
+    <text class="st12" transform="translate(124.5044 1179)"><tspan x="0" y="0">LEFT</tspan></text>
+    <path class="st30" d="M202,1172h66"/>
+    <circle class="st23" cx="273" cy="1172" r="4"/>
+    <circle class="st23" cx="339" cy="1172" r="4"/>
+    <path class="st21" d="M276,1158h59"/>
+    <path class="st29" d="M343,1172h69"/>
+    <rect class="st37" x="412" y="1154" width="110" height="36"/>
+    <text class="st8" transform="translate(447.0005 1179)"><tspan x="0" y="0">GND</tspan></text>
+    <text class="st4" transform="translate(722 1141)"><tspan x="0" y="0">SW3 · right</tspan></text>
+    <rect class="st34" x="722" y="1154" width="110" height="36"/>
+    <text class="st12" transform="translate(749.0024 1179)"><tspan x="0" y="0">RIGHT</tspan></text>
+    <path class="st30" d="M832,1172h66"/>
+    <circle class="st23" cx="903" cy="1172" r="4"/>
+    <circle class="st23" cx="969" cy="1172" r="4"/>
+    <path class="st21" d="M906,1158h59"/>
+    <path class="st29" d="M973,1172h69"/>
+    <rect class="st37" x="1042" y="1154" width="110" height="36"/>
+    <text class="st8" transform="translate(1077.0005 1179)"><tspan x="0" y="0">GND</tspan></text>
+    <text class="st20" transform="translate(64 1250)"><tspan x="0" y="0">Released: HIGH. Pressed: LOW. Both buttons together produce A in the game engine.</tspan></text>
+    <text class="st3" transform="translate(64 1288)"><tspan x="0" y="0">The reference uses buttons to VCC + 1 kΩ to GND. Do not copy that arrangement for ArduCade.</tspan></text>
+    <text class="st17" transform="translate(40 1376)"><tspan x="0" y="0">Checked against the ArduCade profile and Microchip DIP pinout. PB5/RESET is not a third game button.</tspan></text>
+  </g>
+</svg>

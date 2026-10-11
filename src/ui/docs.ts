@@ -11,14 +11,17 @@ import { clear, h } from './dom';
 import { getAssetProject, setAssetProject } from '../blocks/assets';
 import { templateToProject } from '../templates';
 import { platformer } from '../templates/platformer';
+import { hardwareGuide } from './docs-hardware';
 import { illustratedGuide } from './docs-guide';
+import { debugGuide } from './docs-debug';
+import { shortcutsGuide } from './shortcuts';
 import { blockPicture } from './guide-panel';
 import type { ThemeId } from './themes';
 
 type Json = Record<string, any>;
 
 /** Sections about the editor. Texts are docs.<id>.title and docs.<id>.body. */
-const GUIDE = ['start', 'blocks', 'assets', 'sim', 'device', 'homemade', 'attiny'];
+const GUIDE = ['start', 'blocks', 'assets', 'sim', 'debug', 'shortcuts', 'device', 'hardware', 'homemade', 'attiny'];
 
 const n = (v: number): Json => ({ shadow: { type: 'math_number', fields: { NUM: v } } });
 const s = (v: string): Json => ({ shadow: { type: 'text', fields: { TEXT: v } } });
@@ -114,16 +117,22 @@ function more(type: string): string[] {
   return (text === key ? tooltip(type) : text).split('\n\n');
 }
 
-/** Opens the documentation, at the block of this type if one is given. */
+/** Opens the documentation, at the block of this type or the guide section with this id if one is given. */
 export function openDocs(theme: ThemeId, blockType?: string, secretTiny = false) {
+  let dispose = () => {};
+  const dlg = openDialog(t('docs.title'), { wide: true, onClose: () => dispose() });
+  dlg.el.classList.add('docs-dialog');
+  dispose = renderDocs(dlg.body, theme, blockType, secretTiny);
+}
+
+/** Fills root with the section list and the text. Returns a function that frees the block pictures. */
+export function renderDocs(root: HTMLElement, theme: ThemeId, blockType?: string, secretTiny = false): () => void {
   const all = sections(secretTiny);
   const guideCount = all.filter(sec => !sec.blocks).length;
-  const dlg = openDialog(t('docs.title'), { wide: true, onClose: () => disposePictures() });
-  dlg.el.classList.add('docs-dialog');
   const nav = h('nav', { class: 'docs-nav', 'aria-label': t('docs.title') });
   const content = h('div', { class: 'docs-content' });
-  dlg.body.classList.add('docs');
-  dlg.body.append(nav, content);
+  root.classList.add('docs');
+  root.append(nav, content);
 
   let pictures: Blockly.WorkspaceSvg[] = [];
   let observer: IntersectionObserver | undefined;
@@ -143,7 +152,7 @@ export function openDocs(theme: ThemeId, blockType?: string, secretTiny = false)
   };
 
   const buttons = all.map((sec) =>
-    h('button', { type: 'button', onclick: () => show(sec) }, sec.title),
+    h('button', { type: 'button', onclick: () => show(sec) }, sec.id === 'hardware' ? t('docs.hardware.nav') : sec.title),
   );
   nav.append(
     h('h3', {}, t('docs.guide')),
@@ -181,7 +190,7 @@ export function openDocs(theme: ThemeId, blockType?: string, secretTiny = false)
     content.append(h('h2', {}, sec.title));
     if (!sec.blocks) {
       for (const p of t(`docs.${sec.id}.body`).split('\n\n')) content.append(h('p', {}, p));
-      content.append(illustratedGuide(sec.id, picture));
+      content.append(sec.id === 'hardware' ? hardwareGuide(secretTiny) : sec.id === 'debug' ? debugGuide(picture) : sec.id === 'shortcuts' ? shortcutsGuide() : illustratedGuide(sec.id, picture));
       return;
     }
     for (const state of sec.blocks) {
@@ -207,6 +216,7 @@ export function openDocs(theme: ThemeId, blockType?: string, secretTiny = false)
     }
   }
 
-  const start = blockType ? all.find((sec) => sec.blocks?.some((state) => subject(state) === blockType)) : undefined;
+  const start = blockType ? all.find((sec) => sec.id === blockType || sec.blocks?.some((state) => subject(state) === blockType)) : undefined;
   show(start ?? all[0], blockType);
+  return disposePictures;
 }

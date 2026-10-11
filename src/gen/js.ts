@@ -15,10 +15,13 @@ export interface JsResult {
   code: string;
   diagnostics: Diagnostic[];
   hiscoreKey: number;
+  /** Statement indices keep generated code independent of Blockly IDs. */
+  debugIds?: string[];
 }
 
 /** Hooks returned by the generated code, called by the simulator engine. */
 export interface GameHooks {
+  inspect?(): Record<string, unknown>;
   init(): void;
   start(): Promise<void>;
   update(): Promise<void>;
@@ -38,6 +41,7 @@ class JsGen {
   diagnostics: Diagnostic[] = [];
   locals?: Map<string, Ty>;
   private tmp = 0;
+  private debugIds: string[] = [];
   private melodies: ReturnType<typeof melodies>;
   private effects: ReturnType<typeof effectNames>;
 
@@ -123,6 +127,7 @@ class JsGen {
 
     w.line('return {');
     w.indent();
+    w.line(`inspect() { return { ${vars.map(([name]) => `${stringLiteral(name)}: ${this.names.vars.get(name)}`).join(', ')} }; },`);
     w.line('init() {');
     for (const [name, ty] of vars) w.line(`  ${this.names.vars.get(name)} = ${ty === 'sprite' ? '255' : ty === 'bool' ? 'false' : '0'};`);
     eventsOf(p, 'every').forEach((_, i) => w.line(`  every_${i}.t = 0;`));
@@ -162,7 +167,7 @@ class JsGen {
     w.line(`hasTile: ${tilesEv.length > 0},`);
     w.dedent();
     w.line('};');
-    return { code: w.toString(), diagnostics: this.diagnostics, hiscoreKey: hash16(pr.id) };
+    return { code: w.toString(), diagnostics: this.diagnostics, hiscoreKey: hash16(pr.id), debugIds: this.debugIds };
   }
 
   varName(name: string) {
@@ -173,15 +178,25 @@ class JsGen {
     for (const s of list) this.stmt(s);
   }
 
-  block(body: Stmt[]) {
+  block(body: Stmt[], loop: Stmt) {
     this.w.indent();
+    this.checkpoint(loop);
     this.w.line('$lg();');
     this.stmts(body);
     this.w.dedent();
   }
 
+  private checkpoint(s: Stmt) {
+    const w = this.w;
+    if (s.k !== 'comment') {
+      const locals = [...(this.locals?.keys() ?? [])].map(name => `${stringLiteral(name)}: ${this.varName(name)}`).join(', ');
+      w.line(`if (typeof $debug !== "undefined" && $debug) { const $wait = $debug(${this.debugIds.push(s.id ?? '') - 1}, { ${locals} }); if ($wait) await $wait; }`);
+    }
+  }
+
   stmt(s: Stmt) {
     const w = this.w;
+    this.checkpoint(s);
     switch (s.k) {
       case 'set': {
         const ty = this.locals?.get(s.name) ?? this.info.vars.get(s.name) ?? 'num';
@@ -208,20 +223,20 @@ class JsGen {
       }
       case 'while':
         w.line(`while (${this.expr(s.cond)}) {`);
-        this.block(s.body);
+        this.block(s.body, s);
         w.line('}');
         break;
       case 'repeat': {
         const i = `i${this.tmp++}`;
         w.line(`for (let ${i} = 0, n${i} = ${this.expr(s.count)}; ${i} < n${i}; ${i}++) {`);
-        this.block(s.body);
+        this.block(s.body, s);
         w.line('}');
         break;
       }
       case 'for': {
         const v = this.varName(s.name);
         w.line(`for (${v} = ${this.expr(s.from)}; ${v} <= ${this.expr(s.to)}; ${v} = $w(${v} + 1)) {`);
-        this.block(s.body);
+        this.block(s.body, s);
         w.line('}');
         break;
       }
@@ -230,7 +245,7 @@ class JsGen {
         w.line(`for (let ${i} = 0; ${i} < E.maxSprites; ${i}++) {`);
         w.line(`  if (E.kindOf(${i}) !== ${this.expr(s.kind)}) continue;`);
         w.line(`  ${this.varName(s.name)} = ${i};`);
-        this.block(s.body);
+        this.block(s.body, s);
         w.line('}');
         break;
       }

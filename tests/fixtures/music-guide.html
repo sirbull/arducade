@@ -1,5 +1,5 @@
-<!doctype html><html lang="nb"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><base href="/"><title>ArduCade · Musikkveiledning</title><link rel="stylesheet" href="/src/styles.css">
-<body><header style="height:52px;padding:12px 20px;border-bottom:2px solid var(--border);background:var(--panel);font-size:20px"><strong>Ardu<span style="color:var(--accent)">Cade</span></strong> · Musikk</header><main id="studio" class="pane assets active" style="height:calc(100vh - 52px)"></main>
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><base href="/"><title>ArduCade · Music guide</title><link rel="stylesheet" href="/src/styles.css">
+<body><header style="height:52px;padding:12px 20px;border-bottom:2px solid var(--border);background:var(--panel);font-size:20px"><strong>Ardu<span style="color:var(--accent)">Cade</span></strong> · Music</header><main id="studio" class="pane assets active" style="height:calc(100vh - 52px)"></main>
 <script type="module">
 import { MUSIC_EXAMPLES } from '/src/ui/docs-music-examples.ts';
 import { MusicPane } from '/src/ui/music-studio.ts';
@@ -7,13 +7,13 @@ import { newProject } from '/src/project/model.ts';
 import { loadLanguage } from '/src/i18n/i18n.ts';
 import { applyPageTheme } from '/src/ui/themes.ts';
 import { openMelodyRecorder } from '/src/ui/melody-recorder.ts';
-await loadLanguage('nb');applyPageTheme('color');
-const p=newProject('Musikkeksempler');
+await loadLanguage('en');applyPageTheme('color');
+const p=newProject('Music examples');
 p.melodies.push({id:'coin-guide',name:'mynt',notes:MUSIC_EXAMPLES.melody,tempo:160});
 p.songs.push({id:'song-guide',name:'skogstur',tempo:120,voices:[...MUSIC_EXAMPLES.voices]});
 const root=document.querySelector('#studio'), pane=new MusicPane(root,{project:()=>p,changed:()=>{}});pane.render();
 const view=new URL(location.href).searchParams.get('view');
-if(view==='poly') [...root.querySelectorAll('[role="tab"]')].find(b=>b.getAttribute('aria-selected')==='false').click();
+if(view==='poly'||view==='edit') [...root.querySelectorAll('[role="tab"]')].find(b=>b.getAttribute('aria-selected')==='false').click();
 if(view==='recorder')openMelodyRecorder(p.melodies[0].notes,p.melodies[0].tempo,()=>{});
 if(view==='docs'){
  await import('blockly/blocks');

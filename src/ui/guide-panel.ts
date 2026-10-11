@@ -33,15 +33,14 @@ export function blockPicture(el: HTMLElement, blocks: Json[], theme: ThemeId, ma
     theme: blocklyTheme(theme),
     renderer: 'geras',
     rendererOverrides: BLOCK_RENDERER,
-    move: { scrollbars: true, drag: true, wheel: true },
-    zoom: { controls: false, wheel: false, startScale: 0.8, minScale: overview ? 0.05 : 0.3 },
+    move: { scrollbars: false, drag: false, wheel: false },
+    zoom: { controls: false, wheel: false, startScale: 0.8, minScale: 0.01 },
     sounds: false,
     media: 'blockly-media/',
   });
   if (overview) Blockly.Events.disable();
   try {
     Blockly.serialization.workspaces.load({ blocks: { languageVersion: 0, blocks } }, ws);
-    ws.cleanUp();
   } finally {
     if (overview) Blockly.Events.enable();
   }
@@ -62,16 +61,30 @@ export function blockPicture(el: HTMLElement, blocks: Json[], theme: ThemeId, ma
           block.moveBy((i % 3) * columnWidth - pos.x, heights.slice(0, Math.floor(i / 3)).reduce((a, b) => a + b, 0) - pos.y);
         });
       } finally { Blockly.Events.enable(); }
+    } else {
+      // Blockly's cleanUp skips immovable, read-only blocks. Lay out every stack
+      // explicitly so examples containing several events do not overlap.
+      let top = 0;
+      Blockly.Events.disable();
+      try {
+        for (const block of ws.getTopBlocks(true)) {
+          const box = block.getBoundingRectangle();
+          block.moveBy(-box.left, top - box.top);
+          top += box.getHeight() + 24;
+        }
+      } finally { Blockly.Events.enable(); }
     }
-    if (overview) await Blockly.renderManagement.finishQueuedRenders();
+    await Blockly.renderManagement.finishQueuedRenders();
     if (!el.isConnected) return;
     const bounds = overview ? ws.getCanvas().getBBox() : undefined;
     const box = bounds ? { left: bounds.x, top: bounds.y, right: bounds.x + bounds.width, bottom: bounds.y + bounds.height } : ws.getBlocksBoundingBox();
-    // Shrink wide blocks to fit the width, but never above the normal size.
-    ws.setScale(Math.max(overview ? 0.05 : 0.4, Math.min(0.8, (el.clientWidth - 24) / Math.max(1, box.right - box.left), ...(overview ? [(maxHeight - 28) / Math.max(1, box.bottom - box.top)] : []))));
+    // These are static illustrations: fit the entire example within both limits.
+    ws.setScale(Math.max(0.01, Math.min(0.8,
+      (el.clientWidth - 24) / Math.max(1, box.right - box.left),
+      (maxHeight - 28) / Math.max(1, box.bottom - box.top))));
     el.style.height = `${Math.min(maxHeight, Math.max(60, (box.bottom - box.top) * ws.scale + 28))}px`;
     Blockly.svgResize(ws);
-    ws.scroll(12 - box.left * ws.scale, 12 - box.top * ws.scale);
+    ws.translate(12 - box.left * ws.scale, 12 - box.top * ws.scale);
   };
   if (overview) void Blockly.renderManagement.finishQueuedRenders().then(fit);
   else void fit();

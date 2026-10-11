@@ -1,12 +1,12 @@
 # Musikk i ArduCade: fra første note til fire spor
 
-Denne veiledningen finnes også under **Hjelp → Lyd og musikk**. Den viser arbeidsflyter for både nybegynnere og viderekomne. Skjermbildene bruker norsk språk og fargetemaet. Åpne [eksempelprosjektet](../public/examples/music-guide.abproject) med **Åpne fil** i appen. **A** spiller mynt, **B** spiller skjold, pauser bakgrunnssangen og lar den fortsette automatisk.
+Denne veiledningen finnes også under **Hjelp → Lyd og musikk**. Den viser arbeidsflyter for både nybegynnere og viderekomne. Skjermbildene bruker engelsk språk og fargetemaet. Åpne [eksempelprosjektet](../public/examples/music-guide.abproject) med **Åpne fil** i appen. **A** spiller mynt, **B** spiller skjold, pauser bakgrunnssangen og lar den fortsette automatisk.
 
 ## Velg hvordan du vil lage musikk
 
 Åpne Musikk-fanen. Pip er en melodi med én stemme: én note om gangen, som en klassisk spillkonsoll. Flerstemt er en sang med fire spor som kan spille samtidig: melodi, harmoni, bass og trommer. Melodier og sanger lagres hver for seg i prosjektet.
 
-Begynn med Pip og en kort myntlyd. Velg Flerstemt når du vil lage bakgrunnsmusikk eller en lyd med flere lag. Pip-blokker har én note og rosa farge; flerstemte blokker har to noter og en mer lilla farge i fargetemaet. Alle finnes i samme Lyd-kategori. Skjermbildene viser norsk språk og fargetemaet.
+Begynn med Pip og en kort myntlyd. Velg Flerstemt når du vil lage bakgrunnsmusikk eller en lyd med flere lag. Pip-blokker har én note og rosa farge; flerstemte blokker har to noter og en mer lilla farge i fargetemaet. Alle finnes i samme Lyd-kategori. Skjermbildene viser engelsk språk og fargetemaet.
 
 ## Lag din første bip-melodi
 

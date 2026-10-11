@@ -30,6 +30,8 @@ export interface Check {
 
 export interface GuideStep {
   text: LocalizedText;
+  /** Explicit setup for new sprites, variables and functions in this step. */
+  setup?: LocalizedText[];
   /** Top blocks shown as a picture of what to build in this step. */
   show?: Json[];
   /** The whole workspace after this step, shown under Help. */
@@ -126,6 +128,71 @@ export const numIn = (min?: number, max?: number): Pattern => ({ type: 'math_num
 /** Enabled blocks of one type inside the events on the workspace. */
 export function blocksOfType(blocks: Json, type: string): Json[] {
   return (blocks.blocks?.blocks ?? []).filter(enabled).flatMap((b: Json) => [b, ...descendants(b)]).filter((b: Json) => b.type === type && enabled(b));
+}
+
+/** Match the cumulative build, including order, nesting and consistent variable
+ * references. Variable names may differ from the example, but distinct example
+ * variables must remain distinct. Blockly saves references as either names or IDs. */
+export function matchesSolution(blocks: Json, solution: Json, flexibleNumbers = false): boolean {
+  type Bindings = Map<string, string>;
+  const variable = (value: any): string => typeof value === 'object' ? value.name ?? value.id :
+    blocks.variables?.find((v: Json) => v.id === value)?.name ?? String(value);
+  const bind = (bindings: Bindings, want: string, have: string): boolean => {
+    if (bindings.has(want)) return bindings.get(want) === have;
+    if ([...bindings.values()].includes(have)) return false;
+    bindings.set(want, have);
+    return true;
+  };
+  const sequence = (have: Json | undefined, want: Json | undefined, bindings: Bindings): Bindings | undefined => {
+    if (!want) return bindings;
+    for (let b = have; b; b = b.next?.block) {
+      const matched = block(b, want, bindings);
+      if (matched) {
+        const rest = sequence(b.next?.block, want.next?.block, matched);
+        if (rest) return rest;
+      }
+    }
+    return undefined;
+  };
+  const block = (have: Json, want: Json, bindings: Bindings): Bindings | undefined => {
+    if (have.type !== want.type || !enabled(have)) return undefined;
+    let next = new Map(bindings);
+    for (const [key, value] of Object.entries<any>(want.fields ?? {})) {
+      if (flexibleNumbers && want.type === 'math_number' && key === 'NUM') continue;
+      if (typeof value === 'object') {
+        if (have.fields?.[key] == null || !bind(next, value.name, variable(have.fields[key]))) return undefined;
+      } else if (String(have.fields?.[key]) !== String(value)) return undefined;
+    }
+    if (want.extraState?.name && have.extraState?.name !== want.extraState.name) return undefined;
+    const params = want.extraState?.params;
+    if (params) {
+      if (have.extraState?.params?.length !== params.length) return undefined;
+      for (let i = 0; i < params.length; i++) {
+        const name = (p: any) => typeof p === 'string' ? p : p.name;
+        if (!bind(next, name(params[i]), name(have.extraState.params[i]))) return undefined;
+      }
+    }
+    for (const [key, input] of Object.entries<Json>(want.inputs ?? {})) {
+      const child = input.block ?? input.shadow;
+      const actual = have.inputs?.[key]?.block ?? have.inputs?.[key]?.shadow;
+      if (!child || !actual) return undefined;
+      const result = /^(DO\d*|ELSE|STACK)$/.test(key) ? sequence(actual, child, next) : block(actual, child, next);
+      if (!result) return undefined;
+      next = result;
+    }
+    return next;
+  };
+  const have: Json[] = blocks.blocks?.blocks ?? [];
+  const want: Json[] = solution.blocks?.blocks ?? [];
+  const tops = (index: number, used: Set<number>, bindings: Bindings): boolean => {
+    if (index === want.length) return true;
+    return have.some((b, i) => {
+      if (used.has(i)) return false;
+      const matched = block(b, want[index], bindings);
+      return !!matched && tops(index + 1, new Set([...used, i]), matched);
+    });
+  };
+  return tops(0, new Set(), new Map());
 }
 
 // Projects -------------------------------------------------------------------

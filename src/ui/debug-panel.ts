@@ -46,6 +46,7 @@ export class DebugPanel {
   private pausedSnapshot?: Record<string, unknown>;
   private ids = new Set<string>();
   private floating = false;
+  private available = true;
   private logEntries: { text: string; id: string }[] = [];
   private lastRender = 0;
   private listSignature = '';
@@ -168,13 +169,20 @@ export class DebugPanel {
     Blockly.ContextMenuRegistry.registry.register({
       id: 'arducade_breakpoint', scopeType: Blockly.ContextMenuRegistry.ScopeType.BLOCK, weight: 10,
       displayText: () => t('debug.toggleBreakpoint'),
-      preconditionFn: scope => scope.block && this.ids.has(scope.block.id) ? 'enabled' : 'hidden',
+      preconditionFn: scope => this.available && scope.block && this.ids.has(scope.block.id) ? 'enabled' : 'hidden',
       callback: scope => { if (scope.block) this.toggleBreakpoint(scope.block.id); },
     });
     this.render(true);
   }
 
+  setAvailable(available: boolean) {
+    this.available = available;
+    if (!available) this.runner.setDebug(false);
+    this.render(true);
+  }
+
   toggleVisibility() {
+    if (!this.available) return;
     const enabled = !this.runner.debugger.enabled;
     this.runner.setDebug(enabled);
     if (enabled) this.start();
@@ -208,7 +216,7 @@ export class DebugPanel {
   }
 
   private toggleBreakpoint(id: string) {
-    if (!this.ids.has(id)) return;
+    if (!this.available || !this.ids.has(id)) return;
     const points = this.runner.debugger.breakpoints;
     if (points.has(id)) points.delete(id); else points.add(id);
     this.runner.setDebug(true);
@@ -231,12 +239,16 @@ export class DebugPanel {
 
   render(force = false) {
     const debug = this.runner.debugger;
+    const launcher = document.querySelector<HTMLElement>('.side-debug-tools');
+    if (launcher) launcher.hidden = !this.available;
     this.el.hidden = !debug.enabled;
     const side = document.querySelector('.side');
     side?.classList.toggle('debug-active', debug.enabled);
     side?.classList.toggle('debug-docked', debug.enabled && !this.floating);
     const trigger = document.getElementById('btn-debug');
     if (trigger) {
+      trigger.hidden = !this.available;
+      (trigger as HTMLButtonElement).disabled = !this.available;
       trigger.setAttribute('aria-expanded', String(debug.enabled));
       trigger.dataset.i18nTitle = debug.enabled ? 'debug.hide' : 'debug.show';
       trigger.title = t(trigger.dataset.i18nTitle);

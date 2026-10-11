@@ -8,7 +8,8 @@ import { GUIDES } from '../guides/world1';
 import { runChecks } from '../guides/runtime';
 import { localized, type Project } from '../project/model';
 import { openDialog } from './dialogs';
-import { clear, h } from './dom';
+import { clear, h, icon } from './dom';
+import { ACTION_ICONS } from './debug-panel';
 import { BLOCK_RENDERER, blocklyTheme, type ThemeId } from './themes';
 
 type Json = Record<string, unknown>;
@@ -16,6 +17,7 @@ type Json = Record<string, unknown>;
 export interface GuideHost {
   project(): Project;
   theme(): ThemeId;
+  releaseInput(): void;
   stars(): Record<string, number>;
   saveStars(id: string, stars: number): void;
   /** The guide state in the project changed and should be saved. */
@@ -87,7 +89,75 @@ export class GuidePanel {
   private runtimeGeneration = 0;
   private visit = '';
 
-  constructor(private el: HTMLElement, private host: GuideHost) {}
+  private content = h('div', { class: 'guide-body' });
+  private floating = false;
+  private dockParent: HTMLElement;
+  private dockNext: ChildNode | null;
+  private resizeObserver: ResizeObserver;
+
+  constructor(private el: HTMLElement, private host: GuideHost) {
+    this.dockParent = el.parentElement!;
+    this.dockNext = el.nextSibling;
+    this.resizeObserver = new ResizeObserver(() => {
+      if (this.picture) Blockly.svgResize(this.picture);
+      if (this.floating) this.move(this.el.offsetLeft, this.el.offsetTop);
+    });
+    this.resizeObserver.observe(el);
+    window.addEventListener('resize', () => {
+      if (this.floating) this.move(this.el.offsetLeft, this.el.offsetTop);
+    });
+  }
+
+  private move(left: number, top: number) {
+    this.el.style.left = `${Math.max(0, Math.min(left, window.innerWidth - this.el.offsetWidth))}px`;
+    this.el.style.top = `${Math.max(0, Math.min(top, window.innerHeight - this.el.offsetHeight))}px`;
+  }
+
+  private setFloating(floating: boolean) {
+    this.host.releaseInput();
+    this.floating = floating;
+    this.el.classList.toggle('floating', floating);
+    if (floating) {
+      document.body.append(this.el);
+      this.move(24, 80);
+    } else {
+      this.dockParent.insertBefore(this.el, this.dockNext);
+      for (const property of ['left', 'top', 'width', 'height']) this.el.style.removeProperty(property);
+    }
+    this.render();
+    this.el.querySelector<HTMLButtonElement>('.guide-detach')?.focus({ preventScroll: true });
+  }
+
+  private windowButton(key: string, action: () => void, className = '') {
+    return h('button', { type: 'button', class: `guide-window-button ${className}`,
+      title: t(key), 'aria-label': t(key), onclick: action }, icon(ACTION_ICONS[key]));
+  }
+
+  private bindMove(handle: HTMLElement) {
+    let drag: { id: number; x: number; y: number; left: number; top: number } | undefined;
+    handle.addEventListener('pointerdown', event => {
+      if (!this.floating || event.button !== 0 || drag) return;
+      const rect = this.el.getBoundingClientRect();
+      drag = { id: event.pointerId, x: event.clientX, y: event.clientY, left: rect.left, top: rect.top };
+      handle.setPointerCapture(event.pointerId);
+      this.host.releaseInput();
+      event.preventDefault();
+    });
+    handle.addEventListener('pointermove', event => {
+      if (drag?.id === event.pointerId) this.move(drag.left + event.clientX - drag.x, drag.top + event.clientY - drag.y);
+    });
+    for (const type of ['pointerup', 'pointercancel', 'lostpointercapture']) {
+      handle.addEventListener(type, (event: Event) => {
+        if (drag?.id === (event as PointerEvent).pointerId) drag = undefined;
+      });
+    }
+    handle.addEventListener('keydown', event => {
+      if (!this.floating || !event.key.startsWith('Arrow')) return;
+      event.preventDefault(); event.stopPropagation();
+      this.move(this.el.offsetLeft + (event.key === 'ArrowRight' ? 20 : event.key === 'ArrowLeft' ? -20 : 0),
+        this.el.offsetTop + (event.key === 'ArrowDown' ? 20 : event.key === 'ArrowUp' ? -20 : 0));
+    });
+  }
 
   private guide(): Guide | undefined {
     const state = this.host.project().guide;
@@ -125,7 +195,19 @@ export class GuidePanel {
     clear(this.el);
     const g = this.guide();
     this.el.hidden = !g;
-    if (!g) return;
+    document.querySelector('.side')?.classList.toggle('guide-active', !!g);
+    if (!g) {
+      if (this.floating) this.setFloating(false);
+      return;
+    }
+    this.content = h('div', { class: 'guide-body' });
+    if (this.floating) {
+      const grip = h('div', { class: 'guide-grip', tabindex: '0',
+        title: t('debug.move'), 'aria-label': t('debug.move') });
+      this.bindMove(grip);
+      this.el.append(grip);
+    }
+    this.el.append(this.content);
     const state = this.host.project().guide!;
     const visit = `${this.host.project().id}:${g.id}:${state.step}`;
     if (visit !== this.visit) {
@@ -135,29 +217,39 @@ export class GuidePanel {
     }
     const lang = currentLanguage();
     const total = g.steps.length;
+    const title = h('h3', { tabindex: this.floating ? '0' : undefined, class: 'guide-drag', title: this.floating ? t('debug.move') : undefined }, localized(g.title, lang));
+    this.bindMove(title);
     const head = h('div', { class: 'guide-head' },
       h('span', { class: 'guide-badge' }, g.number),
-      h('h3', {}, localized(g.title, lang)),
-      h('span', { class: 'muted small' }, state.step < total ? t('guide.step', { n: state.step + 1, total }) : ''));
+      title,
+      h('span', { class: 'muted small' }, state.step < total ? t('guide.step', { n: state.step + 1, total }) : ''),
+      this.windowButton(this.floating ? 'debug.dock' : 'debug.detach', () => this.setFloating(!this.floating), 'guide-detach'));
+    if (this.floating) {
+      const resize = (amount: number) => {
+        this.host.releaseInput();
+        this.el.style.height = `${Math.max(Math.min(240, window.innerHeight - 24), Math.min(this.el.offsetHeight + amount, window.innerHeight - 24))}px`;
+      };
+      head.append(this.windowButton('debug.smaller', () => resize(-80)), this.windowButton('debug.larger', () => resize(80)));
+    }
     const dots = h('div', { class: 'guide-dots', 'aria-hidden': 'true' },
       ...g.steps.map((_, i) => h('span', { class: i < state.step ? 'done' : i === state.step ? 'current' : '' })));
-    this.el.append(head, dots);
+    this.content.append(head, dots);
     if (state.step >= total) {
       this.renderEnd(g);
       return;
     }
     const step = g.steps[state.step];
     const chapter = g.chapters?.slice().reverse().find((c) => c.start <= state.step);
-    if (chapter) this.el.append(h('p', { class: 'guide-chapter muted small' }, localized(chapter.title, lang)));
-    this.el.append(h('p', { class: 'guide-text' }, localized(step.text, lang)));
+    if (chapter) this.content.append(h('p', { class: 'guide-chapter muted small' }, localized(chapter.title, lang)));
+    this.content.append(h('p', { class: 'guide-text' }, localized(step.text, lang)));
     if (step.show) {
       const pic = h('div', { class: 'guide-picture', role: 'img', 'aria-label': t('guide.picture') });
-      this.el.append(h('p', { class: 'muted small guide-label' }, t('guide.picture')), pic);
+      this.content.append(h('p', { class: 'muted small guide-label' }, t('guide.picture')), pic);
       this.picture = blockPicture(pic, step.show, this.host.theme(), 220);
     }
     this.checklist = h('ul', { class: 'guide-checks', 'aria-live': 'polite' });
     this.nextButton = h('button', { class: 'primary', disabled: true, onclick: () => this.go(state.step + 1) }, t('guide.next'));
-    this.el.append(this.checklist, h('div', { class: 'guide-actions' },
+    this.content.append(this.checklist, h('div', { class: 'guide-actions' },
       h('button', { disabled: state.step === 0, onclick: () => this.go(state.step - 1) }, t('guide.back')),
       h('button', { onclick: () => this.help() }, t('guide.help')),
       this.nextButton));
@@ -168,14 +260,14 @@ export class GuidePanel {
     const state = this.host.project().guide!;
     const stars = this.host.stars()[g.id] ?? 0;
     if (state.done) {
-      this.el.append(h('p', { class: 'guide-stars', 'aria-label': t('guide.stars', { n: stars }) }, '★'.repeat(stars) + '☆'.repeat(Math.max(0, (g.bonus ? 2 : 1) - stars))),
+      this.content.append(h('p', { class: 'guide-stars', 'aria-label': t('guide.stars', { n: stars }) }, '★'.repeat(stars) + '☆'.repeat(Math.max(0, (g.bonus ? 2 : 1) - stars))),
         h('p', { class: 'guide-text' }, t('guide.finished')));
     } else {
-      this.el.append(h('p', { class: 'guide-text' }, t('guide.almost')));
+      this.content.append(h('p', { class: 'guide-text' }, t('guide.almost')));
     }
     if (g.bonus) {
       this.checklist = h('ul', { class: 'guide-checks' });
-      this.el.append(h('p', { class: 'muted small guide-label' }, t('guide.bonus')), this.checklist);
+      this.content.append(h('p', { class: 'muted small guide-label' }, t('guide.bonus')), this.checklist);
     }
     const next = GUIDES[GUIDES.indexOf(g) + 1];
     const actions = h('div', { class: 'guide-actions' }, h('button', { onclick: () => this.go(state.step - 1) }, t('guide.back')));
@@ -184,7 +276,7 @@ export class GuidePanel {
       actions.append(h('button', { onclick: () => this.host.home() }, t('guide.toHome')));
       if (next) actions.append(h('button', { class: 'primary', onclick: () => this.host.openLevel(next) }, t('guide.nextLevel')));
     }
-    this.el.append(actions);
+    this.content.append(actions);
     this.update();
   }
 

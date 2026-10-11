@@ -136,6 +136,7 @@ export class App {
     this.guide = new GuidePanel($('#guide-panel'), {
       project: () => this.project,
       theme: () => this.settings.theme as ThemeId,
+      releaseInput: () => this.runner.releaseAll(),
       stars: () => this.settings.guideStars ?? {},
       saveStars: (id, stars) => {
         const all = { ...this.settings.guideStars };
@@ -306,6 +307,7 @@ export class App {
     $('#editor-layout').hidden = false;
     this.debugPanel?.reset();
     this.project = p;
+    this.debugPanel?.setAvailable(!this.guide.active);
     this.runner.pixelColor = p.pixelColor ?? 'white';
     this.settings.pixelColor = this.runner.pixelColor;
     this.renderSimControls();
@@ -1077,7 +1079,7 @@ export class App {
         $('#btn-sim-view').focus();
         return;
       }
-      if (e.target instanceof HTMLElement && e.target.closest('.debug-panel')) return;
+      if (e.target instanceof HTMLElement && e.target.closest('.debug-panel, .guide-panel')) return;
       if (e.target instanceof HTMLButtonElement && !e.target.hasAttribute('data-btn')
         && (e.code === 'Enter' || e.code === 'Space')) return;
       if (this.homeVisible || editable(e.target) || e.ctrlKey || e.metaKey || e.altKey) return;

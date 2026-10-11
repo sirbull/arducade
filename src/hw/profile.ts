@@ -51,10 +51,14 @@ export interface Profile {
   /** Built in profiles can not be edited, only copied. */
   builtin?: boolean;
   chip: string;
+  /** Optional v1 metadata; absent on legacy profiles. */
+  configurationMode?: 'board' | 'microcontroller';
+  boardId?: string;
+  clockHz?: number;
   espboy?: ESPboyConfig;
   display: DisplayConfig;
   buttons: Record<ButtonId, string>;
-  sound: { pin1?: string; pin2?: string };
+  sound: { enabled?: boolean; pin1?: string; pin2?: string };
 }
 
 export const PROFILE_EXTENSION = '.abprofile';
@@ -129,6 +133,97 @@ for (const [id, name, dac] of [
   }));
 }
 
+/** Board targets reuse the existing profile/runtime; DIY wiring defaults are examples. */
+export interface DevelopmentBoard {
+  id: string;
+  name: string;
+  chip: string;
+  clockHz: number;
+  fqbn: string;
+  preset?: string;
+  pins?: string[];
+  browserCompile?: boolean;
+  baud?: number[];
+}
+
+export const DEVELOPMENT_BOARDS: DevelopmentBoard[] = [
+  { id: 'arduboy', name: 'Arduboy', chip: 'atmega32u4', clockHz: 16000000, fqbn: 'arduino:avr:leonardo', preset: 'arduboy' },
+  { id: 'arduboy-devkit', name: 'Arduboy DevKit', chip: 'atmega32u4', clockHz: 16000000, fqbn: 'arduino:avr:leonardo' },
+  { id: 'promicro-16', name: 'Arduino Pro Micro (5V / 16 MHz)', chip: 'atmega32u4', clockHz: 16000000, fqbn: 'SparkFun:avr:promicro:cpu=16MHzatmega32U4', preset: 'promicro-ssd1306-spi', pins: [...Array.from({ length: 11 }, (_, n) => `D${n}`), 'D14', 'D15', 'D16', 'A0', 'A1', 'A2', 'A3'] },
+  { id: 'promicro-8', name: 'Arduino Pro Micro (3.3V / 8 MHz)', chip: 'atmega32u4', clockHz: 8000000, fqbn: 'SparkFun:avr:promicro:cpu=8MHzatmega32U4', preset: 'promicro-ssd1306-spi', browserCompile: false, pins: [...Array.from({ length: 11 }, (_, n) => `D${n}`), 'D14', 'D15', 'D16', 'A0', 'A1', 'A2', 'A3'] },
+  { id: 'leonardo', name: 'Arduino Leonardo', chip: 'atmega32u4', clockHz: 16000000, fqbn: 'arduino:avr:leonardo', preset: 'promicro-ssd1306-spi' },
+  { id: 'micro', name: 'Arduino Micro', chip: 'atmega32u4', clockHz: 16000000, fqbn: 'arduino:avr:micro', preset: 'promicro-ssd1306-spi' },
+  { id: 'itsybitsy-16', name: 'Adafruit ItsyBitsy 32U4 (5V / 16 MHz)', chip: 'atmega32u4', clockHz: 16000000, fqbn: 'adafruit:avr:itsybitsy32u4_5V', preset: 'promicro-ssd1306-spi', browserCompile: false },
+  { id: 'itsybitsy-8', name: 'Adafruit ItsyBitsy 32U4 (3.3V / 8 MHz)', chip: 'atmega32u4', clockHz: 8000000, fqbn: 'adafruit:avr:itsybitsy32u4_3V', preset: 'promicro-ssd1306-spi', browserCompile: false },
+  { id: 'nano', name: 'Arduino Nano', chip: 'atmega328p', clockHz: 16000000, fqbn: 'arduino:avr:nano', preset: 'nano-ssd1306-i2c' },
+  { id: 'uno-r3', name: 'Arduino Uno R3', chip: 'atmega328p', clockHz: 16000000, fqbn: 'arduino:avr:uno', preset: 'nano-ssd1306-i2c', pins: [...Array.from({ length: 14 }, (_, n) => `D${n}`), ...Array.from({ length: 6 }, (_, n) => `A${n}`)], baud: [115200] },
+  ...BUILTIN_PROFILES.filter(isESPboy).map((p) => ({ id: p.id, name: p.name, chip: p.chip, clockHz: 80000000, fqbn: getChip(p.chip).fqbn, preset: p.id })),
+  // Only variants already represented by the existing chip pin maps and cores.
+  ...['atmega2560', 'atmega4809', 'rp2040', 'esp32', 'samd21', 'stm32f103'].map((id) => {
+    const c = getChip(id);
+    return { id, name: c.boards[0], chip: id, clockHz: c.fCpu, fqbn: c.fqbn };
+  }),
+];
+
+export function configurationMode(p: Profile): 'board' | 'microcontroller' {
+  return p.configurationMode ?? 'microcontroller';
+}
+export function selectedBoard(p: Profile): DevelopmentBoard | undefined {
+  return configurationMode(p) === 'board' ? DEVELOPMENT_BOARDS.find((b) => b.id === p.boardId) : undefined;
+}
+export function supportedClocks(chip: Chip): number[] {
+  return chip.id === 'atmega32u4' ? [8000000, 16000000] : [chip.fCpu];
+}
+/** Effective compiler/upload target. Manual mode never infers a board. */
+export function profileChip(p: Profile): Chip {
+  const chip = getChip(p.chip);
+  const board = selectedBoard(p);
+  const fCpu = p.clockHz ?? chip.fCpu;
+  return { ...chip, fCpu, fqbn: board?.fqbn ?? chip.fqbn,
+    pins: board?.pins ? chip.pins.filter((pin) => board.pins!.includes(pin.id)) : chip.pins,
+    baud: board?.baud ?? chip.baud,
+    browserCompile: chip.browserCompile && fCpu === chip.fCpu && board?.browserCompile !== false };
+}
+
+/** Generic chip defaults deliberately leave user button wiring unset. */
+export function hardwareDefaults(chipId: string): Pick<Profile, 'display' | 'buttons' | 'sound'> {
+  getChip(chipId);
+  return {
+    display: { driver: 'ssd1306', bus: 'i2c', i2cAddress: 0x3c, rotate180: false, mirror: false, contrast: 0xcf },
+    buttons: { up: '', down: '', left: '', right: '', a: '', b: '' }, sound: {},
+  };
+}
+export function boardDefaults(board: DevelopmentBoard): Pick<Profile, 'display' | 'buttons' | 'sound' | 'espboy'> {
+  const preset = BUILTIN_PROFILES.find((p) => p.id === board.preset);
+  if (preset) return JSON.parse(JSON.stringify({ display: preset.display, buttons: preset.buttons, sound: preset.sound, ...(preset.espboy ? { espboy: preset.espboy } : {}) }));
+  if (board.id === 'arduboy-devkit') return {
+    display: { ...BUILTIN_PROFILES[0].display, cs: 'D6', rst: 'D12' },
+    buttons: { left: 'D9', right: 'D5', up: 'D8', down: 'D10', a: 'A0', b: 'A1' }, sound: { pin1: 'A2' },
+  };
+  return hardwareDefaults(board.chip);
+}
+
+/** List actual changes for the confirmation dialog; never mutate until accepted. */
+export function hardwareChanges(p: Profile, next: Profile): string[] {
+  const keys = ['chip', 'clockHz', 'display', 'buttons', 'sound', 'espboy'] as const;
+  return keys.filter((key) => JSON.stringify(key === 'clockHz' ? p.clockHz ?? getChip(p.chip).fCpu : p[key]) !==
+    JSON.stringify(key === 'clockHz' ? next.clockHz ?? getChip(next.chip).fCpu : next[key]));
+}
+export function withBoardDefaults(p: Profile, boardId: string): Profile {
+  const board = DEVELOPMENT_BOARDS.find((b) => b.id === boardId);
+  if (!board) throw new Error('profile.invalidConfig');
+  const next = { ...p, ...boardDefaults(board), chip: board.chip, clockHz: board.clockHz, boardId, configurationMode: 'board' as const };
+  if (!isESPboy(next)) delete next.espboy;
+  // Rotation, mirroring and brightness are unrelated to the board wiring.
+  next.display = { ...next.display, rotate180: p.display.rotate180, mirror: p.display.mirror, contrast: p.display.contrast };
+  return next;
+}
+export function withMicrocontrollerMode(p: Profile): Profile {
+  const next = { ...p, configurationMode: 'microcontroller' as const };
+  delete next.boardId;
+  return next;
+}
+
 export const DEFAULT_PROFILE_ID = 'arduboy';
 
 export function cloneProfile(p: Profile, name: string): Profile {
@@ -141,7 +236,7 @@ export function cloneProfile(p: Profile, name: string): Profile {
 
 /** A blank editable profile; the user chooses the button wiring. */
 export function createCustomProfile(name = 'Custom'): Profile {
-  const p = cloneProfile(BUILTIN_PROFILES[1], name);
+  const p = withBoardDefaults(cloneProfile(BUILTIN_PROFILES[1], name), 'nano');
   p.buttons = { up: '', down: '', left: '', right: '', a: '', b: '' };
   p.sound = {};
   return p;
@@ -172,18 +267,25 @@ function pinUses(p: Profile): PinUse[] {
     if (p.display.dc) uses.push({ pin: p.display.dc, role: 'display.dc', input: false });
   }
   if (p.display.rst) uses.push({ pin: p.display.rst, role: 'display.rst', input: false });
-  if (p.sound.pin1) uses.push({ pin: p.sound.pin1, role: 'sound.pin1', input: false });
-  if (p.sound.pin2) uses.push({ pin: p.sound.pin2, role: 'sound.pin2', input: false });
+  if (p.sound.enabled !== false && p.sound.pin1) uses.push({ pin: p.sound.pin1, role: 'sound.pin1', input: false });
+  if (p.sound.enabled !== false && p.sound.pin2) uses.push({ pin: p.sound.pin2, role: 'sound.pin2', input: false });
   return uses;
 }
 
 /** Checks a profile against the rules of its chip. */
 export function validateProfile(p: Profile): ProfileIssue[] {
   const issues: ProfileIssue[] = [];
-  const chip = CHIPS.find((c) => c.id === p.chip);
+  const baseChip = CHIPS.find((c) => c.id === p.chip);
+  const chip = baseChip ? profileChip(p) : undefined;
   if (!chip) return [{ level: 'error', key: 'profile.unknownChip', params: { chip: p.chip } }];
 
-  if (!DISPLAY_DRIVERS.some((d) => d.id === p.display.driver) || !['spi', 'i2c'].includes(p.display.bus) || !Number.isInteger(p.display.i2cAddress) || p.display.i2cAddress < 1 || p.display.i2cAddress > 127 || !Number.isFinite(p.display.contrast) || p.display.contrast < 0 || p.display.contrast > 255 || (p.sound.pin2 && !p.sound.pin1)) {
+  if ((p.configurationMode !== undefined && !['board', 'microcontroller'].includes(p.configurationMode)) ||
+      (configurationMode(p) === 'board' && (!selectedBoard(p) || selectedBoard(p)!.chip !== p.chip || selectedBoard(p)!.clockHz !== (p.clockHz ?? chip.fCpu))) ||
+      (configurationMode(p) === 'microcontroller' && p.boardId !== undefined) ||
+      !supportedClocks(chip).includes(p.clockHz ?? chip.fCpu) ||
+      (p.sound.enabled !== undefined && typeof p.sound.enabled !== 'boolean')) issues.push({ level: 'error', key: 'profile.invalidTarget' });
+
+  if (!DISPLAY_DRIVERS.some((d) => d.id === p.display.driver) || !['spi', 'i2c'].includes(p.display.bus) || !Number.isInteger(p.display.i2cAddress) || p.display.i2cAddress < 1 || p.display.i2cAddress > 127 || !Number.isFinite(p.display.contrast) || p.display.contrast < 0 || p.display.contrast > 255 || (p.sound.enabled !== false && p.sound.pin2 && !p.sound.pin1)) {
     issues.push({ level: 'error', key: 'profile.invalidConfig' });
   }
   // Arduino analog aliases may refer to the same physical digital pin.
@@ -194,13 +296,17 @@ export function validateProfile(p: Profile): ProfileIssue[] {
     return findPin(chip, id)?.cpp ?? id;
   };
   const uses = pinUses(p);
+  if (!isESPboy(p) && p.display.bus === 'spi' && chip.family !== 'avr') {
+    // Arduino SPI.begin() also claims MISO, even for a write-only OLED.
+    if (chip.bus.miso) uses.push({ pin: chip.bus.miso, role: 'bus.miso', input: false });
+  }
   const busPins: { pin: string; role: string }[] = [];
   if (isESPboy(p)) {
     const e = p.espboy;
     if (chip.id !== 'esp8266' || p.display.bus !== 'spi' || !e ||
         !Number.isInteger(e.mcpAddress) || e.mcpAddress < 0x20 || e.mcpAddress > 0x27 ||
         (e.dacAddress !== undefined && (!Number.isInteger(e.dacAddress) || e.dacAddress < 0x60 || e.dacAddress > 0x67)) ||
-        (p.sound.pin1 && !findPin(chip, p.sound.pin1)) || p.sound.pin2) {
+        (p.sound.enabled !== false && ((p.sound.pin1 && !findPin(chip, p.sound.pin1)) || p.sound.pin2))) {
       issues.push({ level: 'error', key: 'profile.invalidConfig' });
     }
     if (e) {
@@ -237,12 +343,13 @@ export function validateProfile(p: Profile): ProfileIssue[] {
       continue;
     }
     if (info.reserved) issues.push({ level: 'error', key: 'profile.pinReserved', params: { pin: u.pin, role: u.role } });
+    if (chip.id === 'esp32' && !u.input && Number(info.cpp) >= 34) issues.push({ level: 'error', key: 'profile.pinInputOnly', params: { pin: u.pin, role: u.role } });
     if (info.analogOnly) issues.push({ level: 'error', key: 'profile.pinAnalogOnly', params: { pin: u.pin, role: u.role } });
     else if (u.input && info.noPullup) issues.push({ level: 'warning', key: 'profile.pinNoPullup', params: { pin: u.pin, role: u.role } });
     if (info.serial) issues.push({ level: 'warning', key: 'profile.pinSerial', params: { pin: u.pin, role: u.role } });
     const bus = busPins.find((bp) => pinKey(bp.pin) === pinKey(u.pin));
     if (bus) issues.push({ level: 'error', key: 'profile.pinBus', params: { pin: u.pin, role: u.role, bus: bus.role } });
-    if (p.display.bus === 'spi' && chip.family === 'avr' && u.input && u.pin === chip.bus.ss) {
+    if (p.display.bus === 'spi' && chip.family === 'avr' && u.input && pinKey(u.pin) === pinKey(chip.bus.ss ?? '')) {
       issues.push({ level: 'error', key: 'profile.pinSpiSs', params: { pin: u.pin, role: u.role } });
     }
   }
@@ -260,7 +367,7 @@ export function validateProfile(p: Profile): ProfileIssue[] {
     }
     issues.push({ level: 'info', key: 'profile.i2cSlow' });
   }
-  if (!p.sound.pin1) issues.push({ level: 'info', key: 'profile.noSound' });
+  if (p.sound.enabled === false || !p.sound.pin1) issues.push({ level: 'info', key: 'profile.noSound' });
   if (!chip.browserCompile) issues.push({ level: 'info', key: 'profile.exportOnly', params: { chip: chip.name } });
   return issues;
 }
@@ -296,6 +403,9 @@ export function parseProfile(text: string): Profile {
     id: typeof p.id === 'string' && p.id ? p.id : `custom-${Date.now().toString(36)}`,
     name: typeof p.name === 'string' && p.name ? p.name : 'Profile',
     chip: p.chip,
+    ...(p.configurationMode !== undefined ? { configurationMode: p.configurationMode } : {}),
+    ...(p.boardId !== undefined ? { boardId: p.boardId } : {}),
+    ...(p.clockHz !== undefined ? { clockHz: p.clockHz } : {}),
     ...(p.espboy ? { espboy: { ...p.espboy } } : {}),
     display: {
       driver: p.display.driver ?? 'ssd1306',
@@ -311,6 +421,7 @@ export function parseProfile(text: string): Profile {
     buttons: { ...p.buttons } as Record<ButtonId, string>,
     sound: { ...p.sound },
   };
+  if (validateProfile(result).some((i) => i.key === 'profile.invalidTarget')) throw new Error('file.broken');
   if (isESPboy(result) && hasErrors(validateProfile(result))) throw new Error('file.broken');
   return result;
 }
@@ -335,12 +446,16 @@ function pinCpp(chip: Chip, id: string | undefined): string | undefined {
 /** Creates the ab_config.h header for a profile. */
 export function profileToConfigH(p: Profile): string {
   if (hasErrors(validateProfile(p))) throw new Error('profile.hasErrors');
-  const chip = getChip(p.chip);
+  const chip = profileChip(p);
   const lines: string[] = [
     '// Generated by ArduCade from the hardware profile.',
     `// Profile: ${p.name.replace(/[\r\n]/g, ' ')}`,
     '#pragma once',
     '',
+    `#define AB_CPU_HZ ${chip.fCpu}`,
+    '#if !defined(F_CPU) || F_CPU != AB_CPU_HZ',
+    '#error Clock speed does not match the hardware profile; select the matching Arduino target.',
+    '#endif',
     `#define AB_CHIP_${chip.id.toUpperCase()} 1`,
     `#define AB_FAMILY_${chip.family.toUpperCase()} 1`,
     `#define AB_DISPLAY_${p.display.driver.toUpperCase()} 1`,
@@ -373,8 +488,8 @@ export function profileToConfigH(p: Profile): string {
   for (const b of BUTTONS) {
     lines.push(`#define AB_PIN_${b.toUpperCase()} ${pinCpp(chip, p.buttons[b]) ?? '-1'}`);
   }
-  const s1 = pinCpp(chip, p.sound.pin1);
-  const s2 = pinCpp(chip, p.sound.pin2);
+  const s1 = p.sound.enabled === false ? undefined : pinCpp(chip, p.sound.pin1);
+  const s2 = p.sound.enabled === false ? undefined : pinCpp(chip, p.sound.pin2);
   if (s1) lines.push(`#define AB_PIN_SOUND1 ${s1}`);
   if (s2) lines.push(`#define AB_PIN_SOUND2 ${s2}`);
   lines.push(`#define AB_EEPROM_SIZE ${chip.eeprom}`);

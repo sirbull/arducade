@@ -231,11 +231,25 @@ input[type='number'] {
 
 /* Simulator */
 .sim {
-  background: linear-gradient(145deg, var(--panel), var(--panel-2) 65%);
-  border-radius: 0;
+  /* Cartridge-like shell: rounded corners, diagonal cut bottom-right. The outer
+     layer is the theme border colour; ::before paints the face 2px inside it. */
+  position: relative;
+  isolation: isolate;
+  background: var(--border);
+  border-radius: 14px;
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 56px), calc(100% - 40px) 100%, 0 100%);
   padding: 16px;
-  border: 1px solid var(--border);
-  box-shadow: inset 0 2px 1px #ffffff40, inset 0 -5px 0 #00000012, 0 8px 20px #0000000d;
+}
+.sim::before {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  z-index: -1;
+  background: linear-gradient(145deg, var(--panel), var(--panel-2) 65%);
+  border-radius: 12px;
+  /* Parallel to the outer cut, offset 2px inward. */
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 54.6px), calc(100% - 39px) 100%, 0 100%);
+  box-shadow: inset 0 2px 1px #ffffff40, inset 0 -5px 0 #00000012;
 }
 .screen-frame {
   background: linear-gradient(145deg, #3d4149, #22252c);
@@ -764,6 +778,10 @@ dialog::backdrop {
 .project-list li.active strong {
   color: var(--accent);
 }
+.profile-form button {
+  max-width: 100%;
+  white-space: normal;
+}
 .profile-form {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -941,7 +959,6 @@ select, input[type='text'], input[type='number'], input[type='search'] {
 .brand { font-size: 20px; letter-spacing: -1px; color: var(--text); }
 .brand img { display: block; width: 145px; height: 40px; object-fit: contain; }
 .project-name { width: 170px; }
-#btn-new { background: var(--accent); color: var(--accent-text); border-color: var(--text); box-shadow: 0 3px 0 var(--text); }
 #btn-settings::before { content: '⚙'; margin-right: 7px; font-size: 17px; vertical-align: -1px; }
 .layout { height: calc(100% - 68px); grid-template-columns: minmax(0, 1fr) 360px; grid-template-rows: minmax(0, 1fr); } /* the panes scroll, not the page */
 .tabs { gap: 6px; padding: 12px; flex-wrap: wrap; }
@@ -965,7 +982,6 @@ select, input[type='text'], input[type='number'], input[type='search'] {
 .side { background: var(--bg); padding: 16px; gap: 16px; }
 .panel { background: var(--panel); padding: 16px; box-shadow: 0 3px 0 var(--border); }
 .panel h3 { color: var(--text); font-size: 15px; text-transform: none; letter-spacing: -.3px; margin-bottom: 12px; }
-.sim { border: 2px solid var(--text); box-shadow: inset 0 2px 1px #ffffff40, inset 0 -5px 0 #00000012, 0 5px 0 var(--border); }
 .keys { line-height: 1.6; }
 /* Blockly category badges never disappear, including when selected. */
 .blocklyToolbox { padding: 54px 8px 8px !important; border-right: 1px solid var(--border); }
@@ -1169,6 +1185,8 @@ button.brand:hover:not(:disabled) { background: none; color: var(--text); }
   box-shadow: none;
   background: transparent;
 }
+.sim.standalone { clip-path: none; border-radius: 0; }
+.sim.standalone::before { display: none; }
 .sim.standalone .pad { margin-bottom: auto; }
 .sim-shell.standalone > .keys { width: min(100%, 640px); text-align: center; flex-shrink: 0; }
 .side-device-bar {
@@ -1176,7 +1194,8 @@ button.brand:hover:not(:disabled) { background: none; color: var(--text); }
   flex-direction: column;
   align-items: stretch;
   gap: 10px;
-  padding: 10px 0 0;
+  margin: 0 -16px -16px; /* bleed to the side panel's edges */
+  padding: 12px 16px 16px;
   border-top: 1px solid var(--border);
   background: var(--panel);
   flex-shrink: 0;
@@ -1372,6 +1391,8 @@ input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='
 /* Keep the program and its notes in separate, independently scrollable areas. */
 .blocks-content { display: flex; flex: 1; min-height: 0; min-width: 0; }
 .blocks-content #blockly { min-width: 0; }
+.tabs #btn-side { display: flex; align-items: center; justify-content: center; padding: 6px 10px; border: 1.5px solid var(--border); }
+.tabs #btn-side[aria-expanded='false'] { color: var(--text); border-color: var(--text); }
 .tabs #btn-comments { margin-left: auto; border: 1.5px solid var(--border); }
 .tabs #btn-comments::before { content: ''; display: inline-block; width: 1em; height: 1em; vertical-align: -0.15em; background: currentColor; -webkit-mask: var(--icon-bubble) center / contain no-repeat; mask: var(--icon-bubble) center / contain no-repeat; }
 :root { --icon-bubble: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M2.5 3.5h15v10h-9l-4 3.5v-3.5h-2z' fill='none' stroke='%23000' stroke-width='2'/%3E%3C/svg%3E"); }
@@ -1655,6 +1676,7 @@ dialog.docs-dialog[open] { display: flex; flex-direction: column; }
   #lang { min-width: 0; gap: 12px; }
   /* Icon-only buttons; the text stays as the accessible name. */
   #btn-docs, #btn-settings, .tabs #btn-comments { font-size: 0; min-width: 44px; min-height: 44px; }
+  .tabs #btn-side { min-width: 44px; min-height: 44px; }
   #btn-docs::before, #btn-settings::before, .tabs #btn-comments::before { font-size: 20px; margin: 0; }
   .tabs { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: thin; gap: 2px; padding: 10px; }
   .tabs button { flex-shrink: 0; padding: 8px 10px; }
@@ -1668,7 +1690,7 @@ dialog.docs-dialog[open] { display: flex; flex-direction: column; }
   .side-content { display: contents; }
   .side-content > .sim-shell:not(.standalone) { grid-column: 1; grid-row: 1 / span 5; position: sticky; top: 0; }
   .side-content > :not(.sim-shell), .side-device-bar { grid-column: 2; }
-  .side-device-bar { position: sticky; bottom: 0; }
+  .side-device-bar { position: sticky; bottom: -12px; margin: 0 -16px -12px; padding-bottom: 12px; }
   .sim-shell > .keys { display: none; }
   .pane.assets.active { grid-template-columns: 200px minmax(0, 1fr); }
 }
@@ -1696,3 +1718,8 @@ dialog.docs-dialog[open] { display: flex; flex-direction: column; }
 .docs-figure img[src$='/attiny85-schematic.svg'] { max-height: none; }
 
 .docs-figure img[src$='/pro-micro-schematic.svg'] { max-height: none; }
+
+/* Code-only mode: the simulator panel is collapsed and the editor takes the full width. */
+.layout.side-collapsed { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); }
+.layout.side-collapsed > .side { display: none; }
+.layout.side-collapsed > .editor { border-right: none; border-bottom: none; }

@@ -29,7 +29,7 @@ import { CodeView } from './code-view';
 import { confirmDialog } from './dialogs';
 import { openDocs } from './docs';
 import { $, clear, h, toast } from './dom';
-import { loadTemplates, openGallery, openProjectsDialog, starButton, thumbnail } from './gallery';
+import { loadTemplates, openGallery, starButton, thumbnail } from './gallery';
 import { allProfiles, loadServerProfiles, openProfileDialog, profileFromUrl, setSecretProfiles } from './profile-editor';
 import { openFirstRun, openSettings } from './settings-dialog';
 import { CommentsPanel } from './comments';
@@ -387,6 +387,18 @@ export class App {
     size.setAttribute('aria-label', size.title);
     const width = [8, 13, 18][this.simSize];
     size.innerHTML = `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" stroke-dasharray="2 3" opacity="0.45"/><rect x="${12 - width / 2}" y="${12 - width / 4}" width="${width}" height="${width / 2}"/></svg>`;
+  }
+
+  private renderSidePanel(collapsed: boolean) {
+    $('#editor-layout').classList.toggle('side-collapsed', collapsed);
+    const button = $('#btn-side');
+    button.dataset.i18nTitle = collapsed ? 'sim.showPanel' : 'sim.hidePanel';
+    button.title = t(button.dataset.i18nTitle);
+    button.setAttribute('aria-label', button.title);
+    button.setAttribute('aria-expanded', String(!collapsed));
+    // A panel outline with a chevron pointing the way the panel will move.
+    const chevron = collapsed ? 'm12 9-3 3 3 3' : 'm8 9 3 3-3 3';
+    button.innerHTML = `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" stroke-linejoin="miter"/><path d="M15 4v16"/><path d="${chevron}"/></svg>`;
   }
 
   private renderSimControls() {
@@ -843,9 +855,7 @@ export class App {
   private bindUi() {
     document.querySelectorAll<HTMLElement>('.tabs [data-tab]').forEach((b) => b.addEventListener('click', () => this.selectTab(b.dataset.tab!)));
     $('#btn-home').addEventListener('click', () => this.showHome());
-    $('#btn-guides').addEventListener('click', () => void this.showGuides());
     $('#btn-new').addEventListener('click', () => this.newFromGallery());
-    $('#btn-open').addEventListener('click', () => openProjectsDialog(this.project, (p) => this.loadProject(p)));
     $('#btn-import').addEventListener('click', () => this.importProject());
     $('#btn-export').addEventListener('click', () => this.exportProject());
     this.bindSettingsButton();
@@ -917,6 +927,11 @@ export class App {
     }));
 
     // Simulator controls
+    this.renderSidePanel(false);
+    $('#btn-side').addEventListener('click', () => {
+      this.renderSidePanel(!$('#editor-layout').classList.contains('side-collapsed'));
+      Blockly.svgResize(this.ws);
+    });
     this.renderSimView();
     $('#btn-sim-view').addEventListener('click', () => {
       this.simStandalone = !this.simStandalone;

@@ -6,7 +6,7 @@ import abDisplay from '../../core/ardublocks/ab_display.h?raw';
 import abFont from '../../core/ardublocks/ab_font.h?raw';
 import abTiny from '../../core/ardublocks/ab_tiny.h?raw';
 import ardublocks from '../../core/ardublocks/ardublocks.h?raw';
-import { isESPboy, profileToConfigH } from '../hw/profile';
+import { isESPboy, profileToConfigH, profileChip, selectedBoard } from '../hw/profile';
 import { sanitize } from '../gen/names';
 import type { Project } from './model';
 import { makeZip } from './zip';
@@ -29,6 +29,7 @@ export function sketchFiles(project: Project, gameCpp: string): Record<string, s
     [`${sketchName(project)}.ino`]: gameCpp,
     'ab_config.h': profileToConfigH(project.profile),
     ...CORE_HEADERS,
+    ...(!isESPboy(project.profile) && (project.profile.configurationMode !== undefined || project.profile.clockHz !== undefined) ? { 'README.txt': `ArduCade hardware profile: ${project.profile.name}\nMicrocontroller: ${profileChip(project.profile).name}\nClock: ${profileChip(project.profile).fCpu / 1000000} MHz\n${selectedBoard(project.profile) ? `Arduino board target: ${profileChip(project.profile).fqbn}` : 'Select an Arduino core/variant matching your custom wiring and clock.'}\nWiring: ab_config.h\n` } : {}),
     ...(isESPboy(project.profile) ? { 'README.txt': `ESPboy / ArduCade
 
 Open ${sketchName(project)}.ino in Arduino IDE.

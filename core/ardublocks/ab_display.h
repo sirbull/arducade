@@ -101,7 +101,14 @@ static void busBegin() {
 #else
 static void i2cStart() { Wire.beginTransmission(AB_I2C_ADDRESS); }
 static void i2cStop() { Wire.endTransmission(); }
-static void busBegin() { Wire.begin(); Wire.setClock(400000); }
+static void busBegin() {
+#if defined(AB_CHIP_RP2040)
+  Wire.setSDA(4); Wire.setSCL(5);
+#elif defined(AB_CHIP_STM32F103)
+  Wire.setSDA(PB7); Wire.setSCL(PB6);
+#endif
+  Wire.begin(); Wire.setClock(400000);
+}
 #endif
 
 static void displayCommand(uint8_t c) {
@@ -163,6 +170,11 @@ static void busBegin() {
   SPCR = _BV(SPE) | _BV(MSTR);
   SPSR = _BV(SPI2X);
 #else
+#if defined(AB_CHIP_RP2040)
+  SPI.setRX(16); SPI.setTX(19); SPI.setSCK(18);
+#elif defined(AB_CHIP_STM32F103)
+  SPI.setMISO(PA6); SPI.setMOSI(PA7); SPI.setSCLK(PA5);
+#endif
   SPI.begin();
   SPI.beginTransaction(SPISettings(8000000, MSBFIRST, SPI_MODE0));
 #endif

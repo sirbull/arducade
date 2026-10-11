@@ -3,8 +3,8 @@
 
 import { compileInWorker } from '../compile/client';
 import type { CompileOutput } from '../compile/avrgcc';
-import { getChip, usableFlash, type Chip } from '../hw/chips';
-import { hasErrors, validateProfile, profileToConfigH, isESPboy } from '../hw/profile';
+import { usableFlash, type Chip } from '../hw/chips';
+import { hasErrors, validateProfile, profileToConfigH, isESPboy, profileChip } from '../hw/profile';
 import { t } from '../i18n/i18n';
 import type { Diagnostic } from '../ir/ir';
 import { CORE_HEADERS } from '../project/sketch';
@@ -43,7 +43,7 @@ export class DeviceTools {
 
   private chip(): Chip | null {
     try {
-      return getChip(this.app.project.profile.chip);
+      return profileChip(this.app.project.profile);
     } catch {
       return null;
     }

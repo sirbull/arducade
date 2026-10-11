@@ -1,8 +1,9 @@
 // Hardware profile picker and editor. Built in profiles can be copied, and
 // custom profiles can be changed, exported as a template file and imported.
 
-import { CHIPS, getChip, UNSUPPORTED_CHIPS } from '../hw/chips';
+import { CHIPS, UNSUPPORTED_CHIPS } from '../hw/chips';
 import {
+  DEVELOPMENT_BOARDS, configurationMode, selectedBoard, profileChip, supportedClocks, hardwareDefaults, hardwareChanges, withBoardDefaults, withMicrocontrollerMode,
   BUILTIN_PROFILES,
   BUTTONS,
   cloneProfile,
@@ -130,7 +131,7 @@ export function openProfileDialog(current: Profile, onChoose: (p: Profile) => vo
     d.body.append(profileForm(working, false, () => {
       if (working.builtin) working = cloneProfile(working, working.name);
       void render();
-    }));
+    }, () => { void render(); }));
   };
 
   const copy = async () => {
@@ -194,20 +195,37 @@ export function openProfileDialog(current: Profile, onChoose: (p: Profile) => vo
 }
 
 /** Form with all settings; preset edits become a custom copy. */
-function profileForm(p: Profile, readonly: boolean, onChange: () => void): HTMLElement {
-  const chip = getChip(p.chip);
+export function profileForm(p: Profile, readonly: boolean, onChange: () => void, onRefresh = onChange): HTMLElement {
+  const chip = profileChip(p);
+  const board = selectedBoard(p);
+  const mode = configurationMode(p);
+  const issues = validateProfile(p);
+  const apply = async (next: Profile) => {
+    const changes = hardwareChanges(p, next);
+    if (changes.length && !(await confirmDialog(t('profile.changeHardware'), t('profile.resetExplanation', { settings: changes.map((key) => t(`profile.setting.${key}`)).join(', ') }), t('ui.ok')))) { onRefresh(); return; }
+    Object.assign(p, next);
+    if (next.clockHz === undefined) delete p.clockHz;
+    if (!next.boardId) delete p.boardId;
+    if (!next.espboy) delete p.espboy;
+    changed();
+  };
   const pinOptions = [{ value: '', label: t('profile.none') }, ...chip.pins.filter((x) => !x.reserved && !x.analogOnly).map((x) => ({ value: x.id, label: x.id }))];
   const changed = () => {
     onChange();
   };
-  const pinSelect = (value: string | undefined, set: (v: string | undefined) => void, label: string, mcp = false) => {
+  const pinSelect = (value: string | undefined, set: (v: string | undefined) => void, label: string, mcp = false, role?: string) => {
     const options = [...pinOptions, ...(mcp && isESPboy(p) ? MCP_PINS.map((pin) => ({ value: pin.id, label: pin.id })) : [])];
-    return h('label', { class: 'field' }, label, select(value && !options.some((x) => x.value === value) ? [...options, { value, label: value }] : options, value ?? '', (v) => (set(v || undefined), changed()), { disabled: readonly }));
+    const messages = issues.filter((i) => (value && i.params?.pin === value) || (role && i.params?.role === role)).map((i) => {
+      const params = { ...i.params };
+      for (const key of ['role', 'other', 'bus']) if (typeof params[key] === 'string') params[key] = t(`role.${params[key]}`);
+      return h('span', { class: `${i.level} small`, role: i.level === 'error' ? 'alert' : 'status' }, t(i.key, params));
+    });
+    return h('label', { class: 'field' }, label, select(value && !options.some((x) => x.value === value) ? [...options, { value, label: value }] : options, value ?? '', (v) => (set(v || undefined), changed()), { disabled: readonly }), ...messages);
   };
   const addressInput = (label: string, value: number, min: number, max: number, set: (v: number) => void) =>
     h('label', { class: 'field' }, label, select(Array.from({ length: max - min + 1 }, (_, n) => ({ value: String(min + n), label: `0x${(min + n).toString(16).toUpperCase()}` })), String(value), (v) => (set(Number(v)), changed()), { disabled: readonly }));
 
-  const chipOptions = CHIPS.filter((c) => !c.tiny || secretOn || c.id === p.chip).map((c) => ({ value: c.id, label: `${c.name} (${c.boards[0]})${c.browserCompile ? '' : ' *'}` }));
+  const chipOptions = CHIPS.filter((c) => !c.tiny || secretOn || c.id === p.chip).map((c) => ({ value: c.id, label: `${c.name}${c.browserCompile ? '' : ' *'}` }));
   const form = h(
     'div',
     { class: 'profile-form' },
@@ -216,16 +234,39 @@ function profileForm(p: Profile, readonly: boolean, onChange: () => void): HTMLE
       'fieldset',
       { disabled: readonly },
       h('legend', {}, t('profile.chip')),
-      h(
-        'label',
-        { class: 'field' },
-        t('profile.chip'),
-        select(chipOptions, p.chip, (v) => {
-          p.chip = v;
-          changed();
-        }),
-      ),
-      h('p', { class: 'muted small' }, t('profile.chipInfo', { boards: chip.boards.join(', '), flash: Math.round(chip.flash / 1024), ram: (chip.ram / 1024).toFixed(1) })),
+      h('label', { class: 'field' }, t('profile.configurationMode'), select([
+        { value: 'board', label: t('profile.developmentBoard') },
+        { value: 'microcontroller', label: t('profile.chip') },
+      ], mode, (v) => {
+        if (v === 'microcontroller') { Object.assign(p, withMicrocontrollerMode(p)); delete p.boardId; changed(); }
+        else { p.configurationMode = 'board'; delete p.boardId; changed(); }
+      })),
+      ...(mode === 'board' ? [
+        h('label', { class: 'field' }, t('profile.developmentBoard'), select([{ value: '', label: t('profile.chooseBoard') }, ...DEVELOPMENT_BOARDS.map((b) => ({ value: b.id, label: b.name }))], p.boardId ?? '', (v) => {
+          if (!v) return;
+          const defaults = withBoardDefaults(p, v);
+          const compatible = { ...p, chip: defaults.chip, clockHz: defaults.clockHz, boardId: defaults.boardId };
+          if (!board && p.chip === defaults.chip && (p.clockHz ?? chip.fCpu) === defaults.clockHz && !hasErrors(validateProfile(compatible))) {
+            Object.assign(p, compatible); changed();
+          } else void apply(defaults);
+        })),
+        h('p', { class: 'small' }, `${t('profile.chip')}: ${chip.name} · ${t('profile.automatic')}`),
+        h('p', { class: 'small' }, `${t('profile.clockSpeed')}: ${chip.fCpu / 1000000} MHz`),
+        h('button', { disabled: !board, onclick: () => { if (board) void apply(withBoardDefaults(p, board.id)); } }, t('profile.restoreBoardDefaults')),
+        h('p', { class: 'muted small' }, t('profile.boardDefaultsHelp')),
+      ] : [
+        h('label', { class: 'field' }, t('profile.chip'), select(chipOptions, p.chip, (v) => {
+          const next = { ...withMicrocontrollerMode(p), ...hardwareDefaults(v), chip: v };
+          delete next.clockHz; delete next.espboy;
+          void apply(next);
+        })),
+        h('label', { class: 'field' }, t('profile.clockSpeed'), select(supportedClocks(chip).map((hz) => ({ value: String(hz), label: `${hz / 1000000} MHz` })), String(chip.fCpu), (v) => { void apply({ ...p, clockHz: Number(v) }); })),
+      ]),
+      h('h4', {}, t('profile.hardwareSummary')),
+      h('p', { class: 'small' }, `${board ? board.name + ' · ' : ''}${chip.name} · ${chip.fCpu / 1000000} MHz`),
+      h('p', { class: 'small' }, `${p.display.driver.toUpperCase()} · ${p.display.bus.toUpperCase()}`),
+      h('p', { class: 'muted small' }, t('profile.memory', { flash: chip.flash / 1024, ram: chip.ram / 1024 })),
+      ...(!chip.browserCompile ? [h('p', { class: 'warning small' }, t('profile.exportOnly', { chip: chip.name }))] : []),
       h('p', { class: 'muted small' }, t('profile.exportOnlyNote')),
       h('p', { class: 'muted small' }, t('profile.unsupported', { chips: UNSUPPORTED_CHIPS.map((c) => c.name).join(', ') })),
     ),
@@ -233,7 +274,7 @@ function profileForm(p: Profile, readonly: boolean, onChange: () => void): HTMLE
       'fieldset',
       { disabled: readonly },
       h('legend', {}, t('profile.display')),
-      h('label', { class: 'field' }, t('profile.driver'), select(DISPLAY_DRIVERS.map((x) => ({ value: x.id, label: x.name })), p.display.driver, (v) => {
+      h('label', { class: 'field' }, t('profile.driver'), select(DISPLAY_DRIVERS.filter((x) => x.id !== 'espboy' || p.chip === 'esp8266' || p.display.driver === x.id).map((x) => ({ value: x.id, label: x.name })), p.display.driver, (v) => {
         p.display.driver = v as Profile['display']['driver'];
         if (isESPboy(p)) { p.espboy ??= { ...ESPBOY_DEFAULTS }; p.display.bus = 'spi'; }
         changed();
@@ -245,7 +286,7 @@ function profileForm(p: Profile, readonly: boolean, onChange: () => void): HTMLE
         select(
           [
             ...(!isESPboy(p) ? [{ value: 'i2c', label: 'I2C' }] : []),
-            { value: 'spi', label: 'SPI' },
+            ...(!chip.tiny ? [{ value: 'spi', label: 'SPI' }] : []),
           ],
           p.display.bus,
           (v) => ((p.display.bus = v as Profile['display']['bus']), changed()),
@@ -265,8 +306,8 @@ function profileForm(p: Profile, readonly: boolean, onChange: () => void): HTMLE
               (v) => ((p.display.i2cAddress = Number(v)), changed()),
             ),
           )
-        : [pinSelect(p.display.cs, (v) => (p.display.cs = v), 'CS', true), pinSelect(p.display.dc, (v) => (p.display.dc = v), 'DC')],
-      pinSelect(p.display.rst, (v) => (p.display.rst = v), 'RST'),
+        : [pinSelect(p.display.cs, (v) => (p.display.cs = v), 'CS', true, 'display.cs'), pinSelect(p.display.dc, (v) => (p.display.dc = v), 'DC', false, 'display.dc')],
+      pinSelect(p.display.rst, (v) => (p.display.rst = v), 'RST', false, 'display.rst'),
       checkbox(t('profile.rotate'), p.display.rotate180, (v) => ((p.display.rotate180 = v), changed())),
       checkbox(t('profile.mirror'), p.display.mirror, (v) => ((p.display.mirror = v), changed())),
       h('label', { class: 'field' }, t(isESPboy(p) ? 'profile.backlightBrightness' : 'profile.contrast'), range(p.display.contrast, (v) => ((p.display.contrast = v), changed()))),
@@ -284,14 +325,15 @@ function profileForm(p: Profile, readonly: boolean, onChange: () => void): HTMLE
       'fieldset',
       { disabled: readonly },
       h('legend', {}, t('profile.buttons')),
-      ...BUTTONS.map((b) => pinSelect(p.buttons[b], (v) => (p.buttons[b] = v ?? ''), t(`role.button.${b}`), true)),
+      ...BUTTONS.map((b) => pinSelect(p.buttons[b], (v) => (p.buttons[b] = v ?? ''), t(`role.button.${b}`), true, `button.${b}`)),
     ),
     h(
       'fieldset',
       { disabled: readonly },
       h('legend', {}, t('profile.sound')),
-      pinSelect(p.sound.pin1, (v) => (p.sound.pin1 = v), t('role.sound.pin1')),
-      ...(!isESPboy(p) ? [pinSelect(p.sound.pin2, (v) => (p.sound.pin2 = v), t('role.sound.pin2'))] : []),
+      h('label', { class: 'field' }, t('profile.sound'), select([{ value: 'enabled', label: t('profile.soundEnabled') }, { value: 'disabled', label: t('profile.soundDisabled') }], p.sound.enabled === false ? 'disabled' : 'enabled', (v) => { p.sound.enabled = v === 'enabled'; changed(); })),
+      ...(p.sound.enabled !== false ? [pinSelect(p.sound.pin1, (v) => (p.sound.pin1 = v), t('role.sound.pin1'), false, 'sound.pin1'),
+      ...(!isESPboy(p) ? [pinSelect(p.sound.pin2, (v) => (p.sound.pin2 = v), t('role.sound.pin2'), false, 'sound.pin2')] : [])] : []),
     ),
     h('div', { class: 'issues-box' }, h('h4', {}, t('profile.checks')), issueList(p)),
   );

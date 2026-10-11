@@ -370,7 +370,7 @@ export const CHIPS: Chip[] = [
     upload: 'none',
     browserCompile: false,
     bus: { sda: 'D20', scl: 'D21', mosi: 'D23', miso: 'D22', sck: 'D24' },
-    pins: [...digital(0, 13), ...analog(0, 5)],
+    pins: [...digital(0, 13), ...digital(20, 24), ...analog(0, 5)],
   },
   {
     id: 'stm32f103',
@@ -382,7 +382,7 @@ export const CHIPS: Chip[] = [
     eeprom: 0,
     bootloader: 0,
     boards: ['Blue Pill'],
-    fqbn: 'STMicroelectronics:stm32:GenF1',
+    fqbn: 'STMicroelectronics:stm32:GenF1:pnum=BLUEPILL_F103C8',
     upload: 'none',
     browserCompile: false,
     bus: { sda: 'PB7', scl: 'PB6', mosi: 'PA7', miso: 'PA6', sck: 'PA5', ss: 'PA4' },

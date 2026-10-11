@@ -7,7 +7,7 @@ import { compileGame, type FileSource } from '../src/compile/avrgcc';
 import { generateCpp } from '../src/gen/cpp';
 import { defaultEffect, emptyProgram } from '../src/ir/ir';
 import { newProject } from '../src/project/model';
-import { BUILTIN_PROFILES, cloneProfile, profileToConfigH, SECRET_PROFILES } from '../src/hw/profile';
+import { BUILTIN_PROFILES, withBoardDefaults, withMicrocontrollerMode, cloneProfile, profileToConfigH, SECRET_PROFILES } from '../src/hw/profile';
 
 const base = join(__dirname, '../public/compiler');
 const haveTools = existsSync(join(base, 'tools/cc1plus.wasm'));
@@ -160,4 +160,24 @@ describe.skipIf(!haveTools)('WebAssembly compiler', () => {
     }
   }
 
+});
+
+describe.skipIf(!haveTools)('profile configuration modes and firmware', () => {
+  it('compiles board and manual wiring identically with audio disabled', async () => {
+    const project = newProject('Profile modes');
+    const board = withBoardDefaults(cloneProfile(BUILTIN_PROFILES[0], 'Custom board'), 'promicro-16');
+    board.sound.enabled = false;
+    const manual = withMicrocontrollerMode(board);
+    const game = generateCpp(emptyProgram(), project).code;
+    const input = (profile: typeof board) => ({ mcu: profile.chip, game, config: profileToConfigH(profile), headers });
+    const first = await compileGame(src, input(board));
+    const second = await compileGame(src, input(manual));
+    expect(first.hex).toBe(second.hex);
+    expect(first.ram).toBe(second.ram);
+    expect(first.hex.startsWith(':')).toBe(true);
+  }, 120000);
+  it('rejects 8 MHz profiles against the prebuilt 16 MHz core', async () => {
+    const p = withBoardDefaults(cloneProfile(BUILTIN_PROFILES[0], '8 MHz'), 'promicro-8');
+    await expect(compileGame(src, { mcu: p.chip, game: generateCpp(emptyProgram(), newProject('Clock')).code, config: profileToConfigH(p), headers })).rejects.toThrow();
+  }, 120000);
 });

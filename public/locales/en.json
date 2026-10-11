@@ -458,6 +458,7 @@
     "pixel.whiteColor": "White",
     "pixel.blueColor": "Blue",
     "pixel.yellowColor": "Yellow",
+    "pixel.greenColor": "Green",
     "pixel.white": "White",
     "pixel.black": "Black",
     "pixel.erase": "Transparent",

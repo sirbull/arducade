@@ -9,16 +9,17 @@ import type { PixelColor } from '../sim/runner';
 import { openDialog } from './dialogs';
 import { h, select, toast } from './dom';
 import { allProfiles } from './profile-editor';
-import { THEME_IDS } from './themes';
+import { THEME_IDS, type ThemeId } from './themes';
 
-export const PIXEL_COLORS: PixelColor[] = ['white', 'blue', 'yellow'];
+export const PIXEL_COLORS: PixelColor[] = ['white', 'blue', 'yellow', 'green'];
 
 export interface SettingsHost {
   settings: Settings;
+  previewTheme(theme: ThemeId): void;
   apply(next: Settings): Promise<void>;
 }
 
-async function form(draft: Settings, secret = false): Promise<HTMLElement> {
+async function form(draft: Settings, previewTheme: (theme: ThemeId) => void, secret = false): Promise<HTMLElement> {
   const list = await allProfiles();
   const profileSelect = select(
     list.map((p) => ({ value: p.id, label: p.name })),
@@ -49,7 +50,7 @@ async function form(draft: Settings, secret = false): Promise<HTMLElement> {
   const themeChoices = h('fieldset', { class: 'theme-choices' }, h('legend', {}, t('settings.theme')));
   for (const id of THEME_IDS) {
     themeChoices.append(h('label', { class: 'theme-choice', 'data-palette': id },
-      h('input', { type: 'radio', name: 'theme', value: id, checked: draft.theme === id, onchange: () => { draft.theme = id; } }),
+      h('input', { type: 'radio', name: 'theme', value: id, checked: draft.theme === id, onchange: () => { draft.theme = id; previewTheme(id); } }),
       h('span', { class: 'theme-swatch', 'aria-hidden': 'true' }),
       h('span', {}, t(`theme.${id}`)),
     ));
@@ -132,9 +133,9 @@ function celebrate(dialog: HTMLElement, from: HTMLElement) {
 
 export async function openSettings(host: SettingsHost, secret = false) {
   const draft: Settings = { ...host.settings };
-  const d = openDialog(t('settings.title'));
+  const d = openDialog(t('settings.title'), { onClose: () => host.previewTheme(host.settings.theme as ThemeId) });
   d.el.classList.add('settings-dialog');
-  d.body.append(await form(draft, secret));
+  d.body.append(await form(draft, (theme) => host.previewTheme(theme), secret));
   const secretBox = d.body.querySelector<HTMLElement>('.secret-settings');
   if (secret && secretBox) celebrate(d.el, secretBox);
   d.footer.append(
@@ -146,10 +147,10 @@ export async function openSettings(host: SettingsHost, secret = false) {
 export async function openFirstRun(host: SettingsHost): Promise<void> {
   return new Promise((resolve) => {
     const draft: Settings = { ...host.settings };
-    const d = openDialog(t('firstRun.title'), { closable: false, onClose: () => resolve() });
+    const d = openDialog(t('firstRun.title'), { closable: false, onClose: () => { host.previewTheme(host.settings.theme as ThemeId); resolve(); } });
     d.el.classList.add('settings-dialog');
     d.body.append(h('p', {}, t('firstRun.text')));
-    void form(draft).then((f) => d.body.append(f));
+    void form(draft, (theme) => host.previewTheme(theme)).then((f) => d.body.append(f));
     d.footer.append(
       h(
         'button',

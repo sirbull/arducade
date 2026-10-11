@@ -6,6 +6,7 @@ import { registerFieldMultilineInput } from '@blockly/field-multilineinput';
 import { registerAssetFields } from './assets';
 import { registerPointPicker } from './point-picker';
 import { registerAltDrag } from './alt-drag';
+import { registerSpriteVarNames } from './sprite-var-names';
 import { registerBlockInfo } from './info-icon';
 import { registerEffectBlocks } from './effects';
 import { ICONS, type IconName } from './icons';
@@ -391,6 +392,7 @@ export function defineBlocks() {
   registerAssetFields();
   registerPointPicker();
   registerAltDrag();
+  registerSpriteVarNames();
   registerBlockInfo();
   registerEffectBlocks();
   for (const name of Object.keys(ICONS) as IconName[]) {

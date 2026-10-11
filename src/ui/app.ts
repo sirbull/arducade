@@ -467,7 +467,7 @@ export class App {
       button.setAttribute('aria-label', button.title);
     }
     const colorButton = $('#btn-sim-color');
-    colorButton.style.background = { white: '#ebf0f5', blue: '#5abeff', yellow: '#ffd646' }[this.runner.pixelColor];
+    colorButton.style.background = { white: '#ebf0f5', blue: '#5abeff', yellow: '#ffd646', green: '#50ff78' }[this.runner.pixelColor];
     colorButton.style.color = '#111111';
     colorButton.title = `${t('sim.color')}: ${t(`pixel.${this.runner.pixelColor}Color`)}`;
     colorButton.setAttribute('aria-label', colorButton.title);
@@ -617,6 +617,11 @@ export class App {
   }
 
   // Settings --------------------------------------------------------------
+
+  previewTheme(theme: ThemeId) {
+    applyPageTheme(theme);
+    this.ws?.setTheme(blocklyTheme(theme));
+  }
 
   async apply(next: Settings) {
     const langChanged = next.language !== this.settings.language;

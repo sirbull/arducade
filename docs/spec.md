@@ -119,7 +119,7 @@ En profil består av mikrokontroller, skjerm, buss, pinner for knapper, skjerm o
 * **Arduboy (standard):** svart bakgrunn, grå paneler, lys brun aksentfarge, blokker i dempede jordtoner.
 * **Color:** sterke farger per kategori, som i MakeCode.
 * **Greyscale, Blue, Green:** én fargetone i flere sjatteringer. Kategoriene skilles med lyshet, ikon og kantmarkering.
-* Pikselfarge i simulatoren: hvit, blå eller gul.
+* Pikselfarge i simulatoren: hvit, blå, gul eller grønn.
 * Oppstartsdialog første gang: tema, pikselfarge og maskinvareprofil. Her kan man også laste opp en profilfil. Alt kan endres under innstillinger.
 
 ## 7. Simulator

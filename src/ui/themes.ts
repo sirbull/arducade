@@ -4,7 +4,7 @@
 import * as Blockly from 'blockly/core';
 
 export type ThemeId = 'arduboy' | 'color' | 'greyscale' | 'blue' | 'green';
-export const THEME_IDS: ThemeId[] = ['arduboy', 'color', 'greyscale', 'blue', 'green'];
+export const THEME_IDS: ThemeId[] = ['color', 'arduboy', 'greyscale', 'blue', 'green'];
 
 const CATEGORIES = ['game', 'sprites', 'controller', 'scene', 'info', 'graphics', 'music', 'logic', 'loops', 'math', 'variables', 'functions', 'text', 'custom', 'particles'] as const;
 type Category = (typeof CATEGORIES)[number];

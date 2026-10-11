@@ -77,6 +77,7 @@ it('cycles display colors immediately and preserves game pixels', () => {
   expect(runner.cyclePixelColor()).toBe('yellow');
   expect([...pixels().slice(0, 8)]).toEqual([255, 214, 70, 255, 0, 0, 0, 255]);
   expect(buffer[0]).toBe(1); expect(buffer.slice(1).every(v => v === 0)).toBe(true);
+  expect(runner.cyclePixelColor()).toBe('green');
   expect(runner.cyclePixelColor()).toBe('white');
   display.show(new Uint8Array(1024).fill(255), true);
   expect(pixels().every((v, i) => v === (i % 4 === 3 ? 255 : 0))).toBe(true);

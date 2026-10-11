@@ -85,7 +85,7 @@ export interface Project {
   modified: number;
   profile: Profile;
   /** Simulator display colour, saved with this game. */
-  pixelColor?: 'white' | 'blue' | 'yellow';
+  pixelColor?: 'white' | 'blue' | 'yellow' | 'green';
   /** Blockly workspace saved with Blockly.serialization.workspaces.save. */
   blocks: unknown;
   /** Text mode keeps the original block workspace as a recoverable copy. */
@@ -164,7 +164,7 @@ export function upgradeProject(p: Partial<Project>): Project {
     tilemaps: Array.isArray(p.tilemaps) ? p.tilemaps : [],
     kinds: Array.isArray(p.kinds) ? p.kinds : [],
     timerCount: typeof p.timerCount === 'number' && Number.isInteger(p.timerCount) ? Math.max(1, Math.min(8, p.timerCount)) : 1,
-    pixelColor: p.pixelColor === 'blue' || p.pixelColor === 'yellow' ? p.pixelColor : 'white',
+    pixelColor: ['blue', 'yellow', 'green'].includes(p.pixelColor as string) ? p.pixelColor! : 'white',
     source: p.source && ['javascript', 'python'].includes(p.source.language) && typeof p.source.code === 'string' ? p.source : undefined,
   };
 }

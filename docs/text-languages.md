@@ -60,6 +60,8 @@ snake_case in Python. Constant member names are the same in both languages.
 
 * Integers with device-compatible signed 16-bit arithmetic, booleans, string
   literals, `text(...)` for joining text, and `melody("C4:100 D4:100")`.
+* Built in songs as `Song` constants: `music.playSong(Song.title, true)`
+  (`music.play_song` in Python). See [Songs](songs.md).
 * Named variables and functions, function parameters, calls and return values.
   Game variables have global scope; parameters have function scope.
 * Arithmetic, comparisons, boolean operators, `if`/`else`, `while`, `break`

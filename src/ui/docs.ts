@@ -21,7 +21,7 @@ import type { ThemeId } from './themes';
 type Json = Record<string, any>;
 
 /** Sections about the editor. Texts are docs.<id>.title and docs.<id>.body. */
-const GUIDE = ['start', 'blocks', 'assets', 'sim', 'debug', 'shortcuts', 'device', 'hardware', 'homemade', 'attiny'];
+const GUIDE = ['start', 'blocks', 'assets', 'sim', 'sound', 'debug', 'shortcuts', 'device', 'hardware', 'homemade', 'attiny'];
 
 const n = (v: number): Json => ({ shadow: { type: 'math_number', fields: { NUM: v } } });
 const s = (v: string): Json => ({ shadow: { type: 'text', fields: { TEXT: v } } });
@@ -57,6 +57,10 @@ const EXAMPLES: Record<string, Json[]> = {
   ab_on_life_zero: [b('ab_on_life_zero', body(b('ab_game_over', undefined, { WIN: 'lose' })))],
   ab_draw_text: [b('ab_on_draw', body(b('ab_draw_text', { TEXT: val(b('text_join', { ADD0: s('Score: '), ADD1: val(b('ab_score')) })), X: n(0), Y: n(0) })))],
   ab_play_melody: [b('ab_on_start', body(b('ab_play_melody', { TEMPO: n(120) }, { NOTES: 'C D E:2 F G:1/2 A H C5:4', MODE: 'once' })))],
+  ab_play_song: [
+    b('ab_on_start', body(b('ab_play_song', undefined, { SONG: 'title', MODE: 'loop' }))),
+    b('ab_on_life_zero', body(b('ab_play_song', undefined, { SONG: 'gameOver', MODE: 'once' }, b('ab_pause', { MS: n(7000) }, undefined, b('ab_game_over', undefined, { WIN: 'lose' }))))),
+  ],
   ab_pitch: [b('ab_on_button', body(b('ab_pitch', { FROM: n(90), TO: n(110), ...body(b('ab_play_effect', undefined, { SFX: 'jump' })) })), { BUTTON: 'a', EVENT: 'pressed' })],
   ab_random: [b('ab_on_every', body(b('ab_sprite_set_position', { SPRITE: v('mySprite'), X: val(b('ab_random', { FROM: n(0), TO: n(120) })), Y: n(0) })), { MS: 1000 })],
   controls_if: [b('ab_on_update', body(b('controls_if', { IF0: val(b('logic_compare', { A: val(b('ab_score')), B: n(9) }, { OP: 'GT' })), DO0: val(b('ab_game_over', undefined, { WIN: 'win' })) })))],

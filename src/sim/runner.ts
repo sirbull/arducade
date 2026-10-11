@@ -7,6 +7,7 @@ import type { GameHooks, JsResult } from '../gen/js';
 import { div16, mod16 } from './intmath';
 import { Debugger } from './debugger';
 import { Engine, LoopError, StopSignal } from './engine';
+import { ATM_RATE, renderSong } from './atm';
 
 export type PixelColor = 'white' | 'blue' | 'yellow' | 'green';
 
@@ -73,8 +74,8 @@ export class Runner {
   readonly debugger = new Debugger(() => {
     this.paused = this.debugger.paused;
     this.engine?.setPaused(this.paused);
-    if (this.paused) { this.tone(0); this.releaseAll(); }
-    else if (this.engine) this.engine.resetLoopGuard();
+    if (this.paused) { this.tone(0); this.pauseSong(); this.releaseAll(); }
+    else if (this.engine) { this.engine.resetLoopGuard(); this.resumeSong(); }
     this.events.onState?.();
     this.events.onDebug?.();
   });
@@ -108,6 +109,9 @@ export class Runner {
   private osc: OscillatorNode | null = null;
   private gain: GainNode | null = null;
   private toneTimer = 0;
+  private songGain: GainNode | null = null;
+  private song: { buffer: AudioBuffer; loop: boolean; node: AudioBufferSourceNode | null; startedAt: number; offset: number } | null = null;
+  private songCache = new Map<string, Float32Array>();
   private image: ImageData;
   private ctx: CanvasRenderingContext2D;
   private color: PixelColor = 'white';
@@ -208,6 +212,46 @@ export class Runner {
     if (ms) this.toneTimer = window.setTimeout(() => this.tone(0), ms);
   }
 
+  /** Plays ATMlib song data, rendered once ahead of time, or stops it for null. */
+  private playSong(data: number[] | null, loop: boolean) {
+    this.pauseSong();
+    this.song = null;
+    if (!data || !this.audio) return;
+    const key = data.join();
+    let pcm = this.songCache.get(key);
+    if (!pcm) this.songCache.set(key, (pcm = renderSong(data)));
+    const buffer = this.audio.createBuffer(1, Math.max(1, pcm.length), ATM_RATE);
+    buffer.copyToChannel(pcm as Float32Array<ArrayBuffer>, 0);
+    this.song = { buffer, loop, node: null, startedAt: 0, offset: 0 };
+    if (!this.paused) this.resumeSong();
+  }
+
+  private resumeSong() {
+    const s = this.song;
+    if (!s || s.node || !this.audio) return;
+    if (!this.songGain) {
+      this.songGain = this.audio.createGain();
+      this.songGain.connect(this.audio.destination);
+    }
+    this.songGain.gain.value = this.muted ? 0 : 0.1;
+    const node = this.audio.createBufferSource();
+    node.buffer = s.buffer;
+    node.loop = s.loop;
+    node.connect(this.songGain);
+    node.start(0, s.offset);
+    s.node = node;
+    s.startedAt = this.audio.currentTime - s.offset;
+  }
+
+  private pauseSong() {
+    const s = this.song;
+    if (!s?.node || !this.audio) return;
+    s.offset = this.audio.currentTime - s.startedAt;
+    if (s.loop) s.offset %= s.buffer.duration;
+    s.node.stop();
+    s.node = null;
+  }
+
   private show(buffer: Uint8Array, inverted: boolean) {
     this.lastBuffer.set(buffer);
     this.lastInverted = inverted;
@@ -247,6 +291,7 @@ export class Runner {
     const engine = new Engine({
       show: (buf, inv) => this.show(buf, inv),
       tone: (f, ms) => this.tone(f, ms),
+      song: (data, loop) => this.playSong(data, loop),
       storage: {
         read: (a) => storage.data[a] ?? 0,
         write: (a, v) => {
@@ -298,6 +343,7 @@ export class Runner {
 
   setMuted(muted: boolean) {
     this.muted = muted;
+    if (this.songGain) this.songGain.gain.value = muted ? 0 : 0.1;
     if (muted) this.tone(0);
     else this.resumeAudio();
     this.events.onState?.();
@@ -312,7 +358,8 @@ export class Runner {
     }
     this.paused = !this.paused;
     this.engine.setPaused(this.paused);
-    if (this.paused) { this.tone(0); this.releaseAll(); }
+    if (this.paused) { this.tone(0); this.pauseSong(); this.releaseAll(); }
+    else this.resumeSong();
     this.events.onState?.();
   }
 
@@ -326,6 +373,7 @@ export class Runner {
     this.paused = false;
     this.releaseAll();
     this.tone(0);
+    this.playSong(null, false);
     this.events.onState?.();
   }
 }

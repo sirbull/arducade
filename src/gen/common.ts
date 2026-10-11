@@ -2,6 +2,7 @@
 
 import { BUILTIN_KINDS, BUTTON_IDS, COLORS, FLAGS, HIT, PROPS, SFX } from '../engine/enums';
 import { parseMelody } from '../engine/melody';
+import { SONGS, songBytes, type SongName } from '../engine/songs';
 import { forEachExpr } from '../ir/check';
 import type { EffectDef, EnumType, Event, Func, Program } from '../ir/ir';
 import type { Project } from '../project/model';
@@ -119,6 +120,15 @@ export function effectFields(fx: EffectDef): number[] {
     clamp(fx.area[0], 0, 255), clamp(fx.area[1], 0, 255), sp(fx.accel[0]), sp(fx.accel[1]),
     clamp(fx.drag, 0, 100), clamp(fx.wobble, 0, 100),
   ];
+}
+
+/** Each built in song the program plays, with its constant name and ATMlib data. */
+export function songs(p: Program): Map<string, { name: string; bytes: number[] }> {
+  const out = new Map<string, { name: string; bytes: number[] }>();
+  forEachExpr(p, (e) => {
+    if (e.k === 'enum' && e.type === 'song' && e.v in SONGS && !out.has(e.v)) out.set(e.v, { name: `song_${e.v}`, bytes: songBytes(SONGS[e.v as SongName]) });
+  });
+  return out;
 }
 
 /** Each melody text in the program with its constant name and notes. */

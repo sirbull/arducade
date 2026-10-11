@@ -6,7 +6,7 @@ import { getApi } from '../engine/api';
 import { checkProgram, typeOf, type TypeInfo } from '../ir/check';
 import type { Diagnostic, Expr, Program, Stmt, Ty } from '../ir/ir';
 import { encodeBackground, encodeImage, encodeTilemap, type Project } from '../project/model';
-import { buttonMatch, effectFields, effectNames, enumNumber, eventsOf, hash16, melodies, Names } from './common';
+import { buttonMatch, effectFields, effectNames, enumNumber, eventsOf, hash16, melodies, Names, songs } from './common';
 import { stringLiteral, wrap16 } from './names';
 import { Writer } from './writer';
 import { levelTransitionCode } from './levels';
@@ -43,11 +43,13 @@ class JsGen {
   private tmp = 0;
   private debugIds: string[] = [];
   private melodies: ReturnType<typeof melodies>;
+  private songs: ReturnType<typeof songs>;
   private effects: ReturnType<typeof effectNames>;
 
   constructor(private program: Program, private project: Project) {
     this.names = new Names(project);
     this.melodies = melodies(program);
+    this.songs = songs(program);
     this.effects = effectNames(program, this.names);
   }
 
@@ -69,6 +71,7 @@ class JsGen {
     w.line(`E.solidTiles = ${solid};`);
     for (const m of pr.tilemaps) w.line(`const ${this.names.tilemap(m.id)} = [${encodeTilemap(m).join(',')}];`);
     for (const m of this.melodies.values()) w.line(`const ${m.name} = [${m.steps.join(',')}];`);
+    for (const s of this.songs.values()) w.line(`const ${s.name} = [${s.bytes.join(',')}];`);
     for (const { id, fx } of this.effects.values()) {
       w.line(`const ${id} = E.effect(${(fx.image && this.names.image(fx.image)) || 'null'}, [${effectFields(fx).join(',')}]);`);
     }
@@ -320,6 +323,7 @@ class JsGen {
         if (e.type === 'image') return this.names.image(e.v) ?? 'null';
         if (e.type === 'tilemap') return this.names.tilemap(e.v) ?? 'null';
         if (e.type === 'melody') return this.melodies.get(e.v)!.name;
+        if (e.type === 'song') return this.songs.get(e.v)?.name ?? 'null';
         if (e.type === 'effect') return this.effects.get(e.v)?.id ?? 'null';
         return String(enumNumber(e.type, e.v, this.names));
       case 'api': {

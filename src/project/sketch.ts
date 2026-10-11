@@ -1,6 +1,7 @@
 // Arduino sketch export: the generated game plus the engine headers, ready
 // to open in the Arduino IDE for any of the supported boards.
 
+import abAtm from '../../core/ardublocks/ab_atm.h?raw';
 import abESPboy from '../../core/ardublocks/ab_espboy.h?raw';
 import abDisplay from '../../core/ardublocks/ab_display.h?raw';
 import abFont from '../../core/ardublocks/ab_font.h?raw';
@@ -13,6 +14,7 @@ import { makeZip } from './zip';
 
 export const CORE_HEADERS: Record<string, string> = {
   'ardublocks.h': ardublocks,
+  'ab_atm.h': abAtm,
   'ab_display.h': abDisplay,
   'ab_espboy.h': abESPboy,
   'ab_font.h': abFont,

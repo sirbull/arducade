@@ -23,6 +23,10 @@ compile for supported AVR devices or export an Arduino IDE sketch. Games use a
   variables and sprites, and read the game log.
 * **Pixel art tools:** sprite animation, tile, tile map and background editors,
   with a built-in sprite and tile library.
+* **Sound and music:** sound effects, melodies written with note letters, and
+  six ready made songs with four voices (melody, harmony, bass and drums)
+  played by [ATMlib](https://github.com/JKirchartz/ATMlib). See
+  [Songs](docs/songs.md).
 * **Game templates:** Platformer, Pong, Space shooter, 3D ghost hunt (ray casting
   built from blocks), Brick breaker, Flying bird, Match three and Frog crossing
   (Frogger-style).
@@ -185,6 +189,8 @@ AVR_GCC_DIR=/path/to/avr-gcc node scripts/build-sysroot.mjs
 * [Hardware profile configuration](docs/hardware-profile-boards.md): boards,
   clocks and profile format.
 * [ESPboy support](docs/espboy.md): wiring, export setup and limitations.
+* [Songs](docs/songs.md): the ATMlib song player, hardware support and how to
+  add a song.
 * [Project specification](docs/spec.md) (Norwegian): design and technical background.
 
 ## Publishing on a web server
@@ -204,3 +210,8 @@ The ArduCade code does not have a license file yet. The WebAssembly compiler in
 and is GCC and GNU binutils (GPL v3). The sysroot contains avr-libc (BSD
 style license), libgcc (GPL with the GCC runtime exception) and the Arduino
 AVR core (LGPL). See `public/compiler/tools/THIRD_PARTY_NOTICES.md`.
+
+The song player in `core/ardublocks/ab_atm.h` and `src/sim/atm.ts` is based on
+[ATMlib](https://github.com/JKirchartz/ATMlib) by TEAM a.r.g., Davey Taylor
+and Joeri Gantois (BSD 3-Clause License). The license text is in
+`core/ardublocks/ab_atm.h`, which is included in every exported sketch.

@@ -182,7 +182,7 @@ Editoren skal være like enkel og forståelig som MakeCode Arcade. Derfor har de
 * Tyngdekraft og hopp for plattformspill.
 * Tilekart med 8x8 ruter lagret i flash, med tile-editor, kamera som følger en sprite, og kollisjon mot vegger.
 * Poeng, liv, nedtelling og innebygd "game over"-skjerm med rekord i EEPROM.
-* Enkle lydeffekter og melodier.
+* Enkle lydeffekter og melodier, og ferdige sanger med fire stemmer spilt av ATMlib (se [songs.md](songs.md)).
 * All bevegelse regnes med fastpunkt, aldri flyttall.
 * Bare de delene av motoren som brukes blir med i det kompilerte programmet.
 

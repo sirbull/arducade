@@ -81,6 +81,10 @@ bool ab_on_life_zero();
 #pragma GCC diagnostic ignored "-Wunused-function"
 #pragma GCC diagnostic ignored "-Wunused-variable"
 
+#ifdef AB_HAS_SONGS
+#include "ab_atm.h"
+#endif
+
 namespace ab {
 
 // Buttons, in the same order as the ButtonId list in the editor.
@@ -425,11 +429,17 @@ ISR(TIMER1_COMPA_vect) {
 }
 
 static void toneStop() {
+#ifdef AB_ATM_SYNTH
+  if (atm_tone(0, 0)) return;
+#endif
   TIMSK1 &= ~_BV(OCIE1A);
   *tonePort &= ~toneMask;
 }
 
 static void toneStart(uint16_t freq, uint16_t ms) {
+#ifdef AB_ATM_SYNTH
+  if (atm_tone(freq, ms)) return;
+#endif
   // Two toggles per period. Prescaler 8, or 64 for low notes.
   uint32_t top = F_CPU / 16 / freq;
   uint8_t cs = _BV(CS11);
@@ -456,6 +466,9 @@ static void toneBegin() {}
 #endif
 
 static void soundOff() {
+#ifdef AB_HAS_SONGS
+  atm_stop();
+#endif
 #if defined(AB_PIN_SOUND1)
   toneStop();
 #endif
@@ -502,9 +515,53 @@ static void playMelody(const uint16_t *notes, int16_t bpm, bool loop) {
   musicPitch = pickPitch();
 }
 
+#ifdef AB_HAS_SONGS
+// Songs play in the background with up to four voices, see ab_atm.h.
+static uint16_t songHz; // the song note on the tone pin, without Timer4
+
+static void playSong(const uint8_t *song, bool loop) {
+  if (!song) return;
+  atm_play(song, loop);
+  songHz = 0xFFFF;
+}
+
+static void stopSong() {
+  atm_stop();
+}
+
+static void updateSong() {
+#if defined(AB_PIN_SOUND1) && defined(AB_ATM_SYNTH)
+  atm_update();
+#elif defined(AB_PIN_SOUND1)
+  // One voice through the tone pin. A sound effect covers it while it plays.
+  uint16_t hz = atm_update();
+  if (soundPos) songHz = 0xFFFF;
+  else if (hz != songHz) {
+    if (hz) toneStart(hz, 0);
+    else if (songHz) toneStop();
+    songHz = hz;
+  }
+#endif
+}
+
+// Waits. A song goes on meanwhile, also on chips without Timer4.
+static void waitMs(uint16_t ms) {
+  for (uint32_t start = millis(); millis() - start < ms;) {
+    updateSong();
+    delay(1);
+  }
+}
+#else
+// ponytail: a macro, not a function, so games without songs stay byte for byte the same.
+#define waitMs delay
+#endif
+
 static void updateSound() {
 #if defined(AB_PIN_SOUND1)
   uint32_t now = millis();
+#ifdef AB_HAS_SONGS
+  updateSong();
+#endif
   if (soundPos && now >= soundNext) {
     uint16_t f = pgm_read_word(soundPos);
     uint16_t ms = pgm_read_word(soundPos + 1);
@@ -579,9 +636,9 @@ static bool justPressed(uint8_t b) { return (buttons & ~buttonsPrev) & (1 << b);
 
 static void waitForA() {
   // Wait until A is released, then pressed and released again.
-  do { readButtons(); delay(10); } while (isPressed(BTN_A));
-  do { readButtons(); delay(10); } while (!isPressed(BTN_A));
-  do { readButtons(); delay(10); } while (isPressed(BTN_A));
+  do { readButtons(); waitMs(10); } while (isPressed(BTN_A));
+  do { readButtons(); waitMs(10); } while (!isPressed(BTN_A));
+  do { readButtons(); waitMs(10); } while (isPressed(BTN_A));
   buttonsPrev = buttons = 0;
 }
 
@@ -1400,7 +1457,7 @@ static void splash(const char *text) {
 }
 
 static void pause(int16_t ms) {
-  if (ms > 0) delay(ms);
+  if (ms > 0) waitMs(ms);
   nextFrame = millis();
 }
 
@@ -1457,6 +1514,9 @@ static void drawGameOver() {
 static void showGameOver() {
   saveHiscore();
   musicPos = 0;
+#ifdef AB_HAS_SONGS
+  atm_stop();
+#endif
   playEffect(gameOverWin ? 5 : 6);
   render(drawGameOver);
   waitForA();

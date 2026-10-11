@@ -6,7 +6,7 @@ import { BUILTIN_KINDS } from '../engine/enums';
 import { checkProgram, forEachExpr, typeOf, type TypeInfo } from '../ir/check';
 import type { Diagnostic, Expr, Program, Stmt, Ty } from '../ir/ir';
 import { encodeBackground, encodeImage, encodeTilemap, type Project } from '../project/model';
-import { buttonMatch, effectFields, effectNames, enumNumber, eventsOf, hash16, melodies, Names } from './common';
+import { buttonMatch, effectFields, effectNames, enumNumber, eventsOf, hash16, melodies, Names, songs } from './common';
 import { stringLiteral, wrap16 } from './names';
 import { Writer } from './writer';
 import { levelTransitionCode } from './levels';
@@ -36,11 +36,13 @@ class CppGen {
   locals?: Map<string, Ty>;
   private tmp = 0;
   private melodies: ReturnType<typeof melodies>;
+  private songs: ReturnType<typeof songs>;
   private effects: ReturnType<typeof effectNames>;
 
   constructor(private program: Program, private project: Project) {
     this.names = new Names(project);
     this.melodies = melodies(program);
+    this.songs = songs(program);
     this.effects = effectNames(program, this.names);
   }
 
@@ -66,6 +68,7 @@ class CppGen {
     });
     if (hasBackground) w.line('#define AB_HAS_BACKGROUND 1');
     if (hasShake) w.line('#define AB_HAS_SHAKE 1');
+    if (this.songs.size) w.line('#define AB_HAS_SONGS 1');
     if (eventsOf(p, 'overlap').length) w.line('#define AB_HAS_OVERLAP 1');
     if (eventsOf(p, 'tile').length) w.line('#define AB_HAS_TILE_OVERLAP 1');
     const cells = Math.max(8, ...this.project.tilemaps.map((m) => m.width * m.height));
@@ -166,6 +169,11 @@ class CppGen {
     if (this.melodies.size) {
       w.line('// Melodies: frequency and length in quarter beats');
       for (const m of this.melodies.values()) w.line(`static const uint16_t ${m.name}[] PROGMEM = {${[...m.steps, 0, 0].join(', ')}};`);
+      w.line();
+    }
+    if (this.songs.size) {
+      w.line('// Songs: ATMlib data, see ab_atm.h');
+      for (const s of this.songs.values()) w.line(`static const uint8_t ${s.name}[] PROGMEM = {${s.bytes.join(', ')}};`);
       w.line();
     }
   }
@@ -487,6 +495,8 @@ class CppGen {
         }
         return n;
       }
+      case 'song':
+        return this.songs.get(e.v)?.name ?? '0';
       case 'melody': {
         const m = this.melodies.get(e.v)!;
         if (m.bad.length) this.diagnostics.push({ level: 'warning', key: 'diag.badNote', params: { notes: m.bad.join(' ') }, id: e.id });

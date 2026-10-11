@@ -11,6 +11,7 @@ import {
   SFX,
   COLORS,
 } from "../engine/enums";
+import { SONG_NAMES } from "../engine/songs";
 import type { Project } from "../project/model";
 
 export type TextLanguage = "javascript" | "python";
@@ -28,6 +29,7 @@ const enumNames: Record<string, EnumType> = {
   Property: "prop",
   Direction: "dir",
   Sound: "sfx",
+  Song: "song",
   Color: "color",
   images: "image",
   tilemaps: "tilemap",
@@ -298,6 +300,7 @@ export function parseSource(
           prop: PROPS,
           dir: Object.keys(HIT),
           sfx: SFX,
+          song: SONG_NAMES,
           color: Object.keys(COLORS),
         };
         if (allowed[type] && !allowed[type]!.includes(v))

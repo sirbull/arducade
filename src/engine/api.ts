@@ -144,6 +144,8 @@ export const API = api({
   'music.melody': { ret: 'void', args: ['melody', 'num', 'bool'], cpp: 'ab::playMelody($0, $1, $2)', js: 'E.playMelody($0, $1, $2)', name: 'music.playMelody' },
   'music.pitch': { ret: 'void', args: ['num', 'num'], cpp: 'ab::setPitch($0, $1)', js: 'E.setPitch($0, $1)', name: 'music.setPitch' },
   'music.stop': { ret: 'void', args: [], cpp: 'ab::soundOff()', js: 'E.soundOff()', name: 'music.stopAllSounds' },
+  'music.song': { ret: 'void', args: ['song', 'bool'], cpp: 'ab::playSong($0, $1)', js: 'E.playSong($0, $1)', name: 'music.playSong' },
+  'music.stopSong': { ret: 'void', args: [], cpp: 'ab::stopSong()', js: 'E.stopSong()', name: 'music.stopSong' },
 
   // Math
   'math.map': { ret: 'num', args: ['num', 'num', 'num', 'num', 'num'], cpp: 'ab::mapValue($0, $1, $2, $3, $4)', js: 'E.mapValue($0, $1, $2, $3, $4)', name: 'Math.map' },

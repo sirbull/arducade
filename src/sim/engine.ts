@@ -81,6 +81,8 @@ export interface EngineOptions {
   show(buffer: Uint8Array, inverted: boolean): void;
   /** Plays a tone. Frequency 0 stops the sound. */
   tone(freq: number, ms?: number): void;
+  /** Plays ATMlib song data (src/sim/atm.ts) in the background, or stops it for null. */
+  song?(data: number[] | null, loop: boolean): void;
   /** Reads and writes the simulated EEPROM. */
   storage: { read(addr: number): number; write(addr: number, v: number): void };
   /** Called once when the game uses a C++ block. */
@@ -475,8 +477,18 @@ export class Engine {
 
   soundOff() {
     this.opts.tone(0);
+    this.opts.song?.(null, false);
     this.soundSteps = null;
     this.music = null;
+  }
+
+  /** Songs play in the background, same as playSong in ardublocks.h. */
+  playSong(data: number[] | null, loop: boolean) {
+    if (data) this.opts.song?.(data, loop);
+  }
+
+  stopSong() {
+    this.opts.song?.(null, false);
   }
 
   setPitch(lo: number, hi: number) {
@@ -1276,6 +1288,7 @@ export class Engine {
   private async showGameOver() {
     this.saveHiscore();
     this.music = null;
+    this.stopSong();
     this.playEffect(this.gameOverWin ? SFX_WIN : SFX_LOSE);
     this.clear();
     this.center(8, this.gameOverWin ? 'YOU WIN!' : 'GAME OVER');

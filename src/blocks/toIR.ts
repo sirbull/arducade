@@ -377,6 +377,10 @@ class Converter {
         return this.api('music.effect', [this.en('sfx', f('SFX'))], id);
       case 'ab_play_tone':
         return this.api('music.tone', [this.input(b, 'FREQ', { k: 'num', v: 440 }), this.input(b, 'MS', { k: 'num', v: 200 })], id);
+      case 'ab_play_song':
+        return this.api('music.song', [this.en('song', f('SONG')), { k: 'bool', v: f('MODE') !== 'once' }], id);
+      case 'ab_stop_song':
+        return this.api('music.stopSong', [], id);
       case 'ab_stop_sound':
         return this.api('music.stop', [], id);
       case 'ab_pitch': {

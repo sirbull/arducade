@@ -11,6 +11,7 @@ import { registerBlockInfo } from './info-icon';
 import { registerEffectBlocks } from './effects';
 import { ICONS, type IconName } from './icons';
 import { NOTE_CHOICES } from '../engine/melody';
+import { SONG_NAMES } from '../engine/songs';
 
 type Arg = Record<string, unknown>;
 
@@ -316,6 +317,18 @@ export const DEFS: Def[] = [
   },
   { type: 'ab_play_tone', ...MUSIC, msg: 'AB_PLAY_TONE', args: [num('FREQ'), num('MS')], statement: true, inline: true },
   { type: 'ab_stop_sound', ...MUSIC, msg: 'AB_STOP_SOUND', statement: true },
+  {
+    type: 'ab_play_song',
+    ...MUSIC,
+    msg: 'AB_PLAY_SONG',
+    args: [
+      dropdown('SONG', SONG_NAMES.map((name) => [`AB_SONG_${name.toUpperCase()}`, name])),
+      dropdown('MODE', [['AB_MELODY_LOOP', 'loop'], ['AB_MELODY_ONCE', 'once']]),
+    ],
+    statement: true,
+    inline: true,
+  },
+  { type: 'ab_stop_song', ...MUSIC, msg: 'AB_STOP_SONG', statement: true },
   { type: 'ab_pitch', ...MUSIC, msg: 'AB_PITCH', args: [num('FROM'), num('TO')], statement: true, body: true, inline: true },
   {
     type: 'ab_play_melody',

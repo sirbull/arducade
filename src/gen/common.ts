@@ -2,6 +2,7 @@
 
 import { BUILTIN_KINDS, BUTTON_IDS, COLORS, FLAGS, HIT, PROPS, SFX, SFX_STEPS, type SfxName } from '../engine/enums';
 import { parseMelody } from '../engine/melody';
+import { POLYPHONIC_EFFECTS, type PolyphonicEffectName } from '../engine/polyphonic-effects';
 import { SONGS, songBytes, type SongName } from '../engine/songs';
 import { forEachExpr } from '../ir/check';
 import type { EffectDef, EnumType, Event, Func, Program } from '../ir/ir';
@@ -84,6 +85,13 @@ export function buttonMatch(button: string, names: Names, isPressed: string): st
   return `button == ${enumNumber('button', button, names)}`;
 }
 
+/** Parallax APIs need masked backgrounds, including a static background behind the layers. */
+export function hasParallax(p: Program): boolean {
+  let found = false;
+  forEachExpr(p, e => { if (e.k === 'api' && e.fn.startsWith('background.layer')) found = true; });
+  return found;
+}
+
 export function eventsOf<K extends Event['k']>(p: Program, k: K): Extract<Event, { k: K }>[] {
   return p.events.filter((e): e is Extract<Event, { k: K }> => e.k === k);
 }
@@ -134,19 +142,28 @@ export function soundEffects(p: Program): Map<string, { name: string; steps: num
 }
 
 /** Each built in song the program plays, with its constant name and ATMlib data. */
-export function songs(p: Program): Map<string, { name: string; bytes: number[] }> {
+export function songs(p: Program, project?: Project): Map<string, { name: string; bytes: number[] }> {
   const out = new Map<string, { name: string; bytes: number[] }>();
   forEachExpr(p, (e) => {
+    if(e.k==='enum' && e.type==='polyEffect' && e.v in POLYPHONIC_EFFECTS && !out.has(`effect:${e.v}`))out.set(`effect:${e.v}`,{name:`song_effect_${e.v}`,bytes:songBytes(POLYPHONIC_EFFECTS[e.v as PolyphonicEffectName])});
+    if (e.k === 'enum' && e.type === 'songAsset' && !out.has(`asset:${e.v}`)) {
+      const asset = project?.songs?.find(s => s.id === e.v);
+      if (asset) out.set(`asset:${e.v}`, { name: `song_custom_${out.size}`, bytes: songBytes(asset) });
+    }
     if (e.k === 'enum' && e.type === 'song' && e.v in SONGS && !out.has(e.v)) out.set(e.v, { name: `song_${e.v}`, bytes: songBytes(SONGS[e.v as SongName]) });
   });
   return out;
 }
 
 /** Each melody text in the program with its constant name and notes. */
-export function melodies(p: Program): Map<string, { name: string; steps: number[]; bad: string[] }> {
+export function melodies(p: Program, project?: Project): Map<string, { name: string; steps: number[]; bad: string[] }> {
   const out = new Map<string, { name: string; steps: number[]; bad: string[] }>();
   forEachExpr(p, (e) => {
-    if (e.k === 'enum' && e.type === 'melody' && !out.has(e.v)) out.set(e.v, { name: `mel_${out.size}`, ...parseMelody(e.v) });
+    if (e.k === 'enum' && e.type === 'melodyAsset' && !out.has(`asset:${e.v}`)) {
+      const asset = project?.melodies?.find(m => m.id === e.v);
+      if (asset) out.set(`asset:${e.v}`, { name: `mel_${out.size}`, ...parseMelody(asset.notes) });
+    }
+    if (e.k === 'enum' && e.type === 'melody' && !out.has(`text:${e.v}`)) out.set(`text:${e.v}`, { name: `mel_${out.size}`, ...parseMelody(e.v) });
   });
   return out;
 }

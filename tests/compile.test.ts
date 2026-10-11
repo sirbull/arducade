@@ -22,6 +22,21 @@ const src: FileSource = {
 const headers = Object.fromEntries(['ardublocks.h', 'ab_display.h', 'ab_font.h', 'ab_tiny.h'].map((f) => [f, readFileSync(join(__dirname, '../core/ardublocks', f), 'utf8')]));
 
 describe.skipIf(!haveTools)('WebAssembly compiler', () => {
+  it('compiles projectiles from a position for a 2 KB RAM device', async () => {
+    const project = newProject('Position projectile');
+    project.images = [{ id: 'dot', name: 'dot', width: 1, height: 1, frames: [['1']] }];
+    const program = { ...emptyProgram(), events: [{ k: 'start' as const, body: [
+      { k: 'expr' as const, e: { k: 'api' as const, fn: 'sprites.projectilePosition', args: [
+        { k: 'enum' as const, type: 'image' as const, v: 'dot' },
+        ...[0, 32, 50, -10].map(v => ({ k: 'num' as const, v })),
+      ] } },
+    ] }] };
+    const profile = BUILTIN_PROFILES.find(p => p.id === 'nano-sh1106-i2c')!;
+    const out = await compileGame(src, { mcu: profile.chip, game: generateCpp(program, project).code, config: profileToConfigH(profile), headers });
+    expect(out.hex.startsWith(':')).toBe(true);
+    expect(out.ram).toBeLessThanOrEqual(1792);
+  }, 120000);
+
   it('compiles timer displays and counting for a 2 KB RAM device', async () => {
     const project = newProject('Timers');
     const num = (v: number) => ({ k: 'num' as const, v });

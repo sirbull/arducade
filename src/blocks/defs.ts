@@ -4,14 +4,16 @@
 import * as Blockly from 'blockly/core';
 import { registerFieldMultilineInput } from '@blockly/field-multilineinput';
 import { registerAssetFields } from './assets';
+import { registerMelodyRecorder } from './melody-recorder';
 import { registerPointPicker } from './point-picker';
 import { registerAltDrag } from './alt-drag';
 import { registerSpriteVarNames } from './sprite-var-names';
 import { registerBlockInfo } from './info-icon';
+import { registerTextJoin } from './text-join';
 import { registerEffectBlocks } from './effects';
 import { ICONS, type IconName } from './icons';
+import { POLYPHONIC_EFFECT_NAMES } from '../engine/polyphonic-effects';
 import { NOTE_CHOICES } from '../engine/melody';
-import { SONG_NAMES } from '../engine/songs';
 import { SFX_MENU } from '../engine/enums';
 
 type Arg = Record<string, unknown>;
@@ -32,12 +34,14 @@ const dropdown = (name: string, keys: [string, string][]): Arg => ({
 });
 
 const TIMER = { type: 'field_ab_timer', name: 'TIMER' };
+const backgroundLayer = (): Arg => ({ type: 'field_dropdown', name: 'LAYER', options: [['1', '1'], ['2', '2']] });
 
 const COLOR = dropdown('COLOR', [
   ['AB_COLOR_WHITE', 'white'],
   ['AB_COLOR_BLACK', 'black'],
   ['AB_COLOR_INVERT', 'invert'],
 ]);
+const DRAW_MODE = dropdown('MODE', [['AB_DRAW_UNDERLAY', '1'], ['AB_DRAW_BACKGROUND', '2'], ['AB_DRAW_LAYER_1', '3'], ['AB_DRAW_LAYER_2', '4'], ['AB_DRAW_NORMAL', '0']]);
 const PARTICLE_COLOR = dropdown('PARTICLE_COLOR', [['AB_COLOR_WHITE', '1'], ['AB_COLOR_BLACK', '0'], ['AB_PARTICLE_RANDOM', '2']]);
 const PROP = dropdown('PROP', [
   ['AB_PROP_X', 'x'],
@@ -107,13 +111,18 @@ const CONTROLLER = { icon: 'controller', style: 'ab_controller' } as const;
 const SCENE = { icon: 'scene', style: 'ab_scene' } as const;
 const INFO = { icon: 'info', style: 'ab_info' } as const;
 const GRAPHICS = { icon: 'graphics', style: 'ab_graphics' } as const;
-const MUSIC = { icon: 'music', style: 'ab_music' } as const;
+const MUSIC = { icon: 'beep', style: 'ab_music' } as const;
+const POLYPHONIC = { icon: 'music', style: 'ab_polyphonic' } as const;
 const MATH = { icon: 'math', style: 'ab_math' } as const;
 const CUSTOM = { icon: 'custom', style: 'ab_custom' } as const;
 const PARTICLES = { icon: 'particles', style: 'ab_particles' } as const;
 const FX_PART = { ...PARTICLES, part: 'EffectPart' } as const;
 
 export const DEFS: Def[] = [
+  { type: 'ab_with_draw_mode', ...GRAPHICS, msg: 'AB_WITH_DRAW_MODE', args: [DRAW_MODE], statement: true, body: true },
+  { type: 'ab_with_sprite_reference', ...GRAPHICS, msg: 'AB_WITH_SPRITE_REFERENCE', args: [sprite('REFERENCE')], statement: true, body: true },
+  { type: 'ab_sprite_set_draw_mode', ...SPRITES, msg: 'AB_SPRITE_SET_DRAW_MODE', args: [sprite('SPRITE'), DRAW_MODE], statement: true, inline: true },
+  { type: 'ab_sprite_set_draw_reference', ...SPRITES, msg: 'AB_SPRITE_SET_DRAW_REFERENCE', args: [sprite('SPRITE'), sprite('REFERENCE')], statement: true, inline: true },
   { type: 'ab_particle_pixel', ...GRAPHICS, msg: 'AB_PARTICLE_PIXEL', args: [num('X'), num('Y'), num('VX'), num('VY'), num('MS'), num('END_VX'), num('END_VY'), PARTICLE_COLOR], statement: true, inline: true, rows: ['VX', 'MS'] },
   { type: 'ab_particle_image', ...GRAPHICS, msg: 'AB_PARTICLE_IMAGE', args: [image(), num('X'), num('Y'), num('VX'), num('VY'), num('MS'), num('END_VX'), num('END_VY'), PARTICLE_COLOR], statement: true, inline: true, rows: ['VX', 'MS'] },
   { type: 'ab_particles_clear', ...PARTICLES, msg: 'AB_PARTICLES_CLEAR', statement: true },
@@ -145,8 +154,15 @@ export const DEFS: Def[] = [
   { type: 'ab_invert', ...GAME, msg: 'AB_INVERT', args: [ON_OFF], statement: true },
 
   // Sprites
+  { type: 'ab_sprite_say', ...SPRITES, msg: 'AB_SPRITE_SAY', args: [sprite('SPRITE'), text('TEXT')], statement: true, inline: true },
+  { type: 'ab_sprite_say_for', ...SPRITES, msg: 'AB_SPRITE_SAY_FOR', args: [sprite('SPRITE'), text('TEXT'), num('MS')], statement: true, inline: true },
+  { type: 'ab_sprite_speech_position', ...SPRITES, msg: 'AB_SPRITE_SPEECH_POSITION', args: [sprite('SPRITE'), dropdown('POSITION', [['AB_SPEECH_AUTO', '0'], ['AB_SPEECH_ABOVE', '1'], ['AB_SPEECH_BELOW', '2']])], statement: true, inline: true },
+  { type: 'ab_sprite_speech_width', ...SPRITES, msg: 'AB_SPRITE_SPEECH_WIDTH', args: [sprite('SPRITE'), num('WIDTH')], statement: true, inline: true },
+  { type: 'ab_sprite_speech_colors', ...SPRITES, msg: 'AB_SPRITE_SPEECH_COLORS', args: [sprite('SPRITE'), dropdown('TEXT_COLOR', [['AB_COLOR_BLACK', '0'], ['AB_COLOR_WHITE', '1']]), dropdown('BACKGROUND_COLOR', [['AB_COLOR_WHITE', '1'], ['AB_COLOR_BLACK', '0']])], statement: true, inline: true },
+  { type: 'ab_sprite_speech_hide', ...SPRITES, msg: 'AB_SPRITE_SPEECH_HIDE', args: [sprite('SPRITE')], statement: true, inline: true },
   { type: 'ab_sprite_create', ...SPRITES, msg: 'AB_SPRITE_CREATE', args: [image(), kind()], output: 'Sprite' },
   { type: 'ab_sprite_projectile', ...SPRITES, msg: 'AB_SPRITE_PROJECTILE', args: [image(), sprite('FROM'), num('VX'), num('VY')], output: 'Sprite', inline: true },
+  { type: 'ab_sprite_projectile_position', ...SPRITES, msg: 'AB_SPRITE_PROJECTILE_POSITION', args: [image(), num('X'), num('Y'), num('VX'), num('VY')], output: 'Sprite', inline: true },
   { type: 'ab_sprite_set_prop', ...SPRITES, msg: 'AB_SPRITE_SET_PROP', args: [sprite('SPRITE'), PROP, num('VALUE')], statement: true, inline: true },
   { type: 'ab_sprite_change_prop', ...SPRITES, msg: 'AB_SPRITE_CHANGE_PROP', args: [sprite('SPRITE'), PROP, num('VALUE')], statement: true, inline: true },
   { type: 'ab_sprite_get_prop', ...SPRITES, msg: 'AB_SPRITE_GET_PROP', args: [sprite('SPRITE'), PROP_GET], output: 'Number', inline: true },
@@ -233,6 +249,10 @@ export const DEFS: Def[] = [
   { type: 'ab_camera_y', ...SCENE, msg: 'AB_CAMERA_Y', output: 'Number' },
   { type: 'ab_shake', ...SCENE, msg: 'AB_SHAKE', args: [num('STRENGTH'), num('MS')], statement: true, inline: true },
   { type: 'ab_bg_set', ...SCENE, msg: 'AB_BG_SET', args: [{ type: 'field_ab_background', name: 'BG' }], statement: true },
+  { type: 'ab_bg_layer_set', ...SCENE, msg: 'AB_BG_LAYER_SET', args: [backgroundLayer(), { type: 'field_ab_background', name: 'BG' }, num('PERCENT')], statement: true, inline: true },
+  { type: 'ab_bg_layer_clear', ...SCENE, msg: 'AB_BG_LAYER_CLEAR', args: [backgroundLayer()], statement: true },
+  { type: 'ab_bg_layer_position', ...SCENE, msg: 'AB_BG_LAYER_POSITION', args: [backgroundLayer(), num('X'), num('Y')], statement: true, inline: true },
+  { type: 'ab_bg_layer_change_position', ...SCENE, msg: 'AB_BG_LAYER_CHANGE_POSITION', args: [backgroundLayer(), num('X'), num('Y')], statement: true, inline: true },
   { type: 'ab_bg_clear', ...SCENE, msg: 'AB_BG_CLEAR', statement: true },
   { type: 'ab_bg_set_position', ...SCENE, msg: 'AB_BG_SET_POSITION', args: [num('X'), num('Y')], statement: true, inline: true },
   { type: 'ab_bg_change_position', ...SCENE, msg: 'AB_BG_CHANGE_POSITION', args: [num('X'), num('Y')], statement: true, inline: true },
@@ -307,23 +327,28 @@ export const DEFS: Def[] = [
     ],
     statement: true,
   },
+  { type: 'ab_play_poly_effect', ...POLYPHONIC, msg: 'AB_PLAY_POLY_EFFECT', args: [dropdown('SFX', POLYPHONIC_EFFECT_NAMES.map(name=>[`AB_SFX_${name.toUpperCase()}`,name]))], statement: true },
   { type: 'ab_play_tone', ...MUSIC, msg: 'AB_PLAY_TONE', args: [num('FREQ'), num('MS')], statement: true, inline: true },
+  { type: 'ab_play_named_melody', ...MUSIC, msg: 'AB_PLAY_NAMED_MELODY', args: [{ type: 'field_ab_melody', name: 'MELODY' }, dropdown('MODE', [['AB_MELODY_ONCE', 'once'], ['AB_MELODY_LOOP', 'loop']])], statement: true, inline: true },
   { type: 'ab_stop_sound', ...MUSIC, msg: 'AB_STOP_SOUND', statement: true },
   {
     type: 'ab_play_song',
-    ...MUSIC,
+    ...POLYPHONIC,
     msg: 'AB_PLAY_SONG',
     args: [
-      dropdown('SONG', SONG_NAMES.map((name) => [`AB_SONG_${name.toUpperCase()}`, name])),
+      { type: 'field_ab_song_choice', name: 'SONG' },
       dropdown('MODE', [['AB_MELODY_LOOP', 'loop'], ['AB_MELODY_ONCE', 'once']]),
     ],
     statement: true,
     inline: true,
   },
-  { type: 'ab_stop_song', ...MUSIC, msg: 'AB_STOP_SONG', statement: true },
+  { type: 'ab_play_named_song', ...POLYPHONIC, msg: 'AB_PLAY_SONG', args: [{ type: 'field_ab_song', name: 'SONG' }, dropdown('MODE', [['AB_MELODY_LOOP', 'loop'], ['AB_MELODY_ONCE', 'once']])], statement: true, inline: true },
+  { type: 'ab_set_song_volume', ...POLYPHONIC, msg: 'AB_SET_SONG_VOLUME', args: [num('VOLUME')], statement: true, inline: true },
+  { type: 'ab_stop_song', ...POLYPHONIC, msg: 'AB_STOP_SONG', statement: true },
   { type: 'ab_pitch', ...MUSIC, msg: 'AB_PITCH', args: [num('FROM'), num('TO')], statement: true, body: true, inline: true },
   {
     type: 'ab_play_melody',
+    extensions: ['ab_melody_recorder'],
     ...MUSIC,
     msg: 'AB_PLAY_MELODY',
     args: [
@@ -396,10 +421,12 @@ export function defineBlocks() {
   registerFieldMultilineInput();
   registerAssetFields();
   registerPointPicker();
+  registerMelodyRecorder();
   registerAltDrag();
   registerSpriteVarNames();
   registerBlockInfo();
   registerEffectBlocks();
+  registerTextJoin();
   for (const name of Object.keys(ICONS) as IconName[]) {
     Blockly.Extensions.register(`ab_icon_${name}`, function (this: Blockly.Block) {
       const first = this.inputList[0];

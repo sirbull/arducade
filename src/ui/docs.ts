@@ -4,7 +4,7 @@
 
 import * as Blockly from 'blockly/core';
 import { t } from '../i18n/i18n';
-import { buildToolbox } from '../blocks/toolbox';
+import { beginnerFlyout, buildToolbox } from '../blocks/toolbox';
 import { DEFS } from '../blocks/defs';
 import { openDialog } from './dialogs';
 import { clear, h } from './dom';
@@ -17,11 +17,12 @@ import { debugGuide } from './docs-debug';
 import { shortcutsGuide } from './shortcuts';
 import { blockPicture } from './guide-panel';
 import type { ThemeId } from './themes';
+import { DOCS_KEYWORDS, searchDocs, docsSearchExcerpt, type DocsSearchEntry } from './docs-search';
 
 type Json = Record<string, any>;
 
 /** Sections about the editor. Texts are docs.<id>.title and docs.<id>.body. */
-const GUIDE = ['start', 'blocks', 'assets', 'sim', 'sound', 'debug', 'shortcuts', 'device', 'hardware', 'homemade', 'attiny'];
+const GUIDE = ['start', 'blocks', 'favourites', 'assets', 'sim', 'sound', 'debug', 'shortcuts', 'device', 'hardware', 'homemade', 'attiny'];
 
 const n = (v: number): Json => ({ shadow: { type: 'math_number', fields: { NUM: v } } });
 const s = (v: string): Json => ({ shadow: { type: 'text', fields: { TEXT: v } } });
@@ -40,23 +41,46 @@ const create = () => val(b('ab_sprite_create'));
 // Variables and functions are filled in by Blockly when the toolbox opens,
 // so their blocks are listed here.
 const CUSTOM: Record<string, Json[]> = {
-  VARIABLES: [setVar('count', n(0)), b('math_change', { DELTA: n(1) }, { VAR: { name: 'count' } }), b('variables_get', undefined, { VAR: { name: 'count' } })],
-  FUNCTIONS: [b('procedures_defnoreturn', undefined, { NAME: 'restart' }), b('procedures_defreturn', undefined, { NAME: 'double' })],
+  VARIABLES: [setVar('count', n(0)), b('variables_get', undefined, { VAR: { name: 'count' } }), b('math_change', { DELTA: n(1) }, { VAR: { name: 'count' } })],
+  FUNCTIONS: [
+    b('procedures_defnoreturn', undefined, { NAME: 'restart' }),
+    { type: 'procedures_callnoreturn', extraState: { name: 'restart' } },
+    b('procedures_defreturn', undefined, { NAME: 'double' }),
+    { type: 'procedures_callreturn', extraState: { name: 'double' } },
+    b('procedures_ifreturn'),
+  ],
 };
 
 /** Examples. The text is docs.ex.<block type>. */
 const EXAMPLES: Record<string, Json[]> = {
+  ab_with_draw_mode: [
+    b('ab_on_every', body(b('ab_with_draw_mode', body(b('ab_particle_pixel', { X: n(64), Y: n(0), VX: n(0), VY: n(60), MS: n(1000), END_VX: n(0), END_VY: n(60) }, { PARTICLE_COLOR: '1' })), { MODE: '2' })), { MS: 150 }),
+    b('ab_on_start', body(b('ab_with_draw_mode', body(setVar('player', create())), { MODE: '1' }))),
+  ],
+  ab_with_sprite_reference: [b('ab_on_start', body(setVar('reference', create(), b('ab_with_sprite_reference', { REFERENCE: v('reference'), ...body(setVar('bullet', create())) }))))],
+  ab_sprite_set_draw_mode: [b('ab_on_start', body(setVar('player', create(), b('ab_sprite_set_draw_mode', { SPRITE: v('player') }, { MODE: '3' }))))],
+  ab_sprite_set_draw_reference: [b('ab_on_start', body(setVar('reference', create(), setVar('bullet', create(), b('ab_sprite_set_draw_reference', { SPRITE: v('bullet'), REFERENCE: v('reference') })))))],
+  ab_bg_layer_set: [b('ab_on_start', body(b('ab_bg_set', undefined, undefined, b('ab_bg_layer_set', { PERCENT: n(15) }, { LAYER: '1' }, b('ab_bg_layer_set', { PERCENT: n(40) }, { LAYER: '2' })))))],
   ab_on_start: [b('ab_on_start', body(setVar('mySprite', create(), b('ab_sprite_set_position', { SPRITE: v('mySprite'), X: n(64), Y: n(32) }))))],
   ab_on_update: [b('ab_on_update', body(b('controls_if', { IF0: val(b('ab_is_pressed', undefined, { BUTTON: 'a' })), DO0: val(b('ab_sprite_change_prop', { SPRITE: v('mySprite'), VALUE: n(1) }, { PROP: 'x' })) })))],
   ab_on_every: [b('ab_on_every', body(b('ab_score_change', { VALUE: n(1) })), { MS: 1000 })],
   ab_move_sprite: [b('ab_on_start', body(setVar('mySprite', create(), b('ab_move_sprite', { SPRITE: v('mySprite'), VX: n(60), VY: n(60) }))))],
   ab_on_button: [b('ab_on_button', body(setVar('projectile', val(b('ab_sprite_projectile', { FROM: v('mySprite'), VX: n(0), VY: n(-80) })))), { BUTTON: 'a', EVENT: 'pressed' })],
+  ab_sprite_projectile_position: [b('ab_on_button', body(setVar('projectile', val(b('ab_sprite_projectile_position', { X: n(0), Y: n(32), VX: n(50), VY: n(0) })))), { BUTTON: 'a', EVENT: 'pressed' })],
   ab_on_overlap: [b('ab_on_overlap', body(b('ab_score_change', { VALUE: n(1) }, undefined, b('ab_sprite_destroy', { SPRITE: v('otherSprite') }))))],
+  text_join: [b('ab_on_start', body(setVar('mySprite', create(), setVar('message', { block: { type: 'text_join', extraState: { itemCount: 4 }, inputs: { ADD0: s('Hi, '), ADD1: s('Ada'), ADD2: s('! Score: '), ADD3: n(42) } } }, b('ab_sprite_say', { SPRITE: v('mySprite'), TEXT: v('message') })))))],
+  ab_sprite_say: [b('ab_on_start', body(setVar('mySprite', create(), b('ab_sprite_say', { SPRITE: v('mySprite'), TEXT: s('Hello!') }))))],
+  ab_sprite_say_for: [b('ab_on_start', body(setVar('mySprite', create(), b('ab_sprite_say_for', { SPRITE: v('mySprite'), TEXT: val(b('text_join', { ADD0: s('Score: '), ADD1: val(b('ab_score')) })), MS: n(2000) }))))],
+  ab_sprite_speech_position: [b('ab_on_start', body(setVar('mySprite', create(), b('ab_sprite_speech_position', { SPRITE: v('mySprite') }, { POSITION: '2' }, b('ab_sprite_say', { SPRITE: v('mySprite'), TEXT: s('Hello!') })))))],
+  ab_sprite_speech_width: [b('ab_on_start', body(setVar('mySprite', create(), b('ab_sprite_speech_width', { SPRITE: v('mySprite'), WIDTH: n(50) }, undefined, b('ab_sprite_say', { SPRITE: v('mySprite'), TEXT: s('Hello there friend!') })))))],
+  ab_sprite_speech_colors: [b('ab_on_start', body(setVar('mySprite', create(), b('ab_sprite_speech_colors', { SPRITE: v('mySprite') }, { TEXT_COLOR: '1', BACKGROUND_COLOR: '0' }, b('ab_sprite_say', { SPRITE: v('mySprite'), TEXT: s('Hello!') })))))],
+  ab_sprite_speech_hide: [b('ab_on_button', body(b('ab_sprite_speech_hide', { SPRITE: v('mySprite') })), { BUTTON: 'a', EVENT: 'pressed' })],
   ab_sprite_stay_in_screen: [b('ab_on_start', body(setVar('mySprite', create(), b('ab_sprite_stay_in_screen', { SPRITE: v('mySprite') }))))],
   ab_sprite_set_flag: [b('ab_on_start', body(setVar('mySprite', create(), b('ab_sprite_set_flag', { SPRITE: v('mySprite') }, { FLAG: 'stayInScreen', ON: 'on' }))))],
   ab_on_life_zero: [b('ab_on_life_zero', body(b('ab_game_over', undefined, { WIN: 'lose' })))],
   ab_draw_text: [b('ab_on_draw', body(b('ab_draw_text', { TEXT: val(b('text_join', { ADD0: s('Score: '), ADD1: val(b('ab_score')) })), X: n(0), Y: n(0) })))],
   ab_play_melody: [b('ab_on_start', body(b('ab_play_melody', { TEMPO: n(120) }, { NOTES: 'C D E:2 F G:1/2 A H C5:4', MODE: 'once' })))],
+  ab_set_song_volume: [b('ab_on_start', body(b('ab_set_song_volume', { VOLUME: n(50) })))],
   ab_play_song: [
     b('ab_on_start', body(b('ab_play_song', undefined, { SONG: 'title', MODE: 'loop' }))),
     b('ab_on_life_zero', body(b('ab_play_song', undefined, { SONG: 'gameOver', MODE: 'once' }, b('ab_pause', { MS: n(7000) }, undefined, b('ab_game_over', undefined, { WIN: 'lose' }))))),
@@ -83,22 +107,31 @@ function subject(state: Json): string {
   return inner?.startsWith('ab_') ? inner : state.type;
 }
 
-function sections(secretTiny: boolean): Section[] {
+export function documentationSections(secretTiny: boolean): Section[] {
   const list: Section[] = GUIDE.filter(id => id !== 'attiny' || secretTiny).map((id) => ({ id, title: t(`docs.${id}.title`) }));
   const seen = new Set<string>();
   for (const cat of buildToolbox().contents as Json[]) {
+    // The personal favourites list is explained in the guide, rather than
+    // repeating it as an empty block-reference category.
+    if (cat.custom === 'FAVOURITES') continue;
     const key = String(cat.name).replace(/^%\{BKY_AB_CAT_|\}$/g, '');
-    const entries: Json[] = cat.custom ? CUSTOM[key] ?? [] : cat.contents;
+    const entries: Json[] = cat.custom
+      ? beginnerFlyout((CUSTOM[key] ?? []).map(state => ({ kind: 'block', ...state })) as Blockly.utils.toolbox.FlyoutItemInfo[], key === 'VARIABLES' ? 'variables' : 'functions')
+      : cat.contents;
     const blocks = entries
-      .map(({ kind, ...state }) => state)
-      .filter((state) => Blockly.Blocks[subject(state)] && !seen.has(subject(state)) && seen.add(subject(state)));
+      .filter(entry => entry.kind === 'block')
+      .map(({ kind, abFavouriteCategory, ...state }) => state)
+      .filter((state) => Blockly.Blocks[subject(state)]);
+    // Track coverage only for legacy blocks; retain every menu variant and
+    // shared block in the category where the editor displays it.
+    blocks.forEach(state => seen.add(subject(state)));
     list.push({ id: key, title: Blockly.Msg[`AB_CAT_${key}`] ?? key, blocks });
   }
   // Older projects can contain blocks that are no longer in the toolbox.
   // Keep their explanations reachable through Help and the block menu.
   for (const def of DEFS) {
     if (seen.has(def.type)) continue;
-    const section = list.find(sec => sec.id === def.style.replace(/^ab_/, '').toUpperCase());
+    const section = list.find(sec => sec.id === (def.style === 'ab_polyphonic' ? 'MUSIC' : def.style.replace(/^ab_/, '').toUpperCase()));
     section?.blocks?.push(b(def.type));
   }
   return list;
@@ -131,12 +164,21 @@ export function openDocs(theme: ThemeId, blockType?: string, secretTiny = false)
 
 /** Fills root with the section list and the text. Returns a function that frees the block pictures. */
 export function renderDocs(root: HTMLElement, theme: ThemeId, blockType?: string, secretTiny = false): () => void {
-  const all = sections(secretTiny);
+  const all = documentationSections(secretTiny);
   const guideCount = all.filter(sec => !sec.blocks).length;
   const nav = h('nav', { class: 'docs-nav', 'aria-label': t('docs.title') });
   const content = h('div', { class: 'docs-content' });
   root.classList.add('docs');
-  root.append(nav, content);
+  const search = h('input', { type: 'search', placeholder: t('docs.search.placeholder'), 'aria-label': t('docs.search.label'), autocomplete: 'off' });
+  const status = h('span', { class: 'docs-search-status', role: 'status', 'aria-live': 'polite' });
+  const back = h('button', { type: 'button', hidden: true, onclick: () => { showResults(); search.focus(); } }, t('docs.search.back'));
+  const reset = h('button', { type: 'button', onclick: () => {
+    search.value = '';
+    updateSearch();
+    search.focus();
+  } }, t('docs.search.clear'));
+  const toolbar = h('div', { class: 'docs-search' }, search, reset, back, status);
+  root.append(toolbar, nav, content);
 
   let pictures: Blockly.WorkspaceSvg[] = [];
   let observer: IntersectionObserver | undefined;
@@ -167,8 +209,74 @@ export function renderDocs(root: HTMLElement, theme: ThemeId, blockType?: string
 
   let target: HTMLElement | null = null;
   let shown = 0;
+  let currentSection = all[0];
+  let index: DocsSearchEntry[] | undefined;
+
+  const translated = (key: string) => { const text = t(key); return text === key ? '' : text; };
+  const keywords = (id: string) => `${DOCS_KEYWORDS[id] ?? ''} ${translated(`docs.keywords.${id}`)}`;
+  const guide = (id: string, makePicture: typeof picture) => id === 'hardware' ? hardwareGuide(secretTiny)
+    : id === 'debug' ? debugGuide(makePicture) : id === 'shortcuts' ? shortcutsGuide() : illustratedGuide(id, makePicture);
+
+  function buildIndex(): DocsSearchEntry[] {
+    const entries: DocsSearchEntry[] = [];
+    const ws = new Blockly.Workspace();
+    try {
+      for (const sec of all) {
+        if (!sec.blocks) {
+          // Read the actual guide, including captions and tables, without drawing Blockly pictures.
+          const detail = guide(sec.id, () => h('div'));
+          const walker = document.createTreeWalker(detail, NodeFilter.SHOW_TEXT);
+          const fragments: string[] = [];
+          while (walker.nextNode()) fragments.push(walker.currentNode.textContent ?? '');
+          const labels = Array.from(detail.querySelectorAll('[alt], [aria-label]')).map(el => el.getAttribute('alt') ?? el.getAttribute('aria-label')).join(' ');
+          entries.push({ sectionId: sec.id, title: sec.title, sectionTitle: sec.title,
+            text: `${t(`docs.${sec.id}.body`)} ${fragments.join(' ')} ${labels}`, keywords: keywords(sec.id) });
+          continue;
+        }
+        for (const state of sec.blocks) {
+          const type = subject(state);
+          const block = ws.newBlock(type);
+          const title = block.toString(undefined, '…');
+          block.dispose();
+          entries.push({ sectionId: sec.id, blockType: type, title, sectionTitle: sec.title,
+            text: `${more(type).join(' ')} ${translated(`docs.ex.${type}`)}`, keywords: `${type} ${keywords(type)}` });
+        }
+      }
+    } finally { ws.dispose(); }
+    return entries;
+  }
+
+  function showResults() {
+    target = null;
+    disposePictures();
+    clear(content);
+    content.scrollTop = 0;
+    back.hidden = true;
+    buttons.forEach(btn => btn.setAttribute('aria-current', 'false'));
+    index ??= buildIndex();
+    const hits = searchDocs(index, search.value);
+    status.textContent = t('docs.search.count', { count: hits.length });
+    content.append(h('h2', {}, t('docs.search.results')));
+    if (!hits.length) content.append(h('p', {}, t('docs.search.empty')));
+    for (const hit of hits) content.append(h('button', { type: 'button', class: 'docs-search-result', onclick: () => {
+      show(all.find(sec => sec.id === hit.sectionId)!, hit.blockType);
+      (target ?? content.querySelector('h2'))?.focus({ preventScroll: true });
+    } }, h('strong', {}, hit.title), h('span', { class: 'docs-search-category' }, hit.sectionTitle),
+    h('span', {}, docsSearchExcerpt(hit.text, search.value))));
+  }
+
+  function updateSearch() {
+    if (search.value.trim()) showResults();
+    else {
+      status.textContent = '';
+      show(currentSection);
+    }
+  }
+  search.addEventListener('input', updateSearch);
 
   function show(sec: Section, focus?: string) {
+    currentSection = sec;
+    back.hidden = !search.value.trim();
     target = null;
     disposePictures();
     clear(content);
@@ -191,10 +299,10 @@ export function renderDocs(root: HTMLElement, theme: ThemeId, blockType?: string
       if (target && performance.now() - shown < 1000) target.scrollIntoView({ block: 'start' });
     }, { root: content, rootMargin: '200px' });
 
-    content.append(h('h2', {}, sec.title));
+    content.append(h('h2', { tabindex: '-1' }, sec.title));
     if (!sec.blocks) {
       for (const p of t(`docs.${sec.id}.body`).split('\n\n')) content.append(h('p', {}, p));
-      content.append(sec.id === 'hardware' ? hardwareGuide(secretTiny) : sec.id === 'debug' ? debugGuide(picture) : sec.id === 'shortcuts' ? shortcutsGuide() : illustratedGuide(sec.id, picture));
+      content.append(guide(sec.id, picture));
       return;
     }
     for (const state of sec.blocks) {
@@ -203,7 +311,7 @@ export function renderDocs(root: HTMLElement, theme: ThemeId, blockType?: string
       content.append(
         h(
           'article',
-          { class: 'docs-block', 'data-type': type },
+          { class: 'docs-block', 'data-type': type, tabindex: '-1' },
           picture([state]),
           ...more(type).map((p) => h('p', {}, p)),
           example && h('h4', {}, t('docs.example')),

@@ -48,6 +48,7 @@ function walkStmts(stmts: Stmt[], fn: (s: Stmt) => void) {
       case 'repeat':
       case 'for':
       case 'forKind':
+      case 'drawMode':
         walkStmts(s.body, fn);
         break;
     }
@@ -100,6 +101,9 @@ function walkExprs(stmts: Stmt[], fn: (e: Expr) => void) {
         break;
       case 'forKind':
         visit(s.kind);
+        break;
+      case 'drawMode':
+        visit(s.mode);
         break;
       case 'return':
         if (s.value) visit(s.value);
@@ -158,7 +162,7 @@ export function checkProgram(p: Program): { info: TypeInfo; diagnostics: Diagnos
         if (s.k === 'return' && s.value && func) {
           const t = typeOf(s.value, info, locals);
           const f = info.funcs.get(func.name)!;
-          if (t !== 'num' && t !== 'str') f.ret = t;
+          if (t !== 'num') f.ret = t;
         }
       });
       walkExprs(body, (e) => {
@@ -167,7 +171,7 @@ export function checkProgram(p: Program): { info: TypeInfo; diagnostics: Diagnos
           if (!f) return;
           e.args.forEach((a, i) => {
             const t = typeOf(a, info, locals);
-            if (i < f.params.length && t !== 'num' && t !== 'str') f.params[i] = t;
+            if (i < f.params.length && t !== 'num') f.params[i] = t;
           });
         }
       });
@@ -182,8 +186,7 @@ export function checkProgram(p: Program): { info: TypeInfo; diagnostics: Diagnos
       if (s.k === 'set') {
         const want = locals?.get(s.name) ?? info.vars.get(s.name) ?? 'num';
         const got = typeOf(s.value, info, locals);
-        if (got === 'str') diagnostics.push({ level: 'error', key: 'diag.textVariable', params: { name: s.name }, id: s.id });
-        else if (got !== want && !(want === 'num' && got === 'bool')) {
+        if (got !== want && !(want === 'num' && got === 'bool')) {
           diagnostics.push({ level: 'error', key: 'diag.typeMismatch', params: { name: s.name }, id: s.id });
         }
       }

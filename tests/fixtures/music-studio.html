@@ -1,0 +1,52 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><base href="/"><title>ArduCade music studio</title>
+<link rel="stylesheet" href="/src/styles.css"><body>
+<header class="studio-fixture-header"><strong>Ardu<span>Cade</span></strong><span>Music</span><button id="checks">Run studio checks</button><button id="tablet">Tablet layout</button><output id="result">Ready</output></header>
+<div id="studio" class="pane assets active" style="height:calc(100vh - 64px)"></div>
+<style>.studio-fixture-header{height:64px;display:flex;align-items:center;gap:24px;padding:0 20px;border-bottom:1px solid var(--border);background:var(--panel)}.studio-fixture-header strong{font-size:24px}.studio-fixture-header strong span{color:var(--accent)}</style>
+<script type="module">
+import { MusicPane } from '/src/ui/music-studio.ts';
+import { newProject,serializeProject,parseProject } from '/src/project/model.ts';
+import { loadLanguage } from '/src/i18n/i18n.ts';
+import { applyPageTheme } from '/src/ui/themes.ts';
+import { generateCpp } from '/src/gen/cpp.ts';
+import { emptyProgram } from '/src/ir/ir.ts';
+import { sequence } from '/src/engine/sequencer.ts';
+await loadLanguage('en');applyPageTheme('color');
+const project=newProject('Music studio'), root=document.querySelector('#studio'), result=document.querySelector('#result');
+project.melodies.push({id:'beep-demo',name:'coin',notes:'C E G C5:2 R:2',tempo:140});
+project.songs.push({id:'demo',name:'space_walk',tempo:120,voices:['C4:1 E G E D F A F C E G E D F A F','C4:4 F4 C4 G3','C3:2 G3 F3 C3 C3 G3 G3 D3','C:0.25 R:0.75 C:0.25 R:0.75 C:0.25 R:0.75 C:0.25 R:0.75 C:0.25 R:0.75 C:0.25 R:0.75 C:0.25 R:0.75 C:0.25 R:0.75 C:0.25 R:0.75 C:0.25 R:0.75 C:0.25 R:0.75 C:0.25 R:0.75 C:0.25 R:0.75 C:0.25 R:0.75 C:0.25 R:0.75 C:0.25 R:0.75']});
+const pane=new MusicPane(root,{project:()=>project,changed:()=>{result.textContent='Saved in project';}});pane.render();
+document.querySelector('#tablet').onclick=()=>{root.style.width='1024px';root.style.maxWidth='100%';root.style.height='592px';root.style.flex='none';};
+const click=name=>[...root.querySelectorAll('button')].find(b=>b.textContent.trim()===name).click();
+document.querySelector('#checks').onclick=async()=>{
+ try {
+ pane.stop();click('Polyphonic');if(root.querySelectorAll('.studio-track').length!==4)throw Error('Missing tracks');
+ const original=JSON.stringify(project.songs[0].voices);
+ root.querySelectorAll('.studio-track-label > button:first-child')[1].click();
+ const grid=root.querySelector('.studio-note-surface'), rect=grid.getBoundingClientRect();
+ const row=[...root.querySelectorAll('.studio-roll-keys > div')].findIndex(key=>key.textContent==='D4'), rows=root.querySelectorAll('.studio-roll-keys > div').length;
+ const pointer=(target,type,step,id=1,pointerType='mouse')=>target.dispatchEvent(new PointerEvent(type,{bubbles:true,cancelable:true,button:0,pointerId:id,pointerType,clientX:rect.left+(step+.5)*rect.width/32,clientY:rect.top+(row+.5)*rect.height/rows}));
+ pointer(grid,'pointerdown',0);pointer(grid,'pointermove',7);pointer(grid,'pointerup',7);
+ let note=grid.querySelector('.studio-note.selected');pointer(note,'pointerdown',3);pointer(grid,'pointerup',5);
+ if(sequence(project.songs[0].voices[1]).notes[0].at!==2)throw Error('Move failed');
+ note=grid.querySelector('.studio-note.selected');pointer(note.querySelector('[data-edge="left"]'),'pointerdown',2);pointer(grid,'pointerup',1);
+ note=grid.querySelector('.studio-note.selected');pointer(note.querySelector('[data-edge="right"]'),'pointerdown',9);pointer(grid,'pointerup',11);
+ if(sequence(project.songs[0].voices[1]).notes[0].length!==11)throw Error('Resize failed');
+ const saved=project.songs[0].voices[1];pointer(grid,'pointerdown',20,5,'touch');pointer(grid,'pointermove',25,5,'touch');grid.dispatchEvent(new PointerEvent('pointercancel',{pointerId:5}));
+ if(project.songs[0].voices[1]!==saved)throw Error('Cancellation saved a draft');
+ note=grid.querySelector('.studio-note');note.dispatchEvent(new MouseEvent('contextmenu',{bubbles:true,cancelable:true,clientX:rect.left+20,clientY:rect.top+20}));
+ root.querySelector('[role="menuitem"]').click();click('Undo');
+
+ if(sequence(project.songs[0].voices[1]).notes[0].frequency!==294)throw Error('Grid edit failed');
+ if(parseProject(serializeProject(project)).songs[0].voices[1]!==project.songs[0].voices[1])throw Error('Save failed');
+ const program={...emptyProgram(),events:[{k:'start',body:[{k:'expr',e:{k:'api',fn:'music.namedSong',args:[{k:'enum',type:'songAsset',v:'demo'},{k:'bool',v:false}]}}]}]};
+ const output=generateCpp(program,project);if(output.diagnostics.length||!output.code.includes('song_custom_0'))throw Error('Compile failed');
+ [...root.querySelectorAll('button')].find(b=>b.textContent.includes('▶')).click();
+ await new Promise(r=>setTimeout(r,200));
+ if(root.querySelector('.studio-playhead').hidden)throw Error('Playback feedback missing');
+ window.dispatchEvent(new Event('blur'));if(root.querySelector('.studio-note.playing'))throw Error('Blur feedback not cleared');
+ project.songs[0].voices=JSON.parse(original);pane.render();click('Beep');if(root.querySelectorAll('.studio-track').length!==0)throw Error('Wrong beep mode');
+ click('Polyphonic');result.textContent='PASS: draw, move, resize both ends, context deletion, undo, touch cancellation, independent voices, project save, custom compilation and mixer playback.';
+ }catch(error){result.textContent='FAIL: '+error.stack;}
+};
+</script></body></html>

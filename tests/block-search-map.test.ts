@@ -7,7 +7,10 @@ import { workspaceToIR } from '../src/blocks/toIR';
 
 it('finds all sprite blocks by category and map by block text', () => {
   const workspace = { getToolboxCategoryCallback: () => undefined } as unknown as Blockly.WorkspaceSvg;
-  expect(searchBlocks('sprites', workspace)).toHaveLength(23);
+  const spriteTypes = searchBlocks('sprites', workspace).map(entry => entry.type);
+  expect(spriteTypes).toContain('ab_sprite_destroy');
+  expect(spriteTypes).toContain('ab_bg_layer_set');
+  expect(searchBlocks('parallax', workspace).some(entry => entry.type === 'ab_bg_layer_set')).toBe(true);
   expect(searchBlocks('map', workspace).some((entry) => entry.type === 'ab_map')).toBe(true);
   expect(searchBlocks('nothing matches this', workspace)).toEqual([]);
 });

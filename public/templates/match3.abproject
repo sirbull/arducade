@@ -1,6 +1,6 @@
 {
  "format": "ardublocks-project",
- "version": 1,
+ "version": 3,
  "id": "template-match3",
  "name": "Match three",
  "created": 0,
@@ -13889,6 +13889,8 @@
    ]
   }
  },
+ "melodies": [],
+ "songs": [],
  "images": [
   {
    "id": "heart",

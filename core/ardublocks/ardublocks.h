@@ -60,7 +60,11 @@
 #define AB_HISCORE_MAGIC 0xAB01
 #endif
 #ifndef AB_TEXT_LEN
+#ifdef AB_HAS_SPEECH
+#define AB_TEXT_LEN 64
+#else
 #define AB_TEXT_LEN 32
+#endif
 #endif
 #define AB_STORAGE_ADDR 64
 
@@ -113,6 +117,14 @@ enum : uint8_t { P_X, P_Y, P_VX, P_VY, P_AX, P_AY, P_WIDTH, P_HEIGHT, P_LEFT, P_
 static const uint8_t NONE = 0xFF;
 
 struct Sprite {
+#ifdef AB_HAS_SPEECH_SETTINGS
+  uint8_t speechWidth;
+  uint8_t speechPosition : 2;
+  uint8_t speechColors : 3;
+#endif
+#ifdef AB_HAS_DRAW_MODE
+  uint8_t drawMode; // 0 normal, 1 underlay, 2 background/map, 3/4 layers, 5 + sprite
+#endif
   int32_t x, y;      // center, 1/256 pixel
   int16_t vx, vy;    // 1/16 pixel per second
   int16_t ax, ay;    // pixel per second per second
@@ -136,6 +148,65 @@ static uint8_t drawPage; // page being drawn
 static uint8_t buffer[1024];
 #endif
 static Sprite sprites[AB_MAX_SPRITES];
+#ifdef AB_HAS_SPEECH
+#ifdef AB_PAGED
+#define AB_SPEECH_SLOTS 1
+#else
+#define AB_SPEECH_SLOTS 2
+#endif
+struct Speech { char text[AB_TEXT_LEN]; uint32_t started; uint16_t duration; uint8_t owner; };
+static Speech speeches[AB_SPEECH_SLOTS]; // owner = sprite slot + 1, 0 = empty
+
+static void speechHide(uint8_t s) {
+  for (uint8_t i = 0; i < AB_SPEECH_SLOTS; i++) if (speeches[i].owner == s + 1) {
+    for (uint8_t j = i; j + 1 < AB_SPEECH_SLOTS; j++) speeches[j] = speeches[j + 1];
+    speeches[AB_SPEECH_SLOTS - 1].owner = 0;
+    return;
+  }
+}
+static void say(uint8_t s, const char *text, int16_t ms) {
+  if (s >= AB_MAX_SPRITES || !sprites[s].alive) return;
+  if (!*text || ms < 0) { speechHide(s); return; }
+  uint8_t slot = AB_SPEECH_SLOTS;
+  for (uint8_t i = 0; i < AB_SPEECH_SLOTS; i++) if (speeches[i].owner == s + 1) { slot = i; break; }
+  if (slot == AB_SPEECH_SLOTS)
+    for (uint8_t i = 0; i < AB_SPEECH_SLOTS; i++) if (!speeches[i].owner) { slot = i; break; }
+  if (slot == AB_SPEECH_SLOTS) {
+    for (uint8_t i = 0; i + 1 < AB_SPEECH_SLOTS; i++) speeches[i] = speeches[i + 1];
+    slot = AB_SPEECH_SLOTS - 1;
+  }
+  Speech &b = speeches[slot];
+  strncpy(b.text, text, AB_TEXT_LEN - 1);
+  b.text[AB_TEXT_LEN - 1] = 0;
+  b.owner = s + 1; b.started = millis(); b.duration = ms;
+}
+#ifdef AB_HAS_SPEECH_SETTINGS
+static void speechPosition(uint8_t s, int16_t position) {
+  if (s < AB_MAX_SPRITES && sprites[s].alive) sprites[s].speechPosition = constrain(position, 0, 2);
+}
+static void speechWidth(uint8_t s, int16_t width) {
+  if (s < AB_MAX_SPRITES && sprites[s].alive) sprites[s].speechWidth = constrain(width, 14, 128);
+}
+static void speechColors(uint8_t s, int16_t text, int16_t background) {
+  if (s < AB_MAX_SPRITES && sprites[s].alive) sprites[s].speechColors = 4 | (text ? 1 : 0) | (background ? 2 : 0);
+}
+#endif
+#endif
+
+
+#ifdef AB_HAS_DRAW_MODE
+static uint8_t drawingMode;
+#ifdef AB_HAS_DRAW_REFERENCE
+static uint8_t drawColor(int16_t x, int16_t y, uint8_t fallback);
+static void forgetDrawReference(uint8_t s);
+#endif
+// Stack lifetime restores the outer scope on return, break and continue too.
+struct DrawModeScope {
+  uint8_t saved;
+  DrawModeScope(uint8_t mode) : saved(drawingMode) { drawingMode = mode; }
+  ~DrawModeScope() { drawingMode = saved; }
+};
+#endif
 static uint8_t buttons, buttonsPrev;
 static uint32_t nextFrame;
 static uint32_t frameCount;
@@ -175,6 +246,17 @@ static bool hasMap() { return map; }
 
 // Text ------------------------------------------------------------------
 
+struct Text {
+  char data[AB_TEXT_LEN];
+  Text() = default;
+  Text(const char *s) { *this = s; }
+  Text &operator=(const char *s) {
+    size_t length = strlen(s);
+    uint8_t n = length < AB_TEXT_LEN ? length : AB_TEXT_LEN - 1;
+    memmove(data, s, n); data[n] = 0; return *this;
+  }
+  operator const char *() const { return data; }
+};
 static char textBuf[AB_TEXT_LEN];
 static uint8_t textLen;
 
@@ -249,6 +331,13 @@ static void drawPixel(int16_t x, int16_t y, uint8_t color) {
   uint8_t *b = at(y >> 3, x);
   if (!b) return;
   uint8_t bit = 1 << (y & 7);
+#ifdef AB_HAS_DRAW_MODE
+#ifdef AB_HAS_DRAW_REFERENCE
+  color = drawColor(x, y, color);
+#else
+  if (drawingMode == 1) color = 2;
+#endif
+#endif
   if (color == 1) *b |= bit;
   else if (color == 0) *b &= ~bit;
   else *b ^= bit;
@@ -269,6 +358,18 @@ static void fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint8_t color) 
   if (x1 > 128) x1 = 128;
   if (y1 > 64) y1 = 64;
   if (x0 >= x1 || y0 >= y1) return;
+#ifdef AB_HAS_DRAW_REFERENCE
+  if (drawingMode > 1) {
+    for (int16_t row = y0; row < y1; row++) {
+      if (!onPage(row, 1)) continue;
+      for (int16_t col = x0; col < x1; col++) drawPixel(col, row, color);
+    }
+    return;
+  }
+#endif
+#ifdef AB_HAS_DRAW_MODE
+  if (drawingMode == 1) color = 2;
+#endif
   for (int16_t row = y0; row < y1; row = (row | 7) + 1) {
     int16_t last = row | 7;
     if (last >= y1) last = y1 - 1;
@@ -288,10 +389,10 @@ static void hline(int16_t x, int16_t y, int16_t w, uint8_t color) { fillRect(x, 
 static void drawRect(int16_t x, int16_t y, int16_t w, int16_t h, uint8_t color) {
   if (w <= 0 || h <= 0) return;
   hline(x, y, w, color);
-  hline(x, y + h - 1, w, color);
+  if (h > 1) hline(x, y + h - 1, w, color);
   for (int16_t j = 1; j < h - 1; j++) {
     drawPixel(x, y + j, color);
-    drawPixel(x + w - 1, y + j, color);
+    if (w > 1) drawPixel(x + w - 1, y + j, color);
   }
 }
 
@@ -320,20 +421,33 @@ static void drawLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint8_t col
 static void drawCircle(int16_t cx, int16_t cy, int16_t r, uint8_t color, bool fill) {
   int16_t x = r, y = 0, err = 1 - r;
   while (x >= y) {
+    int16_t oldX = x, oldY = y;
     if (fill) {
       hline(cx - x, cy + y, 2 * x + 1, color);
-      hline(cx - x, cy - y, 2 * x + 1, color);
-      hline(cx - y, cy + x, 2 * y + 1, color);
-      hline(cx - y, cy - x, 2 * y + 1, color);
+      if (y) hline(cx - x, cy - y, 2 * x + 1, color);
     } else {
-      drawPixel(cx + x, cy + y, color); drawPixel(cx - x, cy + y, color);
-      drawPixel(cx + x, cy - y, color); drawPixel(cx - x, cy - y, color);
-      drawPixel(cx + y, cy + x, color); drawPixel(cx - y, cy + x, color);
-      drawPixel(cx + y, cy - x, color); drawPixel(cx - y, cy - x, color);
+      drawPixel(cx + x, cy + y, color);
+      if (x) drawPixel(cx - x, cy + y, color);
+      if (y) {
+        drawPixel(cx + x, cy - y, color);
+        if (x) drawPixel(cx - x, cy - y, color);
+      }
+      if (x != y) {
+        drawPixel(cx + y, cy + x, color);
+        if (y) drawPixel(cx - y, cy + x, color);
+        if (x) {
+          drawPixel(cx + y, cy - x, color);
+          if (y) drawPixel(cx - y, cy - x, color);
+        }
+      }
     }
     y++;
     if (err < 0) err += 2 * y + 1;
     else { x--; err += 2 * (y - x) + 1; }
+    if (fill && oldX > oldY && (x != oldX || y > x)) {
+      hline(cx - oldY, cy + oldX, 2 * oldY + 1, color);
+      hline(cx - oldY, cy - oldX, 2 * oldY + 1, color);
+    }
   }
 }
 
@@ -343,6 +457,20 @@ static void drawCircle(int16_t cx, int16_t cy, int16_t r, uint8_t color, bool fi
 static uint8_t imgW(const uint8_t *img) { return img ? pgm_read_byte(img) : 0; }
 static uint8_t imgH(const uint8_t *img) { return img ? pgm_read_byte(img + 1) : 0; }
 static uint8_t imgFrames(const uint8_t *img) { return img ? pgm_read_byte(img + 2) : 0; }
+
+#ifdef AB_HAS_DRAW_REFERENCE
+// -1 means transparent; masked black pixels are opaque.
+static int8_t imageColor(const uint8_t *img, int16_t x, int16_t y, uint8_t frame = 0) {
+  if (!img || x < 0 || y < 0 || x >= imgW(img) || y >= imgH(img)) return -1;
+  uint16_t size = (uint16_t)((imgH(img) + 7) >> 3) * imgW(img);
+  uint8_t masked = pgm_read_byte(img + 3) & 1;
+  if (frame >= imgFrames(img)) frame = 0;
+  const uint8_t *data = img + 4 + frame * size * (masked ? 2 : 1);
+  uint16_t offset = (y >> 3) * imgW(img) + x;
+  uint8_t bit = 1 << (y & 7), color = (pgm_read_byte(data + offset) & bit) ? 1 : 0;
+  return (masked ? (pgm_read_byte(data + size + offset) & bit) : color) ? color : -1;
+}
+#endif
 
 static void drawImage(int16_t x, int16_t y, const uint8_t *img, uint8_t frame, int8_t tint = -1) {
   if (!img) return;
@@ -356,6 +484,18 @@ static void drawImage(int16_t x, int16_t y, const uint8_t *img, uint8_t frame, i
   if (frame >= frames) frame = 0;
   const uint8_t *data = img + 4 + frame * frameSize * (hasMask ? 2 : 1);
   const uint8_t *mask = data + frameSize;
+#ifdef AB_HAS_DRAW_REFERENCE
+  if (drawingMode > 1) {
+    for (int16_t cy = y < 0 ? -y : 0; cy < h && y + cy < 64; cy++) {
+      if (!onPage(y + cy, 1)) continue;
+      for (int16_t cx = x < 0 ? -x : 0; cx < w && x + cx < 128; cx++) {
+        int8_t color = imageColor(img, cx, cy, frame);
+        if (color >= 0) drawPixel(x + cx, y + cy, tint >= 0 ? (tint ? 1 : 0) : color);
+      }
+    }
+    return;
+  }
+#endif
   uint8_t shift = y & 7;
   for (uint8_t p = 0; p < pages; p++) {
     int16_t page = (y >> 3) + p;
@@ -366,9 +506,21 @@ static void drawImage(int16_t x, int16_t y, const uint8_t *img, uint8_t frame, i
       uint16_t d = pgm_read_byte(data + src) << shift;
       uint16_t m = hasMask ? (uint16_t)pgm_read_byte(mask + src) << shift : d;
       if (tint >= 0) d = tint ? m : 0;
-      if (uint8_t *b = at(page, col)) *b = (*b & ~(uint8_t)m) | (uint8_t)d;
+      if (uint8_t *b = at(page, col)) {
+#ifdef AB_HAS_DRAW_MODE
+        if (drawingMode == 1) *b ^= (uint8_t)m;
+        else
+#endif
+        *b = (*b & ~(uint8_t)m) | (uint8_t)d;
+      }
       if (!shift) continue;
-      if (uint8_t *b = at(page + 1, col)) *b = (*b & ~(uint8_t)(m >> 8)) | (uint8_t)(d >> 8);
+      if (uint8_t *b = at(page + 1, col)) {
+#ifdef AB_HAS_DRAW_MODE
+        if (drawingMode == 1) *b ^= (uint8_t)(m >> 8);
+        else
+#endif
+        *b = (*b & ~(uint8_t)(m >> 8)) | (uint8_t)(d >> 8);
+      }
     }
   }
 }
@@ -398,12 +550,16 @@ static int16_t textWidth(const char *s) { return (int16_t)strlen(s) * 6; }
 // (ab::tbClear(), ab::tbStr(PSTR("Score ")), ab::tbNum(score), ab::tb())
 static void tbClear() { textLen = 0; textBuf[0] = 0; }
 static void tbChar(char c) {
+  uint8_t code = (uint8_t)c;
+  if (code >= 128 && code < 192) return; // UTF-8 continuation
+  if (c != '\n' && (code < 32 || code > 126)) c = '?';
   if (textLen < sizeof(textBuf) - 1) { textBuf[textLen++] = c; textBuf[textLen] = 0; }
 }
 static void tbStr(const char *progmemText) {
   char c;
   while ((c = pgm_read_byte(progmemText++))) tbChar(c);
 }
+static void tbRam(const char *s) { while (*s) tbChar(*s++); }
 static void tbNum(int16_t n) {
   char tmp[7];
   itoa(n, tmp, 10);
@@ -521,12 +677,39 @@ static uint16_t songHz; // the song note on the tone pin, without Timer4
 
 static void playSong(const uint8_t *song, bool loop) {
   if (!song) return;
+#ifdef AB_HAS_POLY_EFFECTS
+  // An explicit new song replaces both the effect and its suspended music.
+  uint8_t saved = atm_lock(); atm_background.valid = false; atm_isEffect = false;
+#endif
+#ifdef AB_HAS_SONG_PITCH
+  atm_setPitch(pickPitch());
+#endif
   atm_play(song, loop);
+#ifdef AB_HAS_POLY_EFFECTS
+  atm_unlock(saved);
+#endif
   songHz = 0xFFFF;
 }
 
+#ifdef AB_HAS_POLY_EFFECTS
+static void playPolyEffect(const uint8_t *song) {
+  if (!song) return;
+  uint8_t saved = atm_lock();
+  atm_suspend();
+  atm_isEffect = true;
+#ifdef AB_HAS_SONG_PITCH
+  atm_setPitch(pickPitch());
+#endif
+  atm_play(song, false);
+  atm_unlock(saved);
+  songHz = 0xFFFF;
+}
+#endif
+
 static void stopSong() {
+  uint8_t saved = atm_lock();
   atm_stop();
+  atm_unlock(saved);
 }
 
 static void updateSong() {
@@ -554,6 +737,16 @@ static void waitMs(uint16_t ms) {
 #else
 // ponytail: a macro, not a function, so games without songs stay byte for byte the same.
 #define waitMs delay
+#endif
+
+#ifdef AB_HAS_SONG_VOLUME
+static void setSongVolume(int16_t percent) {
+#if defined(AB_HAS_SONGS) && defined(AB_ATM_SYNTH)
+  atm_setVolume(percent);
+#else
+  (void)percent;
+#endif
+}
 #endif
 
 static void updateSound() {
@@ -605,7 +798,7 @@ static void readButtons() {
   buttonsPrev = buttons;
   buttons = 0;
 #if defined(AB_DISPLAY_ESPBOY)
-  const uint16_t keys = espMcpRead(0x12) | ((uint16_t)espMcpRead(0x13) << 8);
+  const uint16_t keys = espMcp.readGPIOAB();
   for (uint8_t i = 0; i < BTN_COUNT; i++) {
     const int8_t pin = buttonPins[i];
     if (pin >= 0 && (pin >= 64 ? !(keys & (1 << (pin - 64))) : digitalRead(pin) == LOW)) buttons |= 1 << i;
@@ -804,6 +997,12 @@ static uint8_t create(const uint8_t *img, uint8_t kind) {
     if (!sprites[i].alive) {
       Sprite &sp = sprites[i];
       memset(&sp, 0, sizeof(Sprite));
+#ifdef AB_HAS_DRAW_REFERENCE
+      forgetDrawReference(i);
+#endif
+#ifdef AB_HAS_DRAW_MODE
+      sp.drawMode = drawingMode;
+#endif
       sp.alive = 1;
       sp.img = img;
       sp.kind = kind;
@@ -830,7 +1029,15 @@ static uint8_t createProjectile(const uint8_t *img, int16_t vx, int16_t vy, uint
 }
 
 static void destroy(uint8_t s) {
-  if (s < AB_MAX_SPRITES) sprites[s].alive = 0;
+#ifdef AB_HAS_SPEECH
+  speechHide(s);
+#endif
+  if (s < AB_MAX_SPRITES) {
+#ifdef AB_HAS_DRAW_REFERENCE
+    forgetDrawReference(s);
+#endif
+    sprites[s].alive = 0;
+  }
   if (s == cameraSprite) cameraSprite = NONE;
 }
 
@@ -841,6 +1048,10 @@ static void destroyAll(uint8_t kind) {
 }
 
 static bool exists(uint8_t s) { return s < AB_MAX_SPRITES && sprites[s].alive; }
+#ifdef AB_HAS_DRAW_MODE
+static uint8_t spriteReference(uint8_t s) { return exists(s) ? 5 + s : 0; }
+static void setDrawMode(uint8_t s, uint8_t mode) { if (exists(s)) sprites[s].drawMode = mode; }
+#endif
 static uint8_t kindOf(uint8_t s) { return exists(s) ? sprites[s].kind : NONE; }
 static void setKind(uint8_t s, uint8_t kind) { if (exists(s)) sprites[s].kind = kind; }
 
@@ -852,6 +1063,12 @@ static void setPosition(uint8_t s, int16_t x, int16_t y) {
   if (!exists(s)) return;
   sprites[s].x = (int32_t)x << 8;
   sprites[s].y = (int32_t)y << 8;
+}
+
+static uint8_t createProjectileFromPosition(const uint8_t *img, int16_t x, int16_t y, int16_t vx, int16_t vy) {
+  uint8_t s = createProjectile(img, vx, vy, NONE);
+  setPosition(s, x, y);
+  return s;
 }
 
 static void setVelocity(uint8_t s, int16_t vx, int16_t vy) {
@@ -936,11 +1153,28 @@ static const uint8_t *background;
 static int16_t bgX, bgY;
 static void setBackground(const uint8_t *img) { background = img; }
 static void setBackgroundPosition(int16_t x, int16_t y) { bgX = x; bgY = y; }
-// Repeats the background to fill the screen.
-static void drawBackground() {
-  if (!background) return;
-  int16_t w = imgW(background), h = imgH(background);
-  int16_t x0 = bgX, y0 = bgY;
+#ifdef AB_HAS_PARALLAX
+struct BackgroundLayer { const uint8_t *image; int16_t x, y; uint8_t percent; };
+static BackgroundLayer backgroundLayers[2];
+static void setBackgroundLayer(int16_t layer, const uint8_t *img, int16_t percent) {
+  if (layer < 1 || layer > 2) return;
+  backgroundLayers[layer - 1].image = img;
+  backgroundLayers[layer - 1].percent = percent < 0 ? 0 : percent > 100 ? 100 : percent;
+}
+static void setBackgroundLayerPosition(int16_t layer, int16_t x, int16_t y) {
+  if (layer < 1 || layer > 2) return;
+  backgroundLayers[layer - 1].x = x; backgroundLayers[layer - 1].y = y;
+}
+static void changeBackgroundLayerPosition(int16_t layer, int16_t x, int16_t y) {
+  if (layer < 1 || layer > 2) return;
+  setBackgroundLayerPosition(layer, backgroundLayers[layer - 1].x + x, backgroundLayers[layer - 1].y + y);
+}
+#endif
+// Repeat in screen coordinates, with shake independent of parallax speed.
+static void drawRepeatedBackground(const uint8_t *img, int16_t x0, int16_t y0) {
+  if (!img) return;
+  int16_t w = imgW(img), h = imgH(img);
+  if (!w || !h) return;
 #ifdef AB_HAS_SHAKE
   x0 -= shakeX;
   y0 -= shakeY;
@@ -951,8 +1185,83 @@ static void drawBackground() {
   if (y0 > 0) y0 -= h;
   for (int16_t y = y0; y < 64; y += h) {
     if (!onPage(y, h)) continue;
-    for (int16_t x = x0; x < 128; x += w) drawImage(x, y, background, 0);
+    for (int16_t x = x0; x < 128; x += w) drawImage(x, y, img, 0);
   }
+}
+static void drawBackground() {
+  drawRepeatedBackground(background, bgX, bgY);
+#ifdef AB_HAS_PARALLAX
+  int16_t cx = camX, cy = camY;
+#ifdef AB_HAS_SHAKE
+  cx -= shakeX; cy -= shakeY;
+#endif
+  for (uint8_t i = 0; i < 2; ++i) {
+    const BackgroundLayer &layer = backgroundLayers[i];
+    drawRepeatedBackground(layer.image, layer.x - (int32_t)cx * layer.percent / 100,
+      layer.y - (int32_t)cy * layer.percent / 100);
+  }
+#endif
+}
+#endif
+
+#ifdef AB_HAS_DRAW_REFERENCE
+static int8_t repeatedColor(const uint8_t *img, int16_t x, int16_t y, int16_t ox, int16_t oy) {
+  int16_t w = imgW(img), h = imgH(img);
+  if (!w || !h) return -1;
+#ifdef AB_HAS_SHAKE
+  ox -= shakeX; oy -= shakeY;
+#endif
+  int16_t cx = ((int32_t)x - ox) % w, cy = ((int32_t)y - oy) % h;
+  if (cx < 0) cx += w;
+  if (cy < 0) cy += h;
+  return imageColor(img, cx, cy);
+}
+#ifdef AB_HAS_PARALLAX
+static int8_t layerColor(uint8_t i, int16_t x, int16_t y) {
+  const BackgroundLayer &layer = backgroundLayers[i];
+  int16_t cx = camX, cy = camY;
+#ifdef AB_HAS_SHAKE
+  cx -= shakeX; cy -= shakeY;
+#endif
+  return repeatedColor(layer.image, x, y,
+    layer.x - (int32_t)cx * layer.percent / 100,
+    layer.y - (int32_t)cy * layer.percent / 100);
+}
+#endif
+static uint8_t drawColor(int16_t x, int16_t y, uint8_t fallback) {
+  uint8_t mode = drawingMode;
+  if (!mode) return fallback;
+  if (mode == 1) return 2;
+  int8_t color = -1;
+  if (mode == 2) {
+    color = 0;
+#ifdef AB_HAS_BACKGROUND
+    int8_t c = repeatedColor(background, x, y, bgX, bgY);
+    if (c >= 0) color = c;
+#ifdef AB_HAS_PARALLAX
+    for (uint8_t i = 0; i < 2; i++) { c = layerColor(i, x, y); if (c >= 0) color = c; }
+#endif
+#endif
+#ifndef AB_NO_MAP
+    int16_t wx = x + camX, wy = y + camY;
+    uint8_t tile = tileAt(wx >> 3, wy >> 3);
+    int8_t tc = tile && tileImages ? imageColor((const uint8_t *)pgm_read_ptr(&tileImages[tile]), wx & 7, wy & 7) : -1;
+    if (tile && tc >= 0) color = tc;
+#endif
+  }
+#ifdef AB_HAS_PARALLAX
+  else if (mode == 3 || mode == 4) color = layerColor(mode - 3, x, y);
+#endif
+  else if (mode >= 5) {
+    uint8_t s = drawingMode - 5;
+    if (exists(s)) {
+      const Sprite &sp = sprites[s];
+      if (!(sp.flags & FLAG_INVISIBLE)) color = imageColor(sp.img,
+        x + camX - (px(sp.x) - imgW(sp.img) / 2),
+        y + camY - (px(sp.y) - imgH(sp.img) / 2), sp.frame);
+    }
+  }
+  return color < 0 ? fallback : 1 - color;
 }
 #endif
 
@@ -1008,10 +1317,12 @@ static void updateSprites() {
     Sprite &sp = sprites[i];
     if (!sp.alive) continue;
     sp.hit = 0;
+#ifndef AB_NO_SPRITE_MOTION
     sp.vx = clamp16((int32_t)sp.vx + (int32_t)sp.ax * 8 / 15);
     sp.vy = clamp16((int32_t)sp.vy + (int32_t)sp.ay * 8 / 15);
     moveAxis(sp, true, (int32_t)sp.vx * 8 / 15);
     moveAxis(sp, false, (int32_t)sp.vy * 8 / 15);
+#endif
     if (sp.hit && (sp.flags & FLAG_DESTROY_ON_WALL)) { destroy(i); continue; }
 
     int16_t w = imgW(sp.img), h = imgH(sp.img);
@@ -1110,10 +1421,105 @@ static void drawSprite(Sprite &sp) {
     }
   }
 #endif
+#ifdef AB_HAS_DRAW_MODE
+  DrawModeScope scope(sp.drawMode);
+#endif
   drawImage(x, y, sp.img, sp.frame);
 }
 
 // Lowest layer first; sprites on the same layer are drawn in pool order.
+#ifdef AB_HAS_SPEECH
+// Return one wrapped line's bounds, and advance to the next line.
+static __attribute__((noinline)) void speechLine(const char *text, uint8_t columns, uint8_t &start, uint8_t &end, uint8_t &next) {
+  end = start;
+  int16_t space = -1;
+  while (text[end] && text[end] != '\n' && end - start < columns) {
+    if (text[end] == ' ') space = end;
+    end++;
+  }
+  next = end;
+  if (text[end] == '\n') next++;
+  else if (text[end] && text[end] != ' ' && space > start) { end = space; next = space + 1; }
+  while (text[next] == ' ') next++;
+}
+static void drawSpeech() {
+#ifdef AB_HAS_DRAW_MODE
+  uint8_t saved = drawingMode;
+  drawingMode = 0;
+#endif
+  uint32_t now = millis();
+  for (uint8_t i = 0; i < AB_SPEECH_SLOTS; i++) {
+    Speech &b = speeches[i];
+    if (!b.owner) continue;
+    uint8_t s = b.owner - 1;
+    if (!sprites[s].alive || (b.duration && (uint32_t)(now - b.started) >= b.duration)) {
+      speechHide(s); i--; continue;
+    }
+    Sprite &sp = sprites[s];
+    if (sp.flags & FLAG_INVISIBLE) continue;
+    uint8_t maxWidth = 86, position = 0, colors = 6;
+#ifdef AB_HAS_SPEECH_SETTINGS
+    if (sp.speechWidth) maxWidth = sp.speechWidth;
+    position = sp.speechPosition;
+    if (sp.speechColors) colors = sp.speechColors;
+#endif
+    uint8_t columns = (maxWidth - 6) / 4;
+    uint8_t count = 0, start = 0, end, next;
+    do { speechLine(b.text, columns, start, end, next); count++; start = next; } while (b.text[start]);
+    uint8_t page = ((uint32_t)(now - b.started) / 1500) % ((count + 2) / 3);
+    uint8_t starts[3], ends[3], rows = 0, maxLength = 0;
+    start = 0;
+    for (uint8_t line = 0; line < count; line++) {
+      speechLine(b.text, columns, start, end, next);
+      if (line / 3 == page) {
+        starts[rows] = start; ends[rows++] = end;
+        if (end - start > maxLength) maxLength = end - start;
+      }
+      start = next;
+    }
+    int16_t width = maxLength * 4 + 6, height = rows * 6 + 5;
+    if (width < 14) width = 14;
+    int16_t cx = px(sp.x) - camX;
+    uint8_t h = sp.img ? pgm_read_byte(sp.img + 1) : 0;
+    int16_t top = px(sp.y) - h / 2 - camY, bottom = top + h;
+    int16_t x = cx - width / 2;
+    if (x < 0) x = 0;
+    if (x > 128 - width) x = 128 - width;
+    bool below = position == 2 || (position == 0 && top < height + 3);
+    if (below && bottom + 3 + height > 64 && top >= height + 3) below = false;
+    if (!below && top < height + 3 && bottom + 3 + height <= 64) below = true;
+    int16_t y = below ? bottom + 3 : top - height - 3;
+    if (y < 0) y = 0;
+    if (y > 64 - height) y = 64 - height;
+    uint8_t fg = colors & 1, bg = (colors >> 1) & 1;
+    fillRect(x, y, width, height, bg);
+    drawRect(x, y, width, height, 1 - bg);
+    int16_t tailX = cx;
+    if (tailX < x + 3) tailX = x + 3;
+    if (tailX > x + width - 4) tailX = x + width - 4;
+    fillRect(tailX - 1, below ? y : y + height - 1, 3, 1, bg);
+    for (uint8_t t = 0; t < 3; t++) {
+      int16_t ty = below ? y - 1 - t : y + height + t;
+      if (ty >= 0 && ty < 64) {
+        fillRect(tailX - 2 + t, ty, 5 - t * 2, 1, 1 - bg);
+        if (t < 2) fillRect(tailX - 1 + t, ty, 3 - t * 2, 1, bg);
+      }
+    }
+    for (uint8_t row = 0; row < rows; row++) for (uint8_t c = starts[row]; c < ends[row]; c++) {
+      uint8_t code = b.text[c];
+      if (code < 32 || code > 126) code = '?';
+      for (uint8_t gx = 0; gx < 3; gx++) {
+        uint8_t bits = pgm_read_byte(font3x5 + (code - 32) * 3 + gx);
+        for (uint8_t gy = 0; gy < 5; gy++) if (bits & (1 << gy)) drawPixel(x + 3 + (c - starts[row]) * 4 + gx, y + 3 + row * 6 + gy, fg);
+      }
+    }
+  }
+#ifdef AB_HAS_DRAW_MODE
+  drawingMode = saved;
+#endif
+}
+#endif
+
 static void drawSprites() {
 #ifndef AB_NO_SPRITES
   int16_t layer = -129;
@@ -1140,6 +1546,9 @@ struct Effect {
   int16_t lifeMin, lifeMax, dir, spread, speedMin, speedMax, areaW, areaH, ax, ay, drag, wobble;
 };
 struct Particle {
+#ifdef AB_HAS_DRAW_MODE
+  uint8_t drawMode;
+#endif
   int32_t x, y; // 1/256 pixel, world coordinates
   int16_t vx, vy, endVx, endVy; // pixels per second, or 1/16 pixels per second with an effect
   const uint8_t *img; // null means one white pixel
@@ -1164,6 +1573,9 @@ static void emitParticleTween(const uint8_t *img, int16_t x, int16_t y, int16_t 
   p->x = (int32_t)x * 256; p->y = (int32_t)y * 256;
   p->vx = vx; p->vy = vy; p->img = img; p->remaining = p->duration = ms;
   p->endVx = endVx; p->endVy = endVy; p->fx = 0;
+#ifdef AB_HAS_DRAW_MODE
+  p->drawMode = drawingMode;
+#endif
   p->color = color == 2 ? random(0, 1) : color;
 }
 static void emitParticle(const uint8_t *img, int16_t x, int16_t y, int16_t vx, int16_t vy, int16_t ms) {
@@ -1206,6 +1618,9 @@ static void burst(const Effect *fxp, int16_t n, int16_t x, int16_t y, int16_t ro
     p->vx = (int32_t)sp * 16 * isin(a) / 127;
     p->vy = -((int32_t)sp * 16 * isin(a + 90) / 127);
     p->endVx = p->endVy = 0;
+#ifdef AB_HAS_DRAW_MODE
+    p->drawMode = drawingMode;
+#endif
     p->img = fx.img; p->color = color; p->fx = fxp;
     p->remaining = p->duration = life;
   }
@@ -1261,9 +1676,24 @@ static void drawParticles() {
       frame = (uint32_t)(p.duration - p.remaining) * frames / p.duration;
       if (frame >= frames) frame = frames - 1;
     }
+#ifdef AB_HAS_DRAW_MODE
+    DrawModeScope scope(p.drawMode);
+#endif
     if (p.img) drawImage(x - w / 2, y - h / 2, p.img, frame, p.color);
     else drawPixel(x, y, p.color == 0 ? 0 : 1);
   }
+}
+#endif
+
+#ifdef AB_HAS_DRAW_REFERENCE
+// References never attach themselves to a different sprite reusing this slot.
+static void forgetDrawReference(uint8_t s) {
+  uint8_t reference = 5 + s;
+  if (drawingMode == reference) drawingMode = 0;
+  for (uint8_t i = 0; i < AB_MAX_SPRITES; i++) if (sprites[i].drawMode == reference) sprites[i].drawMode = 0;
+#ifdef AB_HAS_PARTICLES
+  for (uint8_t i = 0; i < AB_MAX_PARTICLES; i++) if (particles[i].drawMode == reference) particles[i].drawMode = 0;
+#endif
 }
 #endif
 
@@ -1454,7 +1884,16 @@ static void pause(int16_t ms) {
 static uint32_t runtime() { return millis(); }
 
 static void restart() {
+#ifdef AB_HAS_SONG_VOLUME
+  setSongVolume(100);
+#endif
+#ifdef AB_HAS_DRAW_MODE
+  drawingMode = 0;
+#endif
   memset(sprites, 0, sizeof(sprites));
+#ifdef AB_HAS_SPEECH
+  memset(speeches, 0, sizeof(speeches));
+#endif
 #ifdef AB_HAS_PARTICLES
   clearParticles();
 #endif
@@ -1463,6 +1902,9 @@ static void restart() {
 #ifdef AB_HAS_BACKGROUND
   background = 0;
   bgX = bgY = 0;
+#ifdef AB_HAS_PARALLAX
+  memset(backgroundLayers, 0, sizeof(backgroundLayers));
+#endif
 #endif
 #ifdef AB_HAS_SHAKE
   shakeLeft = 0;
@@ -1556,6 +1998,9 @@ static void drawFrame() {
   drawParticles();
 #endif
   ab_on_draw();
+#ifdef AB_HAS_SPEECH
+  drawSpeech();
+#endif
   drawHud();
 }
 

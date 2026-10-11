@@ -303,3 +303,125 @@ describe.skipIf(!haveTools)('ATtiny85 device code matches the simulator', () => 
     console.log('attiny85 shooter ms per frame: max', Math.max(...ms).toFixed(1), 'mean', (ms.reduce((a, b) => a + b, 0) / ms.length).toFixed(1));
   }, 180000);
 });
+
+
+it.skipIf(!haveTools)('inversion references match device pixels with masks, animation, camera, layers and tiles', async () => {
+  const { generateCpp } = await import('../src/gen/cpp');
+  const { generateJs } = await import('../src/gen/js');
+  const { parseSource } = await import('../src/text/languages');
+  const { newProject } = await import('../src/project/model');
+  const project = newProject('Inversion parity');
+  project.images = [
+    { id: 'shape', name: 'shape', width: 3, height: 3, frames: [['1.0', '.1.', '01.'], ['0.1', '.0.', '10.']] },
+    { id: 'dot', name: 'dot', width: 1, height: 1, frames: [['1']] },
+  ];
+  project.backgrounds = [
+    { id: 'base', name: 'base', width: 8, height: 8, frames: [Array(8).fill('11110000')] },
+    { id: 'layer', name: 'layer', width: 8, height: 8, frames: [Array(8).fill('.0.1....')] },
+  ];
+  project.tiles = [{ id: 'tile', name: 'tile', pixels: Array(8).fill('0101....'), solid: false }];
+  project.tilemaps = [{ id: 'map', name: 'map', width: 2, height: 2, cells: [1, 0, 0, 1] }];
+  const program = parseSource(`
+    let target; let mover;
+    function start() {
+      scene.setBackgroundImage(images.base);
+      scene.setBackgroundLayer(1, images.layer, 25);
+      scene.setBackgroundLayer(2, images.layer, 100);
+      scene.setBackgroundLayerPosition(2, 2, -1);
+      tiles.setTilemap(tilemaps.map);
+      target = sprites.create(images.shape, kind("Player"));
+      sprite.setPosition(target, 12, 10);
+      animation.run(target, 66);
+      with_draw_mode(1) {
+        mover = sprites.create(images.dot, kind("Enemy"));
+        particles.imageColor(images.shape, 15, 10, 20, 0, 2000, 20, 0, 0);
+      }
+      sprite.setPosition(mover, 12, 10);
+      sprite.setVelocity(mover, 20, 0);
+      with_draw_mode(2) { particles.pixel(12, 10, 30, 0, 2000); }
+      with_draw_mode(screen.spriteReference(target)) { particles.imageColor(images.shape, 12, 10, 0, 0, 2000, 0, 0, 1); }
+      scene.centerCameraAt(2, -1);
+    }
+    function update() { scene.changeBackgroundPosition(-1, 1); }
+    function draw() {
+      with_draw_mode(1) { screen.drawCircle(30, 20, 4, Color.white); screen.fillCircle(45, 20, 5, Color.white); screen.drawRect(55, 20, 1, 5, Color.white); }
+      with_draw_mode(2) { screen.drawImage(images.shape, 2, 2); screen.drawLine(0, 0, 18, 18, Color.white); }
+      with_draw_mode(3) { screen.fillRect(60, 10, 4, 7, Color.white); }
+      with_draw_mode(4) { screen.drawImage(images.shape, 70, 10); }
+      with_draw_mode(screen.spriteReference(target)) { screen.drawImage(images.shape, 10, 8); }
+    }
+    events.start(start); events.update(update); events.draw(draw);
+  `, 'javascript', project);
+  const cpp = generateCpp(program, project), js = generateJs(program, project);
+  expect(cpp.diagnostics).toEqual([]);
+  const profile = BUILTIN_PROFILES.find(p => p.id === 'nano-ssd1306-i2c')!;
+  const out = await compileGame(src, { mcu: profile.chip, game: cpp.code, config: profileToConfigH(profile), headers });
+  const frames = 12;
+  const device = runOnAvr(out.hex, frames);
+  const sim = await runInSimulator(js, frames);
+  expect(device).toHaveLength(frames);
+  expect(device.map((f, i) => diff(f, sim[i]))).toEqual(Array(frames).fill(0));
+}, 120000);
+
+it.skipIf(!haveTools)('speech bubbles and text variables match AVR pixels with wrapping, camera and settings', async () => {
+  const { generateCpp } = await import('../src/gen/cpp');
+  const { generateJs } = await import('../src/gen/js');
+  const { parseSource } = await import('../src/text/languages');
+  const { newProject } = await import('../src/project/model');
+  const project = newProject('Speech parity');
+  project.images = [{ id: 'dot', name: 'dot', width: 4, height: 4, frames: [['1111','1001','1001','1111']] }];
+  const program = parseSource(`
+    let target; let message = ""; let name = "Ada"; let step = 0;
+    function greeting(person) { return text("Hi, ", person, "!"); }
+    function start() {
+      target = sprites.create(images.dot, kind("Player"));
+      message = text(greeting(name), " Score: ", 42);
+      sprite.setSpeechWidth(target, 30);
+      sprite.setPosition(target, 2, 2);
+      sprite.say(target, message, 0);
+    }
+    function update() {
+      step = step + 1; sprite.setPosition(target, step, 2);
+      if (step > 5) { sprite.setSpeechColors(target, 1, 0); sprite.setSpeechPosition(target, 2); }
+    }
+    events.start(start); events.update(update);
+  `, 'javascript', project);
+  const cpp = generateCpp(program, project), js = generateJs(program, project);
+  expect(cpp.diagnostics).toEqual([]);
+  const profile = BUILTIN_PROFILES.find(p => p.id === 'nano-ssd1306-i2c')!;
+  const out = await compileGame(src, { mcu: profile.chip, game: cpp.code, config: profileToConfigH(profile), headers });
+  expect(out.ram).toBeLessThanOrEqual(1792);
+  const frames = 12;
+  const device = runOnAvr(out.hex, frames);
+  const sim = await runInSimulator(js, frames);
+  expect(device).toHaveLength(frames);
+  expect(device.map((f, i) => diff(f, sim[i]))).toEqual(Array(frames).fill(0));
+}, 120000);
+
+it.skipIf(!haveTools)('speech bubbles match the paged ATtiny85 screen within flash and RAM limits', async () => {
+  const { generateCpp } = await import('../src/gen/cpp');
+  const { generateJs } = await import('../src/gen/js');
+  const { parseSource } = await import('../src/text/languages');
+  const { newProject } = await import('../src/project/model');
+  const project = newProject('Tiny speech');
+  project.images = [{ id: 'dot', name: 'dot', width: 4, height: 4, frames: [['1111','1001','1001','1111']] }];
+  const program = parseSource(`
+    let target; let message;
+    function start() {
+      target = sprites.create(images.dot, kind("Player"));
+      message = text("Hi! Score: ", 42);
+      sprite.say(target, message, 0);
+    }
+    events.start(start);
+  `, 'javascript', project);
+  const cpp = generateCpp(program, project), js = generateJs(program, project);
+  expect(cpp.diagnostics).toEqual([]);
+  const out = await compileGame(src, { mcu: 'attiny85', game: cpp.code, config: profileToConfigH(SECRET_PROFILES[0]), headers });
+  expect(out.flash).toBeLessThanOrEqual(8192);
+  expect(out.ram).toBeLessThanOrEqual(400);
+  const frames = 8;
+  const { frames: device, seed } = runOnTiny(out.hex, frames, () => 0);
+  const sim = await runInSimulator(js, frames, () => 0, { seed });
+  expect(device).toHaveLength(frames);
+  expect(device.map((f, i) => diff(f, sim[i]))).toEqual(Array(frames).fill(0));
+}, 120000);

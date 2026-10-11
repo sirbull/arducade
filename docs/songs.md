@@ -1,5 +1,8 @@
 # Songs (ATMlib)
 
+For creating music in the editor, follow the illustrated [music guide](music.nb.md).
+It covers beep melodies, four-track arrangements, recording and using audio in games.
+
 ArduCade has sixteen ready made songs with four voices: melody, harmony, bass and
 drums. The device plays them with
 [ATMlib](https://github.com/JKirchartz/ATMlib) (Arduboy Tracker Music) by
@@ -31,10 +34,27 @@ without running into themselves.
 
 ## Blocks and text code
 
-The blocks are in the Music category:
+All sound blocks are together in **Music**. Pink blocks with a single note icon
+play beep melodies, tones and beep effects. Purple blocks with the double note
+icon play polyphonic songs and effects. Your saved melodies and songs appear
+first in their respective dropdowns, followed by built-in choices. The melody
+choices play only the melody voice; song choices play all four voices on
+supported devices (see hardware support below).
 
+* **play melody [melody] [once / repeat]** plays a saved beep melody or the
+  melody voice of a built-in tune.
+* **play beep effect [effect]** plays a short single-voice effect.
+* **play polyphonic effect [effect]** plays jump, coin, power-up, laser,
+  explosion, shield, win or lose with several voices. These short effects
+  pause the currently playing song and play once. The song then continues
+  from its saved position, with its original pitch and loop setting. A second
+  effect replaces the first effect without losing the saved song. Playing a
+  new song or stopping songs also cancels the saved background.
 * **play song [song] [repeat / once]** starts a song in the background. A new
   song replaces the one that plays.
+* **set song volume [0–100]** scales all four voices. It resets to 100 when the
+  game restarts and has no effect on devices without four voices. Games without
+  this block compile without the volume feature (`AB_HAS_SONG_VOLUME`).
 * **stop song** stops the song. Sound effects and melodies go on.
 * **stop sound** stops everything, songs included.
 
@@ -94,7 +114,8 @@ speaker pins, so the Timer1 tone cannot reach the speaker. `atm_tone()` then
 mutes the harmony voice of the song and plays the effect on it instead. When
 the effect ends, the harmony voice comes back. On one voice consoles the
 effect simply takes the pin while it plays. The simulator plays effects on top
-of all four voices.
+of all four voices. On one-voice profiles the simulator uses the same frame-driven
+voice selection and gives effects priority. Disabled sound profiles remain silent.
 
 **Memory.** Measured with the WebAssembly compiler (`tests/songs.test.ts`
 prints it), the player and the title song (409 bytes) add:
@@ -103,7 +124,7 @@ prints it), the player and the title song (409 bytes) add:
 | ----------------------- | ------- | --------- |
 | Arduboy (ATmega32u4)    | 3164 B  | 250 B     |
 | Nano (ATmega328P)       | 2906 B  | 251 B     |
-| ATtiny85                | 3504 B  | 251 B     |
+| ATtiny85                | 3556 B  | 251 B     |
 
 The songs are 85 (game over) to 709 (chase) bytes each. On an ATtiny85 the
 250 bytes are half of its RAM.
@@ -213,7 +234,8 @@ oscillator phases a little, which is how the hardware sounds.
 
 ## Known limits
 
-* The pitch block does not change songs.
+* Pitch applies to both beep and polyphonic sounds at start time. It does not
+  retune an already playing sound. Tempo remains unchanged.
 * On one voice consoles a melody and a song share the tone pin and interrupt
   each other. Play one of them at a time.
 * In the simulator a sound effect does not mute the harmony voice of the song.
@@ -232,3 +254,139 @@ All rights reserved.
 The full license text is at the top of `core/ardublocks/ab_atm.h`. That file is
 part of every exported Arduino sketch, so the notice travels with it. The
 songs in `src/engine/songs.ts` are made for ArduCade.
+
+## Music tab and keyboard recording
+
+The Music tab saves named **beep melodies**, with note text and a tempo. Add,
+rename, duplicate or delete a melody in the list, edit its notes and audition it
+through the simulator's square-wave sound output. The named melody block shares
+one flash table across all uses; unused melodies add no firmware data. Older
+projects open with an empty melody list.
+
+The keyboard icon in the Music tab and the original melody block opens a recorder
+with two octaves. Use touch, mouse, or A W S E D F T G Y H U J K (C through C).
+Z/X and the on-screen buttons move the octave. The latest held key wins, and
+releasing it resumes the previous held key. Pointer cancellation, focus loss,
+a hidden page and dialog close release the keys and silence audition.
+
+The recorder uses the selected tempo and optionally counts in one four-beat bar
+with a metronome. It rounds held notes to quarter beats (1–64 units) and records
+gaps of at least half a quarter beat as rests. Stop, play, clear and edit the
+result before choosing Use. Press a note button to audition that note and select
+its text. The preview uses the selected tempo and the octave and duration
+inherited from preceding notes, including rests. A new press replaces the
+preview, and Stop silences it. Cancel leaves the original untouched. `formatMelody`
+writes sharps and only changes octave or duration when necessary.
+
+The recorder captures one voice at a time. In Polyphonic mode, recordings replace
+the selected track. Beep volume is fixed; it can only be turned on or off.
+
+The tests compare the Nano fallback frequency at 60 frame times, and compare the
+four-voice playroutine at 0, 50 and 100 percent volume against AVR emulation.
+
+## Memory verification for this change
+
+Measured before and after with the WebAssembly compiler. Games that do not use
+song volume keep the same flash and RAM sizes:
+
+| Game / console | Flash before → after | RAM before → after |
+| --- | ---: | ---: |
+| Platformer / Arduboy | 16150 → 16150 B | 1823 → 1823 B |
+| Platformer / Nano (SSD1306 I2C) | 12740 → 12740 B | 1570 → 1570 B |
+| Shooter / ATtiny85 | 8118 → 8118 B | 366 → 366 B |
+
+Adding the song volume block to the title-song test changes Arduboy flash from
+11198 to 11264 B and RAM from 1953 to 1955 B. The same volume call produces
+byte-identical firmware on the Nano and ATtiny85 fallback players.
+
+## Music studio
+
+The Music tab has two modes. **Beep** edits one square-wave melody. **Polyphonic**
+edits four hardware voices: pulse melody, square harmony, triangle bass and
+noise drums. All blocks stay together in the Music category.
+
+A compact overview above the piano roll shows all four tracks stacked on a
+shared timeline, with notes in each track’s colour. It updates after edits and
+undo, and its playhead follows playback. Press a note in the overview to open
+its track, pitch range and two-bar page.
+
+Select a track in the overview. Drag in empty space to draw a note and set
+its length. Drag either end to shorten or lengthen it; drag the middle to move
+it in time. Notes snap to quarter beats. Select a note, then press Delete or
+Backspace, use the visible Delete note button, or right-click and choose Delete
+note. Selecting a note alone never deletes it. Undo restores the last roll edit;
+Ctrl/Cmd+Z works while the roll has focus.
+
+The roll fits the available height and shows two bars per page. The arrows move
+between pages; the octave selector changes the pitch range. Nearby pitches in
+the selected track are included automatically. Move and length buttons provide
+an alternative to dragging, including on touch screens. Keyboard users can move
+a cursor with the arrow keys and add/select a note with Enter or Space. For a
+selected note, left/right moves it and Shift+left/right changes its length.
+
+Each voice is monophonic: drawing or moving a note replaces overlapping notes
+on that voice. Undo can restore them. Pointer cancellation, focus loss, hiding
+the page, and leaving the editor discard unfinished drags. Drum notes are noise
+hits, with no pitched drum instruments.
+
+Play previews the voices together using the same ATMlib mixer as the simulator.
+M and S mute or solo tracks for preview only; they do not alter the saved song.
+Loop repeats the preview. Tempo for polyphonic songs is rounded to multiples
+of ten, matching the device player. The playhead shows the current bar and beat.
+
+Note text remains available under **Edit note text**, and keyboard recording
+can replace the selected track. Loading a built-in song replaces all four
+tracks after confirmation. Duplicate creates an independent copy.
+
+Custom songs are saved in the project and appear first in the **play song**
+dropdown, followed by built-in songs. Existing custom-song blocks upgrade to
+this combined block while retaining their selections. Play song, stop song and
+song volume share a slightly different colour from the single-voice beep blocks,
+within the same Music category.
+Text code uses `music.playNamedSong(songs.theme, true)` in JavaScript or
+`music.play_named_song(songs.theme, True)` in Python. Only songs used by the
+program are included in compiled code. Devices without four-voice support use
+the existing single-voice fallback; the studio preview always plays four voices.
+
+## Pitch for melodies, songs and effects
+
+The pitch block applies to both beep and polyphonic sounds. It picks a pitch
+once when each sound starts: 100% is normal, 200% is one octave higher and
+50% is one octave lower. The pitch stays with that sound after leaving the
+block. Tempo and note durations stay unchanged; noise drums remain noise.
+Devices that play only one song voice use the same pitch adjustment.
+
+```javascript
+music.setPitch(90, 110);
+music.playPolyphonicEffect(PolySound.coin);
+music.setPitch(100, 100);
+```
+
+```python
+music.set_pitch(90, 110)
+music.play_polyphonic_effect(PolySound.coin)
+music.set_pitch(100, 100)
+```
+
+## Polyphonic effect sounds
+
+These effects have independent melody, harmony, triangle bass and noise layers.
+Each note can decay naturally; sweeps and vibrato run in the same tracker on
+the device and in the simulator. They are short sounds for game events:
+
+| Effect | Sound and use |
+| --- | --- |
+| Jump | Rising spring sweep, held harmony and a bass thump |
+| Coin | Sparkling high chime over a sustained major chord |
+| Power up | Rising sparkle, changing harmony and bass |
+| Laser | Two offset downward sweeps with an impact and hiss |
+| Explosion | Falling discordant debris, low rumble and a fading noise tail |
+| Shield | Rippling high notes over a vibrating minor ninth chord and pulsing bass |
+| Win | Three-part fanfare with a short drum roll |
+| Lose | Falling minor harmony, bass drop and a final impact |
+
+For example, use **play polyphonic effect [shield]** when the player collects
+a shield. Use **play polyphonic effect [explosion]** when an enemy explodes.
+These effects play once, pausing the current song and resuming it at its saved position. The full layered sound
+requires a device with four-voice support; the simulator follows the selected
+device's capabilities.

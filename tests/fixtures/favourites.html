@@ -1,0 +1,18 @@
+<!doctype html><html><meta charset="utf-8"><title>Favourites</title>
+<style>body{margin:0;background:#191919;color:white;font:16px system-ui}h1{padding:16px;margin:0}#editor{height:760px;width:1050px}.ab-favourite-star{cursor:pointer}.ab-favourite-star:focus{outline:2px solid white}</style>
+<h1>Favourites · din egen blokkliste</h1><div id="editor"></div>
+<script type="module">
+import '/src/styles.css';
+import * as Blockly from 'blockly/core';import 'blockly/blocks';import * as En from 'blockly/msg/en';
+const en = await fetch('/locales/en.json').then(response => response.json());import {defineBlocks} from '/src/blocks/defs.ts';import '/src/blocks/category.ts';
+import {buildToolbox} from '/src/blocks/toolbox.ts';import {bindFavourites,favouritesFlyout} from '/src/blocks/favourites.ts';
+import {newProject} from '/src/project/model.ts';import {embedProject,readCartridge} from '/src/project/cartridge.ts';
+import {applyPageTheme,blocklyTheme,BLOCK_RENDERER} from '/src/ui/themes.ts';
+Blockly.setLocale(En);Object.assign(Blockly.Msg,en.blocks);defineBlocks();
+applyPageTheme('color');
+const project=newProject('Favourites example');let changes=0;
+const ws=Blockly.inject('editor',{toolbox:buildToolbox(),renderer:'geras',theme:blocklyTheme('color'),rendererOverrides:BLOCK_RENDERER,sounds:false});
+bindFavourites(ws,()=>project,()=>changes++);
+Blockly.serialization.workspaces.load(project.blocks,ws);
+window.fixture={ws,project,Blockly,favouritesFlyout,embedProject,readCartridge,get changes(){return changes}};
+</script></html>

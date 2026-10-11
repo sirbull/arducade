@@ -16,7 +16,9 @@ compile for supported AVR devices or export an Arduino IDE sketch. Games use a
 ## Features
 
 * **Block editor:** Blockly game blocks for sprites, collisions, tile maps,
-  camera, score, lives, particle effects and music.
+  camera, score, lives, particle effects and music. Common beginner blocks
+  appear first in each category; see [toolbox order](docs/toolbox.md).
+- Menu stars collect [favourite blocks](docs/favourites.md), saved with each project and PNG cartridge.
 * **Instant simulator:** play with keyboard or on-screen D-pad and A/B buttons,
   including simultaneous touch presses on tablets.
 * **Debugger:** pause, step through blocks or frames, set breakpoints, inspect
@@ -24,9 +26,17 @@ compile for supported AVR devices or export an Arduino IDE sketch. Games use a
 * **Pixel art tools:** sprite animation, tile, tile map and background editors,
   with a built-in sprite and tile library.
 * **Sound and music:** sound effects, melodies written with note letters, and
-  six ready made songs with four voices (melody, harmony, bass and drums)
+  sixteen ready made songs with four voices (melody, harmony, bass and drums)
   played by [ATMlib](https://github.com/JKirchartz/ATMlib). See
-  [Songs](docs/songs.md).
+  [Songs](docs/songs.md). Beeps work on every device; four-voice songs and song
+  volume require ATmega32u4 with sound pin D5 or D13. The simulator follows the
+  selected hardware profile.
+* **Music tab:** a Beep mode for single-voice melodies and a Polyphonic mode
+  for four-track songs, with a compact piano roll, draggable notes and resize handles, tempo, loop,
+  playhead, and preview mute/solo. Save, duplicate and rename compositions, and
+  play them from blocks or text code. Note text remains editable. Record
+  melodies with two octaves of touch keys or a computer keyboard, with optional
+  metronome and count-in. The original note-text block also supports recording.
 * **Game templates:** Platformer, Pong, Space shooter, 3D ghost hunt (ray casting
   built from blocks), Brick breaker, Flying bird, Match three and Frog crossing
   (Frogger-style).
@@ -185,10 +195,15 @@ AVR_GCC_DIR=/path/to/avr-gcc node scripts/build-sysroot.mjs
 
 ## Documentation
 
+* [Snakkebobler og sammensatt tekst](docs/speech.md): sprite dialogue, compact ASCII text, text variables and direct +/− controls.
 * [JavaScript and Python](docs/text-languages.md): supported syntax and examples.
+* [Drawing modes](docs/drawing-modes.md): contrasting sprites, bullets and rain,
+  background layers, sprite references and examples in both text languages.
 * [Hardware profile configuration](docs/hardware-profile-boards.md): boards,
   clocks and profile format.
 * [ESPboy support](docs/espboy.md): wiring, export setup and limitations.
+* [Musikkveiledning](docs/music.nb.md): illustrated beginner and advanced tutorials,
+  note editing, recording, arrangements, effects, pitch and a downloadable example.
 * [Songs](docs/songs.md): the ATMlib song player, hardware support and how to
   add a song.
 * [Project specification](docs/spec.md) (Norwegian): design and technical background.

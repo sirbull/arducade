@@ -1,6 +1,6 @@
 import { expect, it, vi } from 'vitest';
 import { Engine } from '../src/sim/engine';
-import { parseMelody } from '../src/engine/melody';
+import { parseMelody, formatMelody, noteFreq, MelodyRecording } from '../src/engine/melody';
 import { generateCpp } from '../src/gen/cpp';
 import { generateJs } from '../src/gen/js';
 import type { Program } from '../src/ir/ir';
@@ -40,4 +40,26 @@ it('plays music in the simulator and lets a sound effect cover it', () => {
   update();
   expect(tone).toHaveBeenCalledTimes(3); // the coin effect, not the looped A
   expect(tone).toHaveBeenLastCalledWith(988);
+});
+
+it('formats sharps with octave and length only when they change', () => {
+  expect(formatMelody(parseMelody('C4:1 C#4:1 D5:1/2 R:1/2 F5:1/2').steps)).toBe('C C# D5:0.5 R F');
+});
+it('round trips chromatic notes, carried lengths and rests', () => {
+  for (let octave = 0; octave <= 9; octave++) for (let length = 1; length <= 64; length++) {
+    const steps = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'].flatMap(name => [noteFreq(name[0],octave,name[1]),length,0,length]);
+    expect(parseMelody(formatMelody(steps)).steps).toEqual(steps);
+  }
+});
+it('records gaps and durations at quarter beats, including last-key transitions', () => {
+  const record = new MelodyRecording(120,0); // 125ms quarter beat
+  record.change(440,50); record.change(523,180); record.change(440,300); record.change(0,375);
+  record.change(659,450); record.change(0,9000);
+  expect(record.steps).toEqual([440,1,523,1,440,1,0,1,659,64]);
+  expect(parseMelody(formatMelody(record.steps)).steps).toEqual(record.steps);
+});
+it('round trips accidentals at octave boundaries with sharps only', () => {
+  const steps = parseMelody('Cb0 B#9').steps;
+  const text = formatMelody(steps);
+  expect(text).not.toContain('b'); expect(parseMelody(text).steps).toEqual(steps);
 });

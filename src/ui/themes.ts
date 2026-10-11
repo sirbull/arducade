@@ -97,7 +97,7 @@ export function blocklyTheme(id: ThemeId): Blockly.Theme {
   if (theme) return theme;
   const def = THEMES[id];
   const blockStyles: Record<string, Partial<Blockly.Theme.BlockStyle>> = {};
-  const categoryStyles: Record<string, Blockly.Theme.CategoryStyle> = {};
+  const categoryStyles: Record<string, Blockly.Theme.CategoryStyle> = { ab_favourites: { colour: def.blocks.info } };
   // Keep the light palette cheerful; darker themes retain their category colours.
   const secondary = (colour: string) => {
     const channels = [1, 3, 5].map(i => Math.round(parseInt(colour.slice(i, i + 2), 16) * 0.84));
@@ -107,6 +107,10 @@ export function blocklyTheme(id: ThemeId): Blockly.Theme {
     blockStyles[`ab_${c}`] = { colourPrimary: def.blocks[c], colourSecondary: secondary(def.blocks[c]), colourTertiary: def.dark ? '#18191b' : '#343c35', hat: 'cap' };
     categoryStyles[`ab_${c}`] = { colour: def.blocks[c] };
   }
+  // A nearby tint distinguishes four-voice songs without adding another category.
+  const polyphonic = id === 'color' ? '#c873ad' : id === 'arduboy' ? '#806481' :
+    '#' + [1,3,5].map(i=>Math.round(parseInt(def.blocks.music.slice(i,i+2),16)*0.88+255*0.12).toString(16).padStart(2,'0')).join('');
+  blockStyles.ab_polyphonic = { ...blockStyles.ab_music, colourPrimary: polyphonic, colourSecondary: secondary(polyphonic) };
   // Styles used by the built in Blockly blocks.
   const builtin: Record<string, Category> = {
     logic_blocks: 'logic',

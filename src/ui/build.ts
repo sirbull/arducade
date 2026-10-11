@@ -1,12 +1,14 @@
 // Turns a project into C++ and simulator code.
 
+import { hasFourVoices } from '../hw/profile';
+import { forEachExpr } from '../ir/check';
 import * as Blockly from 'blockly/core';
 import { getAssetProject, setAssetProject } from '../blocks/assets';
 import { workspaceToIR } from '../blocks/toIR';
 import { generateCpp, type CppResult } from '../gen/cpp';
 import { generateJs, type GameHooks, type JsResult } from '../gen/js';
 import type { Diagnostic, Program } from '../ir/ir';
-import type { Project } from '../project/model';
+import { instantiateTemplate, type Project } from '../project/model';
 import { parseSource } from '../text/languages';
 import { BUTTON_IDS, FRAME_MS } from '../engine/enums';
 import { Engine } from '../sim/engine';
@@ -36,6 +38,11 @@ export function buildWorkspace(ws: Blockly.Workspace, project: Project): BuildRe
     seen.add(key);
     return true;
   });
+  let polyphonic = false;
+  forEachExpr(ir.program, e => { if (e.k === 'api' && ['music.polyEffect', 'music.namedSong', 'music.song', 'music.stopSong', 'music.setSongVolume'].includes(e.fn)) polyphonic = true; });
+  if (polyphonic && (project.profile.sound.enabled === false || !project.profile.sound.pin1 || !hasFourVoices(project.profile))) {
+    diagnostics.push({ level: 'info', key: project.profile.sound.enabled === false || !project.profile.sound.pin1 ? 'diag.songSoundOff' : 'diag.songOneVoice' });
+  }
   return { program: ir.program, cpp, js, diagnostics };
 }
 
@@ -59,7 +66,10 @@ export function buildProject(project: Project): BuildResult {
  * Templates can script how long to run and which buttons to tap.
  */
 export async function thumbnailScreen(project: Project, frames = 45): Promise<Uint8Array> {
-  const { js } = buildProject(project);
+  // Gallery templates still contain @translation keys. Resolve their block text
+  // without dropping the shipped thumbnail script or changing the project ID.
+  const preview = project.template?.strings ? { ...project, blocks: instantiateTemplate(project, 'en').blocks } : project;
+  const { js } = buildProject(preview);
   const script = project.template?.thumbnail;
   let last = new Uint8Array(1024);
   const engine = new Engine({

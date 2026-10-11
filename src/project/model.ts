@@ -2,11 +2,12 @@
 // upgrade later. Bump PROJECT_VERSION and add an upgrade step in
 // upgradeProject when the format changes.
 
+import { normalizeFavourites, type FavouriteBlock } from './favourites';
 import type { ButtonName } from '../engine/enums';
 import type { GuideState } from '../guides/guide';
 import { BUILTIN_PROFILES, DEFAULT_PROFILE_ID, parseProfile, type Profile } from '../hw/profile';
 
-export const PROJECT_VERSION = 1;
+export const PROJECT_VERSION = 3;
 export const PROJECT_EXTENSION = '.abproject';
 
 /**
@@ -76,6 +77,14 @@ export interface TemplateInfo {
   thumbnail?: ThumbnailScript;
 }
 
+export interface MelodyAsset {
+  id: string; name: string; notes: string; tempo: number;
+}
+
+export interface SongAsset {
+  id: string; name: string; tempo: number; voices: [string, string, string, string];
+}
+
 export interface Project {
   format: 'ardublocks-project';
   version: number;
@@ -90,6 +99,8 @@ export interface Project {
   blocks: unknown;
   /** Text mode keeps the original block workspace as a recoverable copy. */
   source?: { language: 'javascript' | 'python'; code: string };
+  melodies: MelodyAsset[];
+  songs: SongAsset[];
   images: ImageAsset[];
   /** Full screen pictures drawn behind everything. One frame each. */
   backgrounds: ImageAsset[];
@@ -104,6 +115,8 @@ export interface Project {
   template?: TemplateInfo;
   /** Set when the project belongs to a guide level. */
   guide?: GuideState;
+  /** Starred toolbox recipes, including variants and default inputs. */
+  favouriteBlocks?: FavouriteBlock[];
   /** Starred projects are listed first. */
   starred?: boolean;
 }
@@ -128,6 +141,8 @@ export function newProject(name: string, profile?: Profile): Project {
     profile: profile ?? BUILTIN_PROFILES.find((p) => p.id === DEFAULT_PROFILE_ID)!,
     pixelColor: 'white',
     blocks: { blocks: { languageVersion: 0, blocks: [{ type: 'ab_on_start', x: 20, y: 20 }] } },
+    melodies: [],
+    songs: [],
     images: [],
     backgrounds: [],
     tiles: [],
@@ -150,6 +165,24 @@ export function parseProject(text: string): Project {
   return upgradeProject(p);
 }
 
+/** Merge the old custom-song block while retaining connections and missing IDs. */
+function upgradeSongBlocks(value: unknown): unknown {
+  if (Array.isArray(value)) {
+    const upgraded=value.map(upgradeSongBlocks);
+    return upgraded.every((child,i)=>child===value[i]) ? value : upgraded;
+  }
+  if (!value || typeof value !== 'object') return value;
+  const entries=Object.entries(value);
+  const upgraded=entries.map(([key,child])=>[key,upgradeSongBlocks(child)] as const);
+  const node=Object.fromEntries(upgraded);
+  if (node.type === 'ab_play_named_song') {
+    node.type='ab_play_song';
+    const fields=node.fields && typeof node.fields==='object' ? node.fields as Record<string,unknown> : {};
+    node.fields={...fields,SONG:'asset:'+(typeof fields.SONG==='string'?fields.SONG:'')};
+  } else if (upgraded.every(([key,child])=>child===(value as Record<string,unknown>)[key])) return value;
+  return node;
+}
+
 export function upgradeProject(p: Partial<Project>): Project {
   const base = newProject(typeof p.name === 'string' ? p.name : 'Project');
   return {
@@ -157,7 +190,18 @@ export function upgradeProject(p: Partial<Project>): Project {
     ...p,
     format: 'ardublocks-project',
     version: PROJECT_VERSION,
+    blocks: upgradeSongBlocks(p.blocks ?? base.blocks),
+    favouriteBlocks: normalizeFavourites(p.favouriteBlocks),
     profile: p.profile ? parseProfile(JSON.stringify(p.profile)) : base.profile,
+    melodies: Array.isArray(p.melodies) ? p.melodies.filter((m, i, all) => m &&
+      typeof m.id === 'string' && m.id.length > 0 && typeof m.name === 'string' && m.name.trim().length > 0 &&
+      typeof m.notes === 'string' && Number.isInteger(m.tempo) && m.tempo >= 20 && m.tempo <= 600 &&
+      all.findIndex(o => o?.id === m.id || o?.name === m.name) === i) : [],
+    songs: Array.isArray(p.songs) ? p.songs.filter((m, i, all) => m &&
+      typeof m.id === 'string' && m.id.length > 0 && typeof m.name === 'string' && m.name.trim().length > 0 &&
+      Array.isArray(m.voices) && m.voices.length === 4 && m.voices.every(v => typeof v === 'string') &&
+      Number.isInteger(m.tempo) && m.tempo >= 20 && m.tempo <= 600 &&
+      all.findIndex(o => o?.id === m.id || o?.name === m.name) === i) : [],
     images: Array.isArray(p.images) ? p.images : [],
     backgrounds: Array.isArray(p.backgrounds) ? p.backgrounds : [],
     tiles: Array.isArray(p.tiles) ? p.tiles : [],
@@ -212,9 +256,9 @@ export function encodeImage(width: number, height: number, frames: PixelRows[]):
   return out;
 }
 
-/** A background in the engine format. Transparent and black are the same, so no mask is needed. */
-export function encodeBackground(img: ImageAsset): number[] {
-  return encodeImage(img.width, img.height, [img.frames[0].map((row) => row.replace(/0/g, '.'))]);
+/** Layered backgrounds preserve black pixels and transparency. Static-only games keep the compact format. */
+export function encodeBackground(img: ImageAsset, layered = false): number[] {
+  return encodeImage(img.width, img.height, [layered ? img.frames[0] : img.frames[0].map((row) => row.replace(/0/g, '.'))]);
 }
 
 /** Tilemap in the engine format: width, height, cells. */
@@ -239,7 +283,7 @@ export function instantiateTemplate(template: Project, lang: string): Project {
     return v;
   };
   const now = Date.now();
-  const copy: Project = JSON.parse(JSON.stringify(template));
+  const copy: Project = upgradeProject(JSON.parse(JSON.stringify(template)));
   copy.blocks = replace(copy.blocks);
   // The scripted taps only fit the template as shipped.
   if (copy.template) delete copy.template.thumbnail;

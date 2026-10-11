@@ -1,0 +1,29 @@
+<!doctype html><html lang="nb"><meta charset="utf-8"><title>Snakkebobler og tekst</title>
+<style>body{margin:0;background:#191919;color:#fff;font:16px system-ui}main{padding:24px;display:flex;gap:24px;align-items:flex-start}h1{font-size:22px;margin:0 0 16px}#blocks{width:850px;height:570px;background:#242424}canvas{width:512px;height:256px;image-rendering:pixelated;background:#000;border:1px solid #777}p{max-width:510px;line-height:1.5}button{border-radius:0}#preview{width:512px}</style>
+<main><section><h1>Tekst, variabler og justerbare snakkebobler</h1><div id="blocks"></div></section><section id="preview"><h1>3 × 5 piksler per bokstav</h1><canvas id="screen" width="128" height="64"></canvas><p>Boblen følger spriten, bryter teksten og holder seg på skjermen. Trykk + i tekstblokken for å legge til flere deler.</p></section></main>
+<script type="module">
+import * as Blockly from 'blockly/core';
+import 'blockly/blocks';
+import * as Nb from 'blockly/msg/nb';
+import nb from '/public/locales/nb.json';
+import { defineBlocks } from '/src/blocks/defs.ts';
+import { blocklyTheme, BLOCK_RENDERER } from '/src/ui/themes.ts';
+import { Engine } from '/src/sim/engine.ts';
+Blockly.setLocale(Nb);Object.assign(Blockly.Msg,nb.blocks);defineBlocks();
+const ws=Blockly.inject('blocks',{renderer:'geras',theme:blocklyTheme('color'),rendererOverrides:BLOCK_RENDERER,scrollbars:false,zoom:{startScale:.85},sounds:false});
+const n=(v)=>({shadow:{type:'math_number',fields:{NUM:v}}}),t=(s)=>({shadow:{type:'text',fields:{TEXT:s}}}),v=(name)=>({block:{type:'variables_get',fields:{VAR:{name}}}});
+const blocks = [
+  {type:'variables_set',fields:{VAR:{name:'message'}},inputs:{VALUE:{block:{type:'text_join',extraState:{itemCount:4},inputs:{ADD0:t('Hi, '),ADD1:t('Ada'),ADD2:t('! Score: '),ADD3:n(42)}}}}},
+  {type:'ab_sprite_speech_width',inputs:{SPRITE:v('mySprite'),WIDTH:n(70)}},
+  {type:'ab_sprite_speech_position',fields:{POSITION:'0'},inputs:{SPRITE:v('mySprite')}},
+  {type:'ab_sprite_speech_colors',fields:{TEXT_COLOR:'0',BACKGROUND_COLOR:'1'},inputs:{SPRITE:v('mySprite')}},
+  {type:'ab_sprite_say_for',inputs:{SPRITE:v('mySprite'),TEXT:v('message'),MS:n(2000)}}
+];
+let chain;for(const block of [...blocks].reverse())chain={...block,...(chain?{next:{block:chain}}:{})};
+Blockly.serialization.workspaces.load({blocks:{languageVersion:0,blocks:[{type:'ab_on_start',x:20,y:20,inputs:{DO:{block:chain}}},{type:'ab_on_button',x:20,y:350,fields:{BUTTON:'a',EVENT:'pressed'},inputs:{DO:{block:{type:'ab_sprite_speech_hide',inputs:{SPRITE:v('mySprite')}}}}}]}},ws);
+const e=new Engine({show(){},tone(){},storage:{read:()=>0,write(){}},onSkippedCpp(){},maxSprites:12,hiscoreMagic:0});e.millis=()=>0;
+const img=new Uint8Array([8,8,1,0,0x3c,0x7e,0x5a,0xff,0xff,0x5a,0x7e,0x3c]);
+const s=e.create(img,0);e.setPosition(s,64,43);e.speechWidth(s,70);e.say(s,'Hi, Ada! Score: 42');e.clear();e.drawSprites();e.drawSpeech();
+const ctx=document.querySelector('canvas').getContext('2d');const pixels=ctx.createImageData(128,64);for(let y=0;y<64;y++)for(let x=0;x<128;x++){const i=(y*128+x)*4;const c=e.getPixel(x,y)?255:0;pixels.data.set([c,c,c,255],i)}ctx.putImageData(pixels,0,0);
+window.speechFixture={ws,e};
+</script></html>

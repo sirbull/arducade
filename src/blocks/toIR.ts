@@ -1,6 +1,8 @@
 // Blockly workspace to IR.
 
 import * as Blockly from 'blockly/core';
+import { SONGS, type SongName } from '../engine/songs';
+import { SONG_ASSET_PREFIX } from './assets';
 import { varType } from './var-types';
 import { defaultEffect, type BinOp, type Diagnostic, type EffectDef, type Event, type Expr, type Func, type Program, type Stmt } from '../ir/ir';
 
@@ -220,6 +222,15 @@ class Converter {
         return { k: 'if', cond: this.input(b, 'CONDITION', { k: 'bool', v: false }), then: [{ k: 'return', value }], id };
       }
 
+      case 'ab_with_draw_mode':
+        return { k: 'drawMode', mode: { k: 'num', v: Number(f('MODE')) }, body: this.body(b), id };
+      case 'ab_with_sprite_reference':
+        return { k: 'drawMode', mode: { k: 'api', fn: 'draw.spriteReference', args: [this.input(b, 'REFERENCE', { k: 'num', v: 255 })] }, body: this.body(b), id };
+      case 'ab_sprite_set_draw_mode':
+        return this.api('sprites.setDrawMode', [this.spriteIn(b), { k: 'num', v: Number(f('MODE')) }], id);
+      case 'ab_sprite_set_draw_reference':
+        return this.api('sprites.setDrawMode', [this.spriteIn(b), { k: 'api', fn: 'draw.spriteReference', args: [this.input(b, 'REFERENCE', { k: 'num', v: 255 })] }], id);
+
       case 'ab_particle_pixel':
       case 'ab_particle_image': {
         const args = ['X', 'Y', 'VX', 'VY', 'MS'].map(name => this.input(b, name));
@@ -272,6 +283,17 @@ class Converter {
         return this.api('sprites.setOutline', [this.spriteIn(b), { k: 'num', v: Number(f('OUTLINE')) }], id);
       case 'ab_sprite_set_image':
         return this.api('sprites.setImage', [this.spriteIn(b), this.en('image', f('IMAGE'))], id);
+      case 'ab_sprite_say':
+      case 'ab_sprite_say_for':
+        return this.api('sprites.say', [this.spriteIn(b), this.input(b, 'TEXT', { k: 'str', v: '' }), b.type === 'ab_sprite_say' ? { k: 'num', v: 0 } : this.input(b, 'MS', { k: 'num', v: 2000 })], id);
+      case 'ab_sprite_speech_position':
+        return this.api('sprites.speechPosition', [this.spriteIn(b), { k: 'num', v: Number(f('POSITION')) }], id);
+      case 'ab_sprite_speech_width':
+        return this.api('sprites.speechWidth', [this.spriteIn(b), this.input(b, 'WIDTH', { k: 'num', v: 86 })], id);
+      case 'ab_sprite_speech_colors':
+        return this.api('sprites.speechColors', [this.spriteIn(b), { k: 'num', v: Number(f('TEXT_COLOR')) }, { k: 'num', v: Number(f('BACKGROUND_COLOR')) }], id);
+      case 'ab_sprite_speech_hide':
+        return this.api('sprites.speechHide', [this.spriteIn(b)], id);
       case 'ab_sprite_stay_in_screen':
         return this.api('sprites.setFlag', [this.spriteIn(b), { k: 'enum', type: 'flag', v: 'stayInScreen' }, { k: 'bool', v: true }], id);
       case 'ab_sprite_set_flag':
@@ -302,6 +324,14 @@ class Converter {
         return this.api('scene.shake', [this.input(b, 'STRENGTH'), this.input(b, 'MS')], id);
       case 'ab_bg_set':
         return this.api('background.set', [this.en('image', f('BG'))], id);
+      case 'ab_bg_layer_set':
+        return this.api('background.layerSet', [{ k: 'num', v: Number(f('LAYER')) }, this.en('image', f('BG')), this.input(b, 'PERCENT')], id);
+      case 'ab_bg_layer_clear':
+        return this.api('background.layerClear', [{ k: 'num', v: Number(f('LAYER')) }], id);
+      case 'ab_bg_layer_position':
+        return this.api('background.layerPosition', [{ k: 'num', v: Number(f('LAYER')) }, this.input(b, 'X'), this.input(b, 'Y')], id);
+      case 'ab_bg_layer_change_position':
+        return this.api('background.layerChangePosition', [{ k: 'num', v: Number(f('LAYER')) }, this.input(b, 'X'), this.input(b, 'Y')], id);
       case 'ab_bg_clear':
         return this.api('background.clear', [], id);
       case 'ab_bg_set_position':
@@ -373,12 +403,20 @@ class Converter {
         return this.api('draw.image', [this.en('image', f('IMAGE')), this.input(b, 'X'), this.input(b, 'Y')], id);
 
       // Music
+      case 'ab_play_poly_effect':
+        return this.api('music.polyEffect', [this.en('polyEffect', f('SFX'))], id);
       case 'ab_play_effect':
         return this.api('music.effect', [this.en('sfx', f('SFX'))], id);
       case 'ab_play_tone':
         return this.api('music.tone', [this.input(b, 'FREQ', { k: 'num', v: 440 }), this.input(b, 'MS', { k: 'num', v: 200 })], id);
-      case 'ab_play_song':
-        return this.api('music.song', [this.en('song', f('SONG')), { k: 'bool', v: f('MODE') !== 'once' }], id);
+      case 'ab_play_named_song':
+        return this.api('music.namedSong', [this.en('songAsset', f('SONG')), { k: 'bool', v: f('MODE') !== 'once' }], id);
+      case 'ab_play_song': {
+        const song=f('SONG'), custom=song.startsWith(SONG_ASSET_PREFIX);
+        return this.api(custom?'music.namedSong':'music.song', [this.en(custom?'songAsset':'song', custom?song.slice(SONG_ASSET_PREFIX.length):song), { k: 'bool', v: f('MODE') !== 'once' }], id);
+      }
+      case 'ab_set_song_volume':
+        return this.api('music.setSongVolume', [this.input(b, 'VOLUME', { k: 'num', v: 100 })], id);
       case 'ab_stop_song':
         return this.api('music.stopSong', [], id);
       case 'ab_stop_sound':
@@ -387,6 +425,11 @@ class Converter {
         // ponytail: a nested pitch block resets to normal pitch, not to the outer range.
         const normal: Expr = { k: 'num', v: 100 };
         return [this.api('music.pitch', [this.input(b, 'FROM', { k: 'num', v: 90 }), this.input(b, 'TO', { k: 'num', v: 110 })], id), ...this.body(b), this.api('music.pitch', [normal, normal], id)];
+      }
+      case 'ab_play_named_melody': {
+        const value=f('MELODY');
+        if(value.startsWith('preset:')){const preset=SONGS[value.slice(7) as SongName];if(preset)return this.api('music.melody',[this.en('melody',preset.voices[0]),{k:'num',v:preset.tempo},{k:'bool',v:f('MODE')!=='once'}],id);}
+        return this.api('music.namedMelody', [this.en('melodyAsset', f('MELODY')), { k: 'bool', v: f('MODE') === 'loop' }], id);
       }
       case 'ab_play_melody':
         return this.api('music.melody', [this.en('melody', f('NOTES')), this.input(b, 'TEMPO', { k: 'num', v: 120 }), { k: 'bool', v: f('MODE') === 'loop' }], id);
@@ -472,6 +515,8 @@ class Converter {
         return api('sprites.create', [this.en('image', f('IMAGE')), this.en('kind', f('KIND'))]);
       case 'ab_sprite_projectile':
         return api('sprites.projectile', [this.en('image', f('IMAGE')), this.input(b, 'VX'), this.input(b, 'VY', { k: 'num', v: -50 }), this.spriteIn(b, 'FROM')]);
+      case 'ab_sprite_projectile_position':
+        return api('sprites.projectilePosition', [this.en('image', f('IMAGE')), this.input(b, 'X'), this.input(b, 'Y'), this.input(b, 'VX'), this.input(b, 'VY')]);
       case 'ab_sprite_get_prop':
         return api('sprites.get', [this.spriteIn(b), this.en('prop', f('PROP'))]);
       case 'ab_sprite_overlaps':

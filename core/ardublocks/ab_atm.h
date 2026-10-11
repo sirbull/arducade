@@ -66,6 +66,28 @@ uint8_t atm_pcm __attribute__((used)) = 128;
 bool atm_half __attribute__((used));
 uint16_t atm_cia __attribute__((used)), atm_cia_count __attribute__((used));
 
+static uint8_t atm_lock() {
+#ifdef AB_ATM_SYNTH
+  uint8_t saved = SREG; cli(); return saved;
+#else
+  return 0;
+#endif
+}
+static void atm_unlock(uint8_t saved) {
+#ifdef AB_ATM_SYNTH
+  SREG = saved;
+#else
+  (void)saved;
+#endif
+}
+
+#ifdef AB_HAS_SONG_PITCH
+static uint16_t atm_pitch = 100;
+static void atm_setPitch(uint16_t pitch) {
+  uint8_t saved = atm_lock(); atm_pitch = pitch; atm_unlock(saved);
+}
+#endif
+
 static const uint8_t *atm_song;
 static bool atm_loop;
 static uint8_t atm_tickRate;
@@ -131,6 +153,56 @@ struct atm_ch_t {
 };
 
 static atm_ch_t atm_channel[4];
+#ifndef AB_ATM_SYNTH
+static uint32_t atm_next;
+#endif
+#ifdef AB_HAS_POLY_EFFECTS
+static volatile bool atm_isEffect;
+// One suspended background, shared by successive effects. Included only in
+// games using polyphonic effects; no additional state for song-only games.
+static struct {
+  const uint8_t *song, *trackList, *trackBase;
+  atm_ch_t channel[4];
+  atm_osc_t osc[4];
+  uint16_t cia, ciaCount;
+  uint8_t tickRate, active;
+  bool loop;
+  volatile bool valid;
+#ifdef AB_HAS_SONG_PITCH
+  uint16_t pitch;
+#endif
+#ifndef AB_ATM_SYNTH
+  int32_t nextDelta;
+#endif
+} atm_background;
+#ifndef AB_ATM_SYNTH
+static bool atm_justResumed;
+#endif
+
+static void atm_suspend() {
+  if (atm_background.valid || atm_isEffect || !atm_song) return;
+  atm_background.song = atm_song; atm_background.loop = atm_loop;
+  atm_background.trackList = atm_trackList; atm_background.trackBase = atm_trackBase;
+  memcpy(atm_background.channel, atm_channel, sizeof(atm_channel));
+  memcpy(atm_background.osc, atm_osc, sizeof(atm_osc));
+  atm_background.cia = atm_cia; atm_background.ciaCount = atm_cia_count;
+  atm_background.tickRate = atm_tickRate; atm_background.active = atm_active;
+#ifdef AB_HAS_SONG_PITCH
+  atm_background.pitch = atm_pitch;
+#endif
+#ifndef AB_ATM_SYNTH
+  atm_background.nextDelta = (int32_t)(atm_next - millis() * 1000UL);
+#endif
+  atm_background.valid = true;
+}
+#endif
+#if defined(AB_HAS_SONG_VOLUME) && defined(AB_ATM_SYNTH)
+static volatile uint16_t atm_master = 256;
+static void atm_setVolume(int16_t percent) {
+  uint16_t master = (uint16_t)constrain(percent, 0, 100) * 256 / 100;
+  uint8_t saved = SREG; cli(); atm_master = master; SREG = saved;
+}
+#endif
 
 static uint16_t atm_readVle(const uint8_t **pp) {
   uint16_t q = 0;
@@ -164,6 +236,10 @@ static void atm_load() {
 }
 
 static void atm_stop() {
+#ifdef AB_HAS_POLY_EFFECTS
+  atm_background.valid = false;
+  atm_isEffect = false;
+#endif
 #if defined(AB_ATM_SYNTH)
   TIMSK4 = 0;
   TCCR4A = 0; // the speaker pins are normal pins again
@@ -175,10 +251,37 @@ static void atm_stop() {
 
 extern "C" void ATM_playroutine() asm("ATM_playroutine") __attribute__((used));
 
+static void atm_finish() {
+  uint8_t saved = atm_lock();
+#ifdef AB_HAS_POLY_EFFECTS
+  if (atm_background.valid) {
+    atm_song = atm_background.song; atm_loop = atm_background.loop;
+    atm_trackList = atm_background.trackList; atm_trackBase = atm_background.trackBase;
+    memcpy(atm_channel, atm_background.channel, sizeof(atm_channel));
+    memcpy(atm_osc, atm_background.osc, sizeof(atm_osc));
+    atm_cia = atm_background.cia; atm_cia_count = atm_background.ciaCount;
+    atm_tickRate = atm_background.tickRate; atm_active = atm_background.active;
+#ifdef AB_HAS_SONG_PITCH
+    atm_pitch = atm_background.pitch;
+#endif
+#ifndef AB_ATM_SYNTH
+    atm_next = millis() * 1000UL + atm_background.nextDelta;
+    atm_justResumed = true;
+#endif
+    atm_background.valid = false;
+    atm_isEffect = false;
+    atm_unlock(saved);
+    return;
+  }
+#endif
+  atm_stop();
+  atm_unlock(saved);
+}
+
 void ATM_playroutine() {
   if (!(atm_active & 0xF0)) {
     if (atm_loop && atm_song) atm_load();
-    else { atm_stop(); return; }
+    else { atm_finish(); return; }
   }
 
   for (uint8_t n = 0; n < 4; n++) {
@@ -382,9 +485,17 @@ void ATM_playroutine() {
       if (n == 3) {
         atm_osc[n].vol = ch->vol >> 1; // the noise voice plays at half volume
       } else {
+#ifdef AB_HAS_SONG_PITCH
+        uint32_t pitched = (uint32_t)ch->freq * atm_pitch / 100;
+        atm_osc[n].freq = pitched > 65535 ? 65535 : (ch->freq && !pitched ? 1 : pitched);
+#else
         atm_osc[n].freq = ch->freq;
+#endif
         atm_osc[n].vol = ch->vol;
       }
+#if defined(AB_HAS_SONG_VOLUME) && defined(AB_ATM_SYNTH)
+      atm_osc[n].vol = (uint16_t)atm_osc[n].vol * atm_master >> 8;
+#endif
     }
   }
 }
@@ -589,7 +700,7 @@ static void atm_update() {
 #else
 
 // No Timer4: the game loop runs the playroutine and plays one voice.
-static uint32_t atm_next; // microseconds, from millis() so it works on every chip
+// atm_next uses microseconds from millis(), so it works on every chip.
 
 static void atm_play(const uint8_t *song, bool loop) {
   atm_song = song;
@@ -605,6 +716,9 @@ static uint16_t atm_update() {
   // ponytail: ticks run at most once per frame step, so notes land on 33 ms frames.
   for (uint8_t i = 0; i < 8 && atm_song && (int32_t)(now - atm_next) >= 0; i++) {
     ATM_playroutine();
+#ifdef AB_HAS_POLY_EFFECTS
+    if (atm_justResumed) { atm_justResumed = false; break; }
+#endif
     atm_next += (uint32_t)atm_cia * 32; // atm_cia samples of 32 µs
   }
   if ((int32_t)(now - atm_next) > 0) atm_next = now; // do not catch up after a long pause

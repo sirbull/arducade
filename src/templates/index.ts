@@ -4,6 +4,7 @@ import { blk, workspace } from './dsl';
 import { match3 } from './match3';
 import { bricks } from './bricks';
 import { flappy } from './flappy';
+import { endlessrunner } from './endlessrunner';
 import { frogger } from './frogger';
 import { maze3d } from './maze3d';
 import { platformer } from './platformer';
@@ -33,7 +34,7 @@ const empty: TemplateSource = {
   blocks: workspace([blk('ab_on_start'), blk('ab_on_update')]),
 };
 
-export const TEMPLATE_SOURCES: TemplateSource[] = [empty, platformer, pong, shooter, maze3d, bricks, flappy, match3, frogger].sort((a, b) => a.order - b.order);
+export const TEMPLATE_SOURCES: TemplateSource[] = [empty, platformer, pong, shooter, maze3d, bricks, flappy, match3, frogger, endlessrunner].sort((a, b) => a.order - b.order);
 
 export function templateToProject(t: TemplateSource): Project {
   return {
@@ -45,8 +46,10 @@ export function templateToProject(t: TemplateSource): Project {
     modified: 0,
     profile: BUILTIN_PROFILES.find((p) => p.id === DEFAULT_PROFILE_ID)!,
     blocks: t.blocks,
+    melodies: [],
+    songs: t.songs ?? [],
     images: t.images,
-    backgrounds: [],
+    backgrounds: t.backgrounds ?? [],
     tiles: t.tiles,
     tilemaps: t.tilemaps,
     kinds: t.kinds,

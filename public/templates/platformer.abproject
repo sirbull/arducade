@@ -1,6 +1,6 @@
 {
  "format": "ardublocks-project",
- "version": 1,
+ "version": 3,
  "id": "template-platformer",
  "name": "Platformer",
  "created": 0,
@@ -1233,6 +1233,8 @@
    ]
   }
  },
+ "melodies": [],
+ "songs": [],
  "images": [
   {
    "id": "hero",

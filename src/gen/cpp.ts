@@ -1,3 +1,4 @@
+import { parseMelody } from '../engine/melody';
 // IR to C++ for the device. The output is one .ino file that includes
 // ab_config.h (from the hardware profile) and the engine in core/ardublocks.
 
@@ -6,7 +7,7 @@ import { BUILTIN_KINDS } from '../engine/enums';
 import { checkProgram, forEachExpr, typeOf, type TypeInfo } from '../ir/check';
 import type { Diagnostic, Expr, Program, Stmt, Ty } from '../ir/ir';
 import { encodeBackground, encodeImage, encodeTilemap, type Project } from '../project/model';
-import { buttonMatch, effectFields, effectNames, enumNumber, eventsOf, hash16, melodies, Names, songs, soundEffects } from './common';
+import { buttonMatch, effectFields, effectNames, enumNumber, eventsOf, hasParallax, hash16, melodies, Names, songs, soundEffects } from './common';
 import { stringLiteral, wrap16 } from './names';
 import { Writer } from './writer';
 import { levelTransitionCode } from './levels';
@@ -17,7 +18,7 @@ export interface CppResult {
   diagnostics: Diagnostic[];
 }
 
-const CPP_TYPE: Record<Ty, string> = { num: 'int16_t', bool: 'bool', sprite: 'uint8_t', str: 'int16_t', void: 'void' };
+const CPP_TYPE: Record<Ty, string> = { num: 'int16_t', bool: 'bool', sprite: 'uint8_t', str: 'ab::Text', void: 'void' };
 const BUILTIN_KIND_CONST = ['ab::KIND_PLAYER', 'ab::KIND_ENEMY', 'ab::KIND_PROJECTILE', 'ab::KIND_FOOD'];
 
 function bytes(list: number[], perLine = 16): string[] {
@@ -34,6 +35,7 @@ class CppGen {
   info!: TypeInfo;
   diagnostics: Diagnostic[] = [];
   locals?: Map<string, Ty>;
+  private hasRawCpp = false;
   private tmp = 0;
   private melodies: ReturnType<typeof melodies>;
   private songs: ReturnType<typeof songs>;
@@ -42,8 +44,8 @@ class CppGen {
 
   constructor(private program: Program, private project: Project) {
     this.names = new Names(project);
-    this.melodies = melodies(program);
-    this.songs = songs(program);
+    this.melodies = melodies(program, project);
+    this.songs = songs(program, project);
     this.sfx = soundEffects(program);
     this.effects = effectNames(program, this.names);
   }
@@ -61,6 +63,34 @@ class CppGen {
     w.line('#include "ab_config.h"');
     let hasParticles = this.effects.size > 0;
     forEachExpr(p, e => { if (e.k === 'api' && e.fn.startsWith('particles.')) hasParticles = true; });
+    let hasDrawMode = false, hasDrawReference = false;
+    const scopes = (list: Stmt[]) => { for (const s of list) {
+      if (s.k === 'cpp') this.hasRawCpp = true;
+      if (s.k === 'drawMode') {
+        hasDrawMode = true;
+        if (s.mode.k !== 'num' || s.mode.v > 1) hasDrawReference = true;
+      }
+      if ('body' in s) scopes(s.body);
+      if (s.k === 'if') { scopes(s.then); scopes(s.else ?? []); }
+    } };
+    p.events.forEach(e => scopes(e.body));
+    p.funcs.forEach(f => scopes(f.body));
+    forEachExpr(p, e => {
+      if (e.k !== 'api') return;
+      if (e.fn === 'draw.spriteReference') hasDrawMode = hasDrawReference = true;
+      if (e.fn === 'sprites.setDrawMode') {
+        hasDrawMode = true;
+        const mode = e.args[1];
+        if (mode?.k !== 'num' || mode.v > 1) hasDrawReference = true;
+      }
+    });
+    if (hasDrawMode) w.line('#define AB_HAS_DRAW_MODE 1');
+    if (hasDrawReference) w.line('#define AB_HAS_DRAW_REFERENCE 1');
+    let hasSpeech = false, hasSpeechSettings = false;
+    forEachExpr(p, e => { if (e.k === 'api' && (e.fn === 'sprites.say' || e.fn.startsWith('sprites.speech'))) hasSpeech = true; });
+    forEachExpr(p, e => { if (e.k === 'api' && ['sprites.speechPosition', 'sprites.speechWidth', 'sprites.speechColors'].includes(e.fn)) hasSpeechSettings = true; });
+    if (hasSpeech) w.line('#define AB_HAS_SPEECH 1');
+    if (hasSpeechSettings || (hasSpeech && this.hasRawCpp)) w.line('#define AB_HAS_SPEECH_SETTINGS 1');
     if (hasParticles) w.line('#define AB_HAS_PARTICLES 1');
     let hasBackground = false, hasShake = false;
     forEachExpr(p, e => {
@@ -69,8 +99,19 @@ class CppGen {
       if (e.fn === 'scene.shake') hasShake = true;
     });
     if (hasBackground) w.line('#define AB_HAS_BACKGROUND 1');
+    if (hasParallax(p)) w.line('#define AB_HAS_PARALLAX 1');
     if (hasShake) w.line('#define AB_HAS_SHAKE 1');
-    if (this.songs.size) w.line('#define AB_HAS_SONGS 1');
+    let hasSongVolume = false, hasPolyEffects = false;
+    forEachExpr(p, e => { if (e.k === 'api' && e.fn === 'music.setSongVolume') hasSongVolume = true; });
+    if (hasSongVolume) w.line('#define AB_HAS_SONG_VOLUME 1');
+    if (this.songs.size) {
+      w.line('#define AB_HAS_SONGS 1');
+      forEachExpr(p, e => { if (e.k === 'api' && e.fn === 'music.polyEffect') hasPolyEffects = true; });
+      if (hasPolyEffects) w.line('#define AB_HAS_POLY_EFFECTS 1');
+      let hasPitch = false;
+      forEachExpr(p, e => { if (e.k === 'api' && e.fn === 'music.pitch') hasPitch = true; });
+      if (hasPitch) w.line('#define AB_HAS_SONG_PITCH 1');
+    }
     if (eventsOf(p, 'overlap').length) w.line('#define AB_HAS_OVERLAP 1');
     if (eventsOf(p, 'tile').length) w.line('#define AB_HAS_TILE_OVERLAP 1');
     const cells = Math.max(8, ...this.project.tilemaps.map((m) => m.width * m.height));
@@ -100,11 +141,17 @@ class CppGen {
   private leaveOut(at: number) {
     const body = this.w.lines.slice(at).join('\n');
     const unused = [
-      ['AB_NO_SPRITES', /ab::(create|createProjectile|spawnOnTiles)\(/],
+      ['AB_NO_SPRITES', /ab::(create|createProjectile|createProjectileFromPosition|spawnOnTiles)\(/],
       ['AB_NO_MAP', /ab::setMap\(/],
       ['AB_NO_OUTLINE', /ab::setOutline/],
       ['AB_NO_HUD', /ab::(setScore|changeScore|setLife|changeLife)\(/],
     ].filter(([, used]) => !(used as RegExp).test(body)).map(([name]) => `#define ${name} 1`);
+    // Speech needs room on ATtiny85. Static sprites have no velocity or
+    // acceleration, so their physics can be omitted without changing behavior.
+    if (!this.hasRawCpp && this.w.lines.includes('#define AB_HAS_SPEECH 1') &&
+        !/ab::(createProjectile|createProjectileFromPosition|moveWithButtons|setVelocity|setProp|changeProp)\(/.test(body)) {
+      unused.push('#define AB_NO_SPRITE_MOTION 1');
+    }
     if (/ab::timer/.test(body)) unused.push('#define AB_HAS_TIMERS 1');
     if (/ab::setLifePosition\(/.test(body)) unused.push('#define AB_LIFE_POS 1');
     if (/ab::setScorePosition\(/.test(body)) unused.push('#define AB_SCORE_POS 1');
@@ -135,7 +182,7 @@ class CppGen {
       w.line('// Backgrounds');
       for (const bg of pr.backgrounds) {
         w.line(`static const uint8_t ${this.names.image(bg.id)}[] PROGMEM = {`);
-        for (const l of bytes(encodeBackground(bg))) w.line('  ' + l);
+        for (const l of bytes(encodeBackground(bg, hasParallax(this.program)))) w.line('  ' + l);
         w.line('};');
       }
       w.line();
@@ -219,7 +266,7 @@ class CppGen {
     const sig = (f: (typeof funcs)[number]) => {
       const t = this.info.funcs.get(f.name)!;
       const params = f.params.map((pr, i) => `${CPP_TYPE[t.params[i]]} ${this.names.vars.get(pr.name)}`).join(', ');
-      return `${CPP_TYPE[t.ret === 'str' ? 'num' : t.ret]} ${this.names.funcs.get(f.name)}(${params})`;
+      return `${CPP_TYPE[t.ret]} ${this.names.funcs.get(f.name)}(${params})`;
     };
     for (const f of funcs) w.line(sig(f) + ';');
     w.line();
@@ -230,7 +277,7 @@ class CppGen {
         w.line(sig(f) + ' {');
         w.indent();
         this.stmts(f.body);
-        if (t.ret !== 'void') w.line(`return ${t.ret === 'bool' ? 'false' : t.ret === 'sprite' ? 'ab::NONE' : '0'};`);
+        if (t.ret !== 'void') w.line(`return ${t.ret === 'bool' ? 'false' : t.ret === 'sprite' ? 'ab::NONE' : t.ret === 'str' ? 'ab::Text("")' : '0'};`);
         w.dedent();
         w.line('}');
       });
@@ -349,7 +396,7 @@ class CppGen {
     const w = this.w;
     switch (s.k) {
       case 'set':
-        w.line(`${this.varName(s.name)} = ${this.expr(s.value)};`);
+        w.line(`${this.varName(s.name)} = ${typeOf(s.value, this.info, this.locals) === 'str' ? this.text(s.value) : this.expr(s.value)};`);
         break;
       case 'expr':
         w.line(`${this.expr(s.e)};`);
@@ -399,6 +446,14 @@ class CppGen {
         w.line('}');
         break;
       }
+      case 'drawMode':
+        w.line('{');
+        w.indent();
+        w.line(`ab::DrawModeScope drawMode${this.tmp++}(${this.expr(s.mode)});`);
+        this.stmts(s.body);
+        w.dedent();
+        w.line('}');
+        break;
       case 'break':
         w.line('break;');
         break;
@@ -425,15 +480,24 @@ class CppGen {
   /** Text for a "str" argument: a pointer to the engine text buffer. */
   text(e: Expr): string {
     const parts: string[] = [];
+    const prep: string[] = [];
     const add = (x: Expr) => {
       if (x.k === 'join') x.parts.forEach(add);
       else if (x.k === 'str') {
         if (x.v) parts.push(`ab::tbStr(PSTR(${stringLiteral(x.v)}))`);
+      } else if (typeOf(x, this.info, this.locals) === 'str') {
+        if (x.k === 'var') parts.push(`ab::tbRam(${this.expr(x)})`);
+        else {
+          const name = `textPart${this.tmp++}`;
+          prep.push(`ab::Text ${name} = ${this.expr(x)};`);
+          parts.push(`ab::tbRam(${name})`);
+        }
       } else if (typeOf(x, this.info, this.locals) === 'bool') parts.push(`ab::tbStr(${this.expr(x)} ? PSTR("true") : PSTR("false"))`);
       else parts.push(`ab::tbNum(${this.expr(x)})`);
     };
     add(e);
-    return `(ab::tbClear(), ${parts.length ? parts.join(', ') + ', ' : ''}ab::tb())`;
+    const result = `(ab::tbClear(), ${parts.length ? parts.join(', ') + ', ' : ''}ab::tb())`;
+    return prep.length ? `([&]() -> const char * { ${prep.join(' ')} return ${result}; }())` : result;
   }
 
   expr(e: Expr): string {
@@ -480,13 +544,15 @@ class CppGen {
       case 'api': {
         const fn = getApi(e.fn);
         if (!fn) return '0';
+        const first = e.args[0];
+        const tempo = first?.k === 'enum' ? this.project.melodies?.find(m => m.id === first.v)?.tempo ?? 120 : 120;
         const args = fn.args.map((t, i) => {
           const a = e.args[i];
           if (!a) return '0';
           if (t === 'str') return this.text(a);
           return this.expr(a);
         });
-        return fn.cpp.replace(/\$(\d)/g, (_, n) => args[Number(n)] ?? '0');
+        return fn.cpp.replace('$tempo', String(tempo)).replace(/\$(\d)/g, (_, n) => args[Number(n)] ?? '0');
       }
     }
   }
@@ -503,12 +569,27 @@ class CppGen {
         }
         return n;
       }
+      case 'polyEffect': return this.songs.get(`effect:${e.v}`)?.name ?? 'nullptr';
+      case 'songAsset': {
+        const song = this.songs.get(`asset:${e.v}`);
+        if (!song) this.diagnostics.push({ level: 'error', key: 'diag.noSong', id: e.id });
+        const asset = this.project.songs?.find(s => s.id === e.v);
+        const bad = asset?.voices.flatMap(v => parseMelody(v).bad) ?? [];
+        if (bad.length) this.diagnostics.push({ level: 'error', key: 'diag.badNote', params: { notes: bad.join(' ') }, id: e.id });
+        return song?.name ?? 'nullptr';
+      }
       case 'song':
         return this.songs.get(e.v)?.name ?? '0';
       case 'sfx':
         return this.sfx.get(e.v)?.name ?? '0';
+      case 'melodyAsset': {
+        const m = this.melodies.get(`asset:${e.v}`);
+        if (!m) { this.diagnostics.push({ level: 'error', key: 'diag.noMelody', id: e.id }); return 'nullptr'; }
+        if (m.bad.length) this.diagnostics.push({ level: 'warning', key: 'diag.badNote', params: { notes: m.bad.join(' ') }, id: e.id });
+        return m.name;
+      }
       case 'melody': {
-        const m = this.melodies.get(e.v)!;
+        const m = this.melodies.get(`text:${e.v}`)!;
         if (m.bad.length) this.diagnostics.push({ level: 'warning', key: 'diag.badNote', params: { notes: m.bad.join(' ') }, id: e.id });
         return m.name;
       }

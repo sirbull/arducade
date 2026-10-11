@@ -8,7 +8,8 @@ import '../blocks/category';
 import { setAssetLabels, setAssetProject } from '../blocks/assets';
 import { defineBlocks } from '../blocks/defs';
 import { setBlockInfoHandler } from '../blocks/info-icon';
-import { buildToolbox } from '../blocks/toolbox';
+import { beginnerFlyout, buildToolbox } from '../blocks/toolbox';
+import { bindFavourites, favouriteItems, refreshFavourites } from '../blocks/favourites';
 import { searchBlocks } from '../blocks/search';
 import { getChip } from '../hw/chips';
 import { BUILTIN_PROFILES, DEFAULT_PROFILE_ID, type Profile } from '../hw/profile';
@@ -23,7 +24,7 @@ import { DebugPanel } from './debug-panel';
 import { bindSimulatorInput } from './simulator-input';
 import { Runner, type PixelColor } from '../sim/runner';
 import { BUTTON_IDS } from '../engine/enums';
-import { BackgroundsPane, ImagesPane, MapPane, TilesPane } from './assets-panes';
+import { BackgroundsPane, ImagesPane, MapPane, TilesPane, MusicPane } from './assets-panes';
 import { buildWorkspace, type BuildResult } from './build';
 import type { TextEditor } from './text-editor';
 import { generateSource, parseSource, SourceError, type TextLanguage } from '../text/languages';
@@ -72,6 +73,7 @@ export class App {
   private tiles!: TilesPane;
   private backgrounds!: BackgroundsPane;
   private map!: MapPane;
+  private music!: MusicPane;
   private device!: DeviceTools;
   private guide!: GuidePanel;
   private buildTimer = 0;
@@ -132,6 +134,7 @@ export class App {
     this.tiles = new TilesPane($('#pane-tiles'), host);
     this.backgrounds = new BackgroundsPane($('#pane-backgrounds'), host);
     this.map = new MapPane($('#pane-map'), host);
+    this.music = new MusicPane($('#pane-music'), host);
     this.device = new DeviceTools(this);
     this.guide = new GuidePanel($('#guide-panel'), {
       project: () => this.project,
@@ -228,9 +231,10 @@ export class App {
         show([{ kind: 'sep', gap: '44' }, ...Blockly.utils.toolbox.convertFlyoutDefToJsonArray(contents)]);
       };
     }
+    bindFavourites(this.ws, () => this.project, () => this.scheduleSave());
     // "set" comes with a value of the variable's type that can be pulled off.
     this.ws.registerToolboxCategoryCallback('VARIABLE', (ws) =>
-      Blockly.Variables.flyoutCategory(ws).map((item) => {
+      favouriteItems(beginnerFlyout(Blockly.Variables.flyoutCategory(ws).map((item) => {
         if (!('type' in item) || item.type !== 'variables_set') return item;
         const v = ws.getVariableMap().getVariable((item.fields as { VAR: { name: string } }).VAR.name);
         const ty = v && varType(ws, v.getId());
@@ -238,7 +242,9 @@ export class App {
           : ty === 'str' ? { type: 'text', fields: { TEXT: '' } }
           : { type: 'math_number', fields: { NUM: 0 } };
         return { ...item, inputs: { VALUE: { block: value } } };
-      }));
+      }), 'variables'), 'ab_variables'));
+    this.ws.registerToolboxCategoryCallback('PROCEDURE', (ws) =>
+      favouriteItems(beginnerFlyout(Blockly.Procedures.flyoutCategory(ws), 'functions'), 'ab_functions'));
     this.deleteOverlay?.dispose();
     this.deleteOverlay = new ToolboxDeleteOverlay(this.ws);
     this.comments?.dispose();
@@ -323,6 +329,7 @@ export class App {
     }
     this.scrollToStart();
     this.loading = false;
+    refreshFavourites(this.ws);
     ($('#project-name') as HTMLInputElement).value = p.name;
     this.settings.lastProjectId = p.id;
     saveSettings(this.settings);
@@ -487,7 +494,7 @@ export class App {
       this.simMessage(t('sim.fixErrors'), 'error');
       return;
     }
-    void this.runner.start(this.build.js, `ardublocks.eeprom.${this.project.id}`, this.maxSprites(), this.isTiny());
+    void this.runner.start(this.build.js, `ardublocks.eeprom.${this.project.id}`, this.maxSprites(), this.isTiny(), this.project.profile);
     this.guide.onPlay();
   }
 
@@ -569,6 +576,7 @@ export class App {
     if (this.activeTab === 'images') this.images.render();
     if (this.activeTab === 'tiles') this.tiles.render();
     if (this.activeTab === 'backgrounds') this.backgrounds.render();
+    if (this.activeTab === 'music') this.music.render();
     if (this.activeTab === 'map') this.map.render();
   }
 
@@ -600,6 +608,7 @@ export class App {
         this.runBuild(false);
       }
     }
+    this.music.stop();
     this.activeTab = tab;
     document.querySelectorAll<HTMLElement>('.tabs [data-tab]').forEach((b) => {
       b.classList.toggle('active', b.dataset.tab === tab);

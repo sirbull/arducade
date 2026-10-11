@@ -7,6 +7,8 @@ import type { GameHooks, JsResult } from '../gen/js';
 import { div16, mod16 } from './intmath';
 import { Debugger } from './debugger';
 import { Engine, LoopError, StopSignal } from './engine';
+import { hasFourVoices, type Profile } from '../hw/profile';
+import { SquareTone } from './beep';
 import { ATM_RATE, renderSong } from './atm';
 
 export type PixelColor = 'white' | 'blue' | 'yellow' | 'green';
@@ -106,11 +108,9 @@ export class Runner {
   private keys = 0;
   private touch = 0;
   private audio: AudioContext | null = null;
-  private osc: OscillatorNode | null = null;
-  private gain: GainNode | null = null;
-  private toneTimer = 0;
   private songGain: GainNode | null = null;
-  private song: { buffer: AudioBuffer; loop: boolean; node: AudioBufferSourceNode | null; startedAt: number; offset: number } | null = null;
+  private songVolume = 100;
+  private song: { data: number[]; pitch: number; buffer: AudioBuffer; loop: boolean; node: AudioBufferSourceNode | null; startedAt: number; offset: number } | null = null;
   private songCache = new Map<string, Float32Array>();
   private image: ImageData;
   private ctx: CanvasRenderingContext2D;
@@ -193,42 +193,42 @@ export class Runner {
     if (this.audio.state === 'suspended') void this.audio.resume();
   }
 
+  private squareTone = new SquareTone();
   private tone(freq: number, ms?: number) {
-    clearTimeout(this.toneTimer);
-    if (!this.audio || this.muted || freq <= 0) {
-      if (this.gain && this.audio) this.gain.gain.setTargetAtTime(0, this.audio.currentTime, 0.005);
-      return;
-    }
-    if (!this.osc) {
-      this.osc = this.audio.createOscillator();
-      this.gain = this.audio.createGain();
-      this.osc.type = 'square';
-      this.gain.gain.value = 0;
-      this.osc.connect(this.gain).connect(this.audio.destination);
-      this.osc.start();
-    }
-    this.osc.frequency.setValueAtTime(freq, this.audio.currentTime);
-    this.gain!.gain.setTargetAtTime(0.05, this.audio.currentTime, 0.002);
-    if (ms) this.toneTimer = window.setTimeout(() => this.tone(0), ms);
+    this.squareTone.play(this.audio, this.muted ? 0 : freq, ms);
   }
 
   /** Plays ATMlib song data, rendered once ahead of time, or stops it for null. */
-  private playSong(data: number[] | null, loop: boolean) {
+  private playSong(data: number[] | null, loop: boolean, offset = 0, pitch = 100) {
     this.pauseSong();
     this.song = null;
     if (!data || !this.audio) return;
-    const key = data.join();
+    const key = `${this.songVolume}:${pitch}:${data.join()}`;
     let pcm = this.songCache.get(key);
-    if (!pcm) this.songCache.set(key, (pcm = renderSong(data)));
+    if (!pcm) {
+      pcm = renderSong(data, 120, this.songVolume, 0, pitch);
+      if (this.songCache.size >= 4) this.songCache.delete(this.songCache.keys().next().value!);
+      this.songCache.set(key, pcm);
+    }
     const buffer = this.audio.createBuffer(1, Math.max(1, pcm.length), ATM_RATE);
     buffer.copyToChannel(pcm as Float32Array<ArrayBuffer>, 0);
-    this.song = { buffer, loop, node: null, startedAt: 0, offset: 0 };
+    this.song = { data, pitch, buffer, loop, node: null, startedAt: 0, offset: loop ? offset % buffer.duration : offset };
     if (!this.paused) this.resumeSong();
+  }
+
+  private setSongVolume(percent: number) {
+    if (percent === this.songVolume) return;
+    this.songVolume = percent;
+    if (this.song) {
+      this.pauseSong();
+      const { data, loop, offset, pitch } = this.song;
+      this.playSong(data, loop, offset, pitch);
+    }
   }
 
   private resumeSong() {
     const s = this.song;
-    if (!s || s.node || !this.audio) return;
+    if (!s || s.node || !this.audio || (!s.loop && s.offset >= s.buffer.duration)) return;
     if (!this.songGain) {
       this.songGain = this.audio.createGain();
       this.songGain.connect(this.audio.destination);
@@ -276,7 +276,7 @@ export class Runner {
   }
 
   /** Starts a game from generated JavaScript. */
-  async start(game: JsResult, storageKey: string, maxSprites = 16, tiny = false) {
+  async start(game: JsResult, storageKey: string, maxSprites = 16, tiny = false, profile?: Profile) {
     this.stop();
     if (this.debugger.enabled) this.debugger.pause();
     let hooksFactory: (E: Engine, ...helpers: unknown[]) => GameHooks;
@@ -290,8 +290,10 @@ export class Runner {
     const storage = loadStorage(storageKey);
     const engine = new Engine({
       show: (buf, inv) => this.show(buf, inv),
-      tone: (f, ms) => this.tone(f, ms),
-      song: (data, loop) => this.playSong(data, loop),
+      tone: (f, ms) => this.tone(profile && (profile.sound.enabled === false || !profile.sound.pin1) ? 0 : f, ms),
+      songVolume: percent => this.setSongVolume(percent),
+      fourVoices: profile ? hasFourVoices(profile) : true,
+      song: (data, loop, pitch = 100, offset = 0) => this.playSong(profile && (profile.sound.enabled === false || !profile.sound.pin1) ? null : data, loop, offset, pitch),
       storage: {
         read: (a) => storage.data[a] ?? 0,
         write: (a, v) => {

@@ -5,7 +5,10 @@
 
 import { BUTTON_IDS, FRAME_MS, NONE, SFX, SFX_STEPS, STORAGE_SLOTS } from '../engine/enums';
 import type { GameHooks } from '../gen/js';
+import { FONT_3X5 } from '../shared/font-small';
+import { speechLines } from '../shared/speech';
 import { FONT_5X7 } from '../shared/font';
+import { AtmFallback, songDurationMs } from './atm';
 import { isin } from './intmath';
 
 const FLAG_STAY_IN_SCREEN = 1;
@@ -36,6 +39,7 @@ export interface Effect {
 
 /** Legacy particles have no effect and tween from vx to endVx in pixels per second. */
 interface Particle {
+  drawMode: number;
   x: number; y: number; vx: number; vy: number; endVx: number; endVy: number;
   duration: number; remaining: number; color: number; img: Uint8Array | null; fx: Effect | null;
 }
@@ -47,6 +51,10 @@ export class StopSignal extends Error {}
 export class LoopError extends Error {}
 
 interface Sprite {
+  speechWidth: number;
+  speechPosition: number;
+  speechColors: number;
+  drawMode: number;
   x: number;
   y: number;
   vx: number;
@@ -68,7 +76,7 @@ interface Sprite {
 }
 
 function newSprite(): Sprite {
-  return { x: 0, y: 0, vx: 0, vy: 0, ax: 0, ay: 0, img: null, kind: 0, flags: 0, outline: 0, outlineWidth: 1, z: 0, hit: 0, frame: 0, animRate: 0, animCount: 0, alive: false };
+  return { speechWidth: 0, speechPosition: 0, speechColors: 0, drawMode: 0, x: 0, y: 0, vx: 0, vy: 0, ax: 0, ay: 0, img: null, kind: 0, flags: 0, outline: 0, outlineWidth: 1, z: 0, hit: 0, frame: 0, animRate: 0, animCount: 0, alive: false };
 }
 
 const w16 = (v: number) => (v << 16) >> 16;
@@ -81,8 +89,13 @@ export interface EngineOptions {
   show(buffer: Uint8Array, inverted: boolean): void;
   /** Plays a tone. Frequency 0 stops the sound. */
   tone(freq: number, ms?: number): void;
-  /** Plays ATMlib song data (src/sim/atm.ts) in the background, or stops it for null. */
-  song?(data: number[] | null, loop: boolean): void;
+  /** Audition UI follows the same scheduled notes and rests as the sound. */
+  melodyStep?(index: number, frequency: number): void;
+  /** False uses frame-driven single-voice song playback on the tone output. */
+  fourVoices?: boolean;
+  songVolume?(percent: number): void;
+  /** Plays ATMlib song data in the background, or stops it for null. */
+  song?(data: number[] | null, loop: boolean, pitch?: number, offsetSeconds?: number): void;
   /** Reads and writes the simulated EEPROM. */
   storage: { read(addr: number): number; write(addr: number, v: number): void };
   /** Called once when the game uses a C++ block. */
@@ -103,8 +116,24 @@ export interface EngineOptions {
 
 export class Engine {
   buffer = new Uint8Array(1024);
+  /** 0 normal, 1 underlay, 2 background/map, 3/4 layers, 5 + reference sprite slot. */
+  drawingMode = 0;
+
+  spriteReference(s: number) { return this.exists(s) ? 5 + s : 0; }
+
+  setDrawMode(s: number, mode: number) {
+    if (this.exists(s)) this.sprites[s].drawMode = mode;
+  }
+
+  private forgetDrawReference(s: number) {
+    const reference = 5 + s;
+    if (this.drawingMode === reference) this.drawingMode = 0;
+    for (const sp of this.sprites) if (sp.drawMode === reference) sp.drawMode = 0;
+    for (const p of this.slots) if (p.drawMode === reference) p.drawMode = 0;
+  }
   maxSprites: number;
   sprites: Sprite[];
+  private speeches: { sprite: number; text: string; started: number; duration: number }[] = [];
   buttons = 0;
   buttonsPrev = 0;
   /** Buttons held right now, set by the keyboard and the on screen buttons. */
@@ -148,6 +177,7 @@ export class Engine {
   inverted = false;
   frameCount = 0;
   background: Uint8Array | null = null;
+  private backgroundLayers = Array.from({ length: 2 }, () => ({ image: null as Uint8Array | null, percent: 0, x: 0, y: 0 }));
   bgX = 0;
   bgY = 0;
   private shakeLeft = 0;
@@ -161,6 +191,10 @@ export class Engine {
   private cleared = new Set<number>();
   private overlay: { idx: number; tile: number }[] = [];
 
+  private fallbackSong: AtmFallback | null = null;
+  private songPlayback: { data: number[]; loop: boolean; pitch: number; offset: number; startedAt: number } | null = null;
+  private polyEffect: { until: number; suspendedAt: number; fallback: AtmFallback | null } | null = null;
+  private songHz = -1;
   private soundSteps: number[] | null = null;
   private soundPos = 0;
   private soundNext = 0;
@@ -192,7 +226,8 @@ export class Engine {
   get maxParticles() { return this.opts.tiny ? 4 : this.maxSprites <= 12 ? 12 : 16; }
 
   /** Characters that fit in the device text buffer. */
-  private get textMax() { return this.opts.tiny ? 21 : 31; }
+  textCapacity = 31;
+  private get textMax() { return this.opts.tiny ? 21 : this.textCapacity; }
 
   clearParticles() { this.slots = []; }
 
@@ -205,7 +240,7 @@ export class Engine {
     if (ms <= 0) return;
     const i = this.freeSlot();
     if (i < 0) return;
-    this.slots[i] = { img, x: x * 256, y: y * 256, vx, vy, endVx, endVy, duration: ms, remaining: ms, color: color === 2 ? this.random(0, 1) : color, fx: null };
+    this.slots[i] = { drawMode: this.drawingMode, img, x: x * 256, y: y * 256, vx, vy, endVx, endVy, duration: ms, remaining: ms, color: color === 2 ? this.random(0, 1) : color, fx: null };
   }
 
   effect(img: Uint8Array | null, f: number[]): Effect {
@@ -227,7 +262,7 @@ export class Engine {
       const color = fx.color === 2 ? this.random(0, 1) : fx.color;
       if (life <= 0) continue;
       this.slots[i] = {
-        img: fx.img, x: (x + ox) * 256, y: (y + oy) * 256,
+        drawMode: this.drawingMode, img: fx.img, x: (x + ox) * 256, y: (y + oy) * 256,
         vx: tdiv(sp * 16 * isin(a), 127), vy: -tdiv(sp * 16 * isin(a + 90), 127),
         endVx: 0, endVy: 0, duration: life, remaining: life, color, fx,
       };
@@ -278,8 +313,11 @@ export class Engine {
       const x = Math.floor(p.x / 256) - this.camX, y = Math.floor(p.y / 256) - this.camY;
       const frames = p.img ? p.img[2] : 0;
       const frame = fx && frames > 1 ? Math.min(frames - 1, tdiv((p.duration - p.remaining) * frames, p.duration)) : 0;
+      const saved = this.drawingMode;
+      this.drawingMode = p.drawMode;
       if (p.img) this.drawImage(x - tdiv(p.img[0], 2), y - tdiv(p.img[1], 2), p.img, frame, p.color);
       else this.drawPixel(x, y, p.color === 0 ? 0 : 1);
+      this.drawingMode = saved;
     }
   }
 
@@ -345,6 +383,7 @@ export class Engine {
 
   drawPixel(x: number, y: number, color: number) {
     if (x < 0 || x >= 128 || y < 0 || y >= 64) return;
+    color = this.drawColor(x, y, color);
     const i = (y >> 3) * 128 + x;
     const bit = 1 << (y & 7);
     if (color === 1) this.buffer[i] |= bit;
@@ -368,10 +407,10 @@ export class Engine {
   drawRect(x: number, y: number, w: number, h: number, color: number) {
     if (w <= 0 || h <= 0) return;
     this.hline(x, y, w, color);
-    this.hline(x, y + h - 1, w, color);
+    if (h > 1) this.hline(x, y + h - 1, w, color);
     for (let j = 1; j < h - 1; j++) {
       this.drawPixel(x, y + j, color);
-      this.drawPixel(x + w - 1, y + j, color);
+      if (w > 1) this.drawPixel(x + w - 1, y + j, color);
     }
   }
 
@@ -397,23 +436,26 @@ export class Engine {
   }
 
   drawCircle(cx: number, cy: number, r: number, color: number, fill: boolean) {
-    let x = r;
-    let y = 0;
-    let err = 1 - r;
+    let x = r, y = 0, err = 1 - r;
     while (x >= y) {
+      const oldX = x, oldY = y;
       if (fill) {
         this.hline(cx - x, cy + y, 2 * x + 1, color);
-        this.hline(cx - x, cy - y, 2 * x + 1, color);
-        this.hline(cx - y, cy + x, 2 * y + 1, color);
-        this.hline(cx - y, cy - x, 2 * y + 1, color);
+        if (y) this.hline(cx - x, cy - y, 2 * x + 1, color);
       } else {
-        for (const [a, b] of [[x, y], [-x, y], [x, -y], [-x, -y], [y, x], [-y, x], [y, -x], [-y, -x]]) this.drawPixel(cx + a, cy + b, color);
+        const points = [[x, y], [-x, y], [x, -y], [-x, -y], [y, x], [-y, x], [y, -x], [-y, -x]];
+        for (let i = 0; i < points.length; i++) {
+          const [dx, dy] = points[i];
+          if (!points.slice(0, i).some(p => p[0] === dx && p[1] === dy)) this.drawPixel(cx + dx, cy + dy, color);
+        }
       }
       y++;
       if (err < 0) err += 2 * y + 1;
-      else {
-        x--;
-        err += 2 * (y - x) + 1;
+      else { x--; err += 2 * (y - x) + 1; }
+      // Draw each filled row once, including the widest span at the outer rows.
+      if (fill && oldX > oldY && (x !== oldX || y > x)) {
+        this.hline(cx - oldY, cy + oldX, 2 * oldY + 1, color);
+        this.hline(cx - oldY, cy - oldX, 2 * oldY + 1, color);
       }
     }
   }
@@ -430,6 +472,16 @@ export class Engine {
     if (frame >= frames) frame = 0;
     const data = 4 + frame * frameSize * (hasMask ? 2 : 1);
     const mask = data + frameSize;
+    const mode = this.drawingMode;
+    if (mode > 1) {
+      for (let cy = Math.max(0, -y); cy < Math.min(h, 64 - y); cy++) {
+        for (let cx = Math.max(0, -x); cx < Math.min(w, 128 - x); cx++) {
+          const color = this.imageColor(img, cx, cy, frame);
+          if (color >= 0) this.drawPixel(x + cx, y + cy, tint >= 0 ? (tint ? 1 : 0) : color);
+        }
+      }
+      return;
+    }
     const shift = y & 7;
     for (let p = 0; p < pages; p++) {
       const page = (y >> 3) + p;
@@ -442,11 +494,13 @@ export class Engine {
         if (tint >= 0) d = tint ? m : 0;
         if (page >= 0 && page < 8) {
           const b = page * 128 + col;
-          this.buffer[b] = (this.buffer[b] & ~m & 0xff) | (d & 0xff);
+          if (mode === 1) this.buffer[b] ^= m & 0xff;
+          else this.buffer[b] = (this.buffer[b] & ~m & 0xff) | (d & 0xff);
         }
         if (shift && page + 1 >= 0 && page + 1 < 8) {
           const b = (page + 1) * 128 + col;
-          this.buffer[b] = (this.buffer[b] & ~(m >> 8) & 0xff) | ((d >> 8) & 0xff);
+          if (mode === 1) this.buffer[b] ^= (m >> 8) & 0xff;
+          else this.buffer[b] = (this.buffer[b] & ~(m >> 8) & 0xff) | ((d >> 8) & 0xff);
         }
       }
     }
@@ -477,18 +531,47 @@ export class Engine {
 
   soundOff() {
     this.opts.tone(0);
-    this.opts.song?.(null, false);
+    this.stopSong();
     this.soundSteps = null;
     this.music = null;
   }
 
   /** Songs play in the background, same as playSong in ardublocks.h. */
   playSong(data: number[] | null, loop: boolean) {
-    if (data) this.opts.song?.(data, loop);
+    if (!data) return;
+    const pitch = this.pickPitch();
+    this.polyEffect = null;
+    this.songPlayback = { data, loop, pitch, offset: 0, startedAt: this.millis() };
+    if (this.opts.fourVoices === false) { this.fallbackSong = new AtmFallback(data, loop, this.millis(), pitch); this.songHz = -1; }
+    else if (pitch === 100) this.opts.song?.(data, loop);
+    else this.opts.song?.(data, loop, pitch);
   }
 
   stopSong() {
+    if (this.fallbackSong) this.opts.tone(0);
+    this.fallbackSong = null;
+    this.songPlayback = null;
+    this.polyEffect = null;
     this.opts.song?.(null, false);
+  }
+
+  /** Save the background position once, even if another effect interrupts this one. */
+  playPolyEffect(data: number[] | null) {
+    if (!data) return;
+    const now = this.millis(), pitch = this.pickPitch();
+    if (!this.polyEffect) {
+      if (this.songPlayback) this.songPlayback.offset += now - this.songPlayback.startedAt;
+      this.polyEffect = { until: 0, suspendedAt: now, fallback: this.fallbackSong };
+    }
+    this.polyEffect.until = now + songDurationMs(data);
+    if (this.opts.fourVoices === false) {
+      this.fallbackSong = new AtmFallback(data, false, now, pitch); this.songHz = -1;
+    } else if (pitch === 100) this.opts.song?.(data, false);
+    else this.opts.song?.(data, false, pitch);
+  }
+
+  setSongVolume(percent: number) {
+    if (this.opts.fourVoices !== false) this.opts.songVolume?.(Math.max(0, Math.min(100, Math.trunc(percent))));
   }
 
   setPitch(lo: number, hi: number) {
@@ -525,9 +608,32 @@ export class Engine {
     this.music = { steps, pos: 0, next: 0, tempo: Math.min(Math.max(bpm, 20), 600), loop, pitch: this.pickPitch() };
   }
 
+  get melodyPlaying(): boolean { return this.music !== null; }
+
+  private updateSong() {
+    if (this.pausedAt !== null) return;
+    if (this.polyEffect && this.millis() >= this.polyEffect.until) {
+      const effect = this.polyEffect, now = this.millis();
+      this.polyEffect = null;
+      this.fallbackSong = effect.fallback;
+      this.fallbackSong?.shiftTime(now - effect.suspendedAt);
+      this.songHz = -1;
+      if (this.songPlayback) {
+        const s = this.songPlayback;
+        s.startedAt = now;
+        if (this.opts.fourVoices !== false) this.opts.song?.(s.data, s.loop, s.pitch, s.offset / 1000);
+      } else if (this.opts.fourVoices !== false) this.opts.song?.(null, false);
+    }
+    if (!this.fallbackSong) return;
+    const hz = this.fallbackSong.update(this.millis());
+    if (this.soundSteps) this.songHz = -1;
+    else if (hz !== this.songHz) { this.opts.tone(hz); this.songHz = hz; }
+  }
+
   private updateSound() {
     if (this.pausedAt !== null) return;
     const now = this.millis();
+    this.updateSong();
     if (this.soundSteps && now >= this.soundNext) {
       if (this.soundPos >= this.soundSteps.length) {
         this.soundSteps = null;
@@ -547,6 +653,7 @@ export class Engine {
       }
       const f = this.pitched(m.steps[m.pos], m.pitch);
       const ms = Math.floor((m.steps[m.pos + 1] * 15000) / m.tempo);
+      this.opts.melodyStep?.(m.pos / 2, f);
       if (!this.soundSteps) this.opts.tone(f, f ? ms - Math.floor(ms / 8) : undefined);
       m.next = now + ms;
       m.pos += 2;
@@ -598,7 +705,8 @@ export class Engine {
       const poll = () => {
         if (this.stopped) return reject(new StopSignal());
         if (this.pausedAt === null && this.millis() >= until) return resolve();
-        setTimeout(poll, Math.min(10, Math.max(1, until - this.millis())));
+        this.updateSong();
+        setTimeout(poll, Math.min(this.fallbackSong ? 1 : 10, Math.max(1, until - this.millis())));
       };
       poll();
     });
@@ -607,6 +715,7 @@ export class Engine {
   setPaused(paused: boolean) {
     if (paused && this.pausedAt === null) {
       this.pausedAt = performance.now();
+      this.songHz = -1;
       this.opts.tone(0);
     } else if (!paused && this.pausedAt !== null) {
       this.startTime += performance.now() - this.pausedAt;
@@ -703,21 +812,98 @@ export class Engine {
     this.bgY = w16(y);
   }
 
+  setBackgroundLayer(layer: number, image: Uint8Array | null, percent: number) {
+    if (layer !== 1 && layer !== 2) return;
+    const state = this.backgroundLayers[layer - 1];
+    state.image = image;
+    state.percent = Math.max(0, Math.min(100, w16(percent)));
+  }
+
+  setBackgroundLayerPosition(layer: number, x: number, y: number) {
+    if (layer !== 1 && layer !== 2) return;
+    Object.assign(this.backgroundLayers[layer - 1], { x: w16(x), y: w16(y) });
+  }
+
+  changeBackgroundLayerPosition(layer: number, x: number, y: number) {
+    if (layer !== 1 && layer !== 2) return;
+    const state = this.backgroundLayers[layer - 1];
+    this.setBackgroundLayerPosition(layer, state.x + x, state.y + y);
+  }
+
   /** Same as ab::shake: strength in pixels (at most 16), time rounded up to whole frames. */
   shake(strength: number, ms: number) {
     this.shakeAmp = Math.max(0, Math.min(16, strength));
     this.shakeLeft = ms > 0 ? tdiv(ms + FRAME_MS - 1, FRAME_MS) : 0;
   }
 
-  /** Repeats the background to fill the screen. */
-  private drawBackground() {
-    const img = this.background;
+  /** Repeat each image in screen coordinates; shake is applied after parallax. */
+  private drawRepeatedBackground(img: Uint8Array | null, x: number, y: number) {
     if (!img) return;
     const w = img[0], h = img[1];
-    let x0 = w16(this.bgX - this.shakeX) % w, y0 = w16(this.bgY - this.shakeY) % h;
+    if (!w || !h) return;
+    let x0 = w16(x - this.shakeX) % w, y0 = w16(y - this.shakeY) % h;
     if (x0 > 0) x0 -= w;
     if (y0 > 0) y0 -= h;
     for (let y = y0; y < 64; y += h) for (let x = x0; x < 128; x += w) this.drawImage(x, y, img, 0);
+  }
+
+  private drawBackground() {
+    this.drawRepeatedBackground(this.background, this.bgX, this.bgY);
+    for (const layer of this.backgroundLayers) {
+      this.drawRepeatedBackground(layer.image,
+        layer.x - tdiv((this.camX - this.shakeX) * layer.percent, 100),
+        layer.y - tdiv((this.camY - this.shakeY) * layer.percent, 100));
+    }
+  }
+
+  /** -1 is transparent. Black pixels in a mask are opaque. */
+  private imageColor(img: Uint8Array | null, x: number, y: number, frame = 0): number {
+    if (!img || x < 0 || y < 0 || x >= img[0] || y >= img[1]) return -1;
+    const size = ((img[1] + 7) >> 3) * img[0];
+    const masked = img[3] & 1;
+    if (frame >= img[2]) frame = 0;
+    const data = 4 + frame * size * (masked ? 2 : 1);
+    const offset = (y >> 3) * img[0] + x, bit = 1 << (y & 7);
+    const color = img[data + offset] & bit ? 1 : 0;
+    return (masked ? img[data + size + offset] & bit : color) ? color : -1;
+  }
+
+  private repeatedColor(img: Uint8Array | null, x: number, y: number, ox: number, oy: number) {
+    if (!img || !img[0] || !img[1]) return -1;
+    const mod = (v: number, size: number) => ((v % size) + size) % size;
+    return this.imageColor(img, mod(x - w16(ox - this.shakeX), img[0]), mod(y - w16(oy - this.shakeY), img[1]));
+  }
+
+  private layerColor(layer: number, x: number, y: number) {
+    const state = this.backgroundLayers[layer];
+    return this.repeatedColor(state.image, x, y,
+      state.x - tdiv((this.camX - this.shakeX) * state.percent, 100),
+      state.y - tdiv((this.camY - this.shakeY) * state.percent, 100));
+  }
+
+  private drawColor(x: number, y: number, fallback: number): number {
+    const mode = this.drawingMode;
+    if (!mode) return fallback;
+    if (mode === 1) return 2;
+    let color = -1;
+    if (mode === 2) {
+      color = Math.max(0, this.repeatedColor(this.background, x, y, this.bgX, this.bgY));
+      for (let i = 0; i < 2; i++) { const c = this.layerColor(i, x, y); if (c >= 0) color = c; }
+      const wx = x + this.camX, wy = y + this.camY;
+      const tile = this.tileAt(wx >> 3, wy >> 3);
+      const c = this.imageColor(this.tileImages[tile] ?? null, wx & 7, wy & 7);
+      if (tile && c >= 0) color = c;
+    } else if (mode === 3 || mode === 4) color = this.layerColor(mode - 3, x, y);
+    else if (mode >= 5) {
+      const s = this.drawingMode - 5;
+      if (this.exists(s)) {
+        const sp = this.sprites[s];
+        if (!(sp.flags & FLAG_INVISIBLE) && sp.img) color = this.imageColor(sp.img,
+          x + this.camX - (px(sp.x) - tdiv(sp.img[0], 2)),
+          y + this.camY - (px(sp.y) - tdiv(sp.img[1], 2)), sp.frame);
+      }
+    }
+    return color < 0 ? fallback : 1 - color;
   }
 
   private drawMap() {
@@ -799,6 +985,8 @@ export class Engine {
     for (let i = 0; i < this.maxSprites; i++) {
       if (!this.sprites[i].alive) {
         const sp = newSprite();
+        this.forgetDrawReference(i);
+        sp.drawMode = this.drawingMode;
         sp.alive = true;
         sp.img = img;
         sp.kind = kind;
@@ -825,8 +1013,18 @@ export class Engine {
     return s;
   }
 
+  createProjectileFromPosition(img: Uint8Array | null, x: number, y: number, vx: number, vy: number): number {
+    const s = this.createProjectile(img, vx, vy, NONE);
+    this.setPosition(s, x, y);
+    return s;
+  }
+
   destroy(s: number) {
-    if (s >= 0 && s < this.maxSprites) this.sprites[s].alive = false;
+    if (s >= 0 && s < this.maxSprites) {
+      this.speechHide(s);
+      this.forgetDrawReference(s);
+      this.sprites[s].alive = false;
+    }
     if (s === this.cameraSprite) this.cameraSprite = NONE;
   }
 
@@ -1117,7 +1315,86 @@ export class Engine {
         }
       }
     }
+    const saved = this.drawingMode;
+    this.drawingMode = sp.drawMode;
     this.drawImage(x, y, sp.img, sp.frame);
+    this.drawingMode = saved;
+  }
+
+  // Speech is copied when say runs; changing a variable needs another say call.
+  limitText(value: unknown, max = 31): string {
+    return Array.from(String(value), c => c === '\n' || (c >= ' ' && c <= '~') ? c : '?').join('').slice(0, this.opts.tiny ? Math.min(21, max) : max);
+  }
+
+  say(s: number, value: string, ms = 0) {
+    if (!this.exists(s)) return;
+    const text = this.limitText(value, 63);
+    if (!text || ms < 0) { this.speechHide(s); return; }
+    let slot = this.speeches.find(b => b.sprite === s);
+    if (!slot) {
+      if (this.speeches.length >= (this.opts.tiny ? 1 : 2)) this.speeches.shift();
+      slot = { sprite: s, text, started: this.millis(), duration: ms };
+      this.speeches.push(slot);
+    }
+    slot.text = text;
+    slot.started = this.millis();
+    slot.duration = ms;
+  }
+
+  speechHide(s: number) { this.speeches = this.speeches.filter(b => b.sprite !== s); }
+  speechPosition(s: number, position: number) {
+    if (this.exists(s)) this.sprites[s].speechPosition = Math.max(0, Math.min(2, position));
+  }
+  speechWidth(s: number, width: number) {
+    if (this.exists(s)) this.sprites[s].speechWidth = Math.max(14, Math.min(128, width));
+  }
+  speechColors(s: number, text: number, background: number) {
+    if (this.exists(s)) this.sprites[s].speechColors = 4 | (text ? 1 : 0) | (background ? 2 : 0);
+  }
+
+  private drawSpeech() {
+    const now = this.millis();
+    this.speeches = this.speeches.filter(b => this.exists(b.sprite) && (!b.duration || now - b.started < b.duration));
+    const saved = this.drawingMode;
+    this.drawingMode = 0;
+    for (const b of this.speeches) {
+      const sp = this.sprites[b.sprite];
+      if (sp.flags & FLAG_INVISIBLE) continue;
+      const columns = Math.floor(((sp.speechWidth || 86) - 6) / 4);
+      const all = speechLines(b.text, columns);
+      const page = Math.floor((now - b.started) / 1500) % Math.ceil(all.length / 3);
+      const lines = all.slice(page * 3, page * 3 + 3);
+      const width = Math.max(14, Math.max(...lines.map(l => l.length)) * 4 + 6);
+      const height = lines.length * 6 + 5;
+      const cx = px(sp.x) - this.camX;
+      const top = px(sp.y) - Math.floor((sp.img?.[1] || 0) / 2) - this.camY;
+      const bottom = top + (sp.img?.[1] || 0);
+      const x = Math.max(0, Math.min(128 - width, cx - Math.floor(width / 2)));
+      let below = sp.speechPosition === 2 || (sp.speechPosition === 0 && top < height + 3);
+      if (below && bottom + 3 + height > 64 && top >= height + 3) below = false;
+      if (!below && top < height + 3 && bottom + 3 + height <= 64) below = true;
+      const y = Math.max(0, Math.min(64 - height, below ? bottom + 3 : top - height - 3));
+      const colors = sp.speechColors || 6; // black text, white background
+      const fg = colors & 1, bg = (colors >> 1) & 1;
+      this.fillRect(x, y, width, height, bg);
+      this.drawRect(x, y, width, height, 1 - bg);
+      const tailX = Math.max(x + 3, Math.min(x + width - 4, cx));
+      this.fillRect(tailX - 1, below ? y : y + height - 1, 3, 1, bg);
+      for (let i = 0; i < 3; i++) {
+        const ty = below ? y - 1 - i : y + height + i;
+        if (ty < 0 || ty >= 64) continue;
+        this.fillRect(tailX - 2 + i, ty, 5 - i * 2, 1, 1 - bg);
+        if (i < 2) this.fillRect(tailX - 1 + i, ty, 3 - i * 2, 1, bg);
+      }
+      lines.forEach((line, row) => {
+        for (let c = 0; c < line.length; c++) {
+          const glyph = (line.charCodeAt(c) - 32) * 3;
+          for (let gx = 0; gx < 3; gx++) for (let gy = 0; gy < 5; gy++)
+            if (FONT_3X5[glyph + gx] & (1 << gy)) this.drawPixel(x + 3 + c * 4 + gx, y + 3 + row * 6 + gy, fg);
+        }
+      });
+    }
+    this.drawingMode = saved;
   }
 
   // Score and lives -------------------------------------------------------
@@ -1264,7 +1541,9 @@ export class Engine {
   }
 
   private async restart() {
+    this.setSongVolume(100);
     this.clearParticles();
+    this.speeches = [];
     this.sprites = Array.from({ length: this.maxSprites }, newSprite);
     this.map = null;
     this.camX = this.camY = 0;
@@ -1278,7 +1557,9 @@ export class Engine {
     this.soundOff();
     this.inverted = false;
     this.frameCount = 0;
+    this.drawingMode = 0;
     this.background = null;
+    this.backgroundLayers.forEach(layer => Object.assign(layer, { image: null, percent: 0, x: 0, y: 0 }));
     this.bgX = this.bgY = this.shakeLeft = 0;
     this.pitchLo = this.pitchHi = 100;
     this.hooks.init();
@@ -1381,6 +1662,7 @@ export class Engine {
         this.camY -= this.shakeY;
       }
       if (this.stopped) return false;
+      this.drawSpeech();
       this.drawHud();
       this.opts.show(this.buffer, this.inverted);
 

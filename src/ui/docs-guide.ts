@@ -5,6 +5,9 @@ import { tinyDipPin } from '../hw/attiny85-pinout';
 import { getChip } from '../hw/chips';
 import { platformer } from '../templates/platformer';
 import { h } from './dom';
+import { musicGuide } from './docs-music';
+import favouritesExample from '../../docs/images/favourites.png';
+import backgroundExample from '../../assets/backgrounds/mono/forest-path.png';
 
 type Json = Record<string, any>;
 const asset = (file: string) => `${import.meta.env.BASE_URL}docs/${file}`;
@@ -24,17 +27,33 @@ function step(id: string, file?: string) {
 }
 
 export function illustratedGuide(id: string, picture: (blocks: Json[], overview?: boolean) => HTMLElement): HTMLElement {
+  if (id === 'sound') return musicGuide(picture);
   const el = h('div', { class: 'docs-illustrated' });
   if (id === 'start') {
     el.append(figure('arduboy-front-back.jpg', 'docs.visual.arduboy.caption', 'Foto: Drummyfish · CC0'),
-      step('first'), figure('simulator.png', 'docs.visual.sim.caption'));
+      step('first'), figure('simulator.png', 'docs.visual.sim.caption'),
+      h('article', { class: 'docs-step' }, h('h3', {}, t('docs.search.help.title')),
+        ...t('docs.search.help.body').split('\n\n').map(p => h('p', {}, p)),
+        h('figure', { class: 'docs-figure' },
+          h('div', { class: 'docs-search-preview' }, h('span', {}, t('docs.search.label')), h('strong', {}, 'collision')),
+          h('figcaption', {}, t('docs.search.placeholder')))));
   } else if (id === 'blocks') {
     el.append(step('events'), picture([
       { type: 'ab_on_start', inputs: { DO: { block: { type: 'ab_score_set', inputs: { VALUE: { shadow: { type: 'math_number', fields: { NUM: 0 } } } } } } } },
       { type: 'ab_on_button', fields: { BUTTON: 'a', EVENT: 'pressed' }, inputs: { DO: { block: { type: 'ab_score_change', inputs: { VALUE: { shadow: { type: 'math_number', fields: { NUM: 1 } } } } } } } },
     ]), step('code'), picture((platformer.blocks as Json).blocks.blocks, true));
+  } else if (id === 'favourites') {
+    el.append(h('figure', { class: 'docs-figure' },
+      h('a', { href: favouritesExample, target: '_blank', rel: 'noopener', 'aria-label': t('docs.visual.enlarge') },
+        h('img', { src: favouritesExample, alt: t('docs.favourites.title'), loading: 'lazy' })),
+      h('figcaption', {}, t('docs.favourites.title'))));
   } else if (id === 'assets') {
-    el.append(step('sprite', 'sprites.png'), step('tile', 'tiles.png'), step('map', 'tilemap.png'), step('connect'));
+    el.append(step('sprite', 'sprites.png'), step('tile', 'tiles.png'), step('map', 'tilemap.png'),
+      step('background'),
+      h('figure', { class: 'docs-figure' },
+        h('img', { class: 'library-set-preview', src: backgroundExample, width: 512, height: 256, alt: t('docs.visual.background.caption'), loading: 'lazy' }),
+        h('figcaption', {}, t('docs.visual.background.caption'))),
+      step('connect'));
   } else if (id === 'sim') {
     el.append(figure('simulator.png', 'docs.visual.sim.caption'), step('test'));
   } else if (id === 'device') {

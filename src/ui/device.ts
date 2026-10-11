@@ -72,7 +72,10 @@ export class DeviceTools {
     const statements = build.cpp.code.split('\n').filter((l) => l.trim().endsWith(';')).length;
     const flash = 9000 + statements * 14 + assets + (chip.id === 'atmega32u4' ? 3500 : 0);
     const cells = Math.max(8, ...p.tilemaps.map((m) => m.width * m.height));
-    const ram = 1024 + this.app.maxSprites() * 25 + build.program.vars.length * 2 + Math.ceil(cells / 8) + 120 + (chip.id === 'atmega32u4' ? 200 : 0);
+    const drawModeRam = build.cpp.code.includes('#define AB_HAS_DRAW_MODE 1')
+      ? 1 + this.app.maxSprites() + (build.cpp.code.includes('#define AB_HAS_PARTICLES 1') ? (chip.tiny ? 4 : this.app.maxSprites() <= 12 ? 12 : 16) : 0)
+      : 0;
+    const ram = drawModeRam + 1024 + this.app.maxSprites() * 25 + build.program.vars.length * 2 + Math.ceil(cells / 8) + 120 + (chip.id === 'atmega32u4' ? 200 : 0);
     this.meter(flash, ram, true);
   }
 

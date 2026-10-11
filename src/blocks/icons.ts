@@ -8,6 +8,7 @@ const svg = (body: string) =>
   );
 
 export const ICONS = {
+  favourites: svg('<path d="M8 1l2.1 4.4 4.9.7-3.5 3.4.8 4.8L8 12l-4.3 2.3.8-4.8L1 6.1l4.9-.7z"/>'),
   game: svg('<rect x="1.5" y="4" width="13" height="8"/><path d="M4.5 8h3M6 6.5v3"/><circle cx="11" cy="7" r=".6"/><circle cx="12.3" cy="9" r=".6"/>'),
   sprites: svg('<path d="M4 2.5h8v3h2v6h-2v2H4v-2H2v-6h2z"/><path d="M6 7h1M9 7h1"/>'),
   controller: svg('<circle cx="8" cy="8" r="6"/><path d="M8 4.5v2M8 9.5v2M4.5 8h2M9.5 8h2"/>'),
@@ -15,6 +16,7 @@ export const ICONS = {
   info: svg('<path d="M8 2.5l1.7 3.5 3.8.5-2.8 2.6.7 3.8L8 11l-3.4 1.9.7-3.8-2.8-2.6 3.8-.5z"/>'),
   graphics: svg('<path d="M2.5 13.5l3-1 7.5-7.5-2-2L3.5 10.5z"/><path d="M9.5 4.5l2 2"/>'),
   particles: svg('<path d="M3 13l4-4M9 7l2-2"/><rect x="11.5" y="1.5" width="2" height="2"/><rect x="13" y="6" width="1.5" height="1.5"/><rect x="7" y="2" width="1.5" height="1.5"/><circle cx="3" cy="13" r="1.4"/>'),
+  beep: svg('<path d="M7 12V2l5 2v3L7 5"/><circle cx="5" cy="12" r="2"/>'),
   music: svg('<path d="M6 12.5V3.5l7-1.5v9"/><circle cx="4.5" cy="12.5" r="1.8"/><circle cx="11.5" cy="11" r="1.8"/>'),
   logic: svg('<path d="M2 8h4l2-4h6M8 8l2 4h4"/>'),
   loops: svg('<path d="M12.5 6A5 5 0 1 0 13 9.5"/><path d="M13 2.5V6H9.5"/>'),

@@ -1,0 +1,18 @@
+{
+  "generator": "PixelLab PixFlux",
+  "width": 128,
+  "height": 64,
+  "palette": [
+    "#000000",
+    "#FFFFFF"
+  ],
+  "selected": "title-screen",
+  "prompt": "Native 128x64 pixel monochrome 1-bit videogame SPLASH SCREEN, spectacular polished retro arcade cover for 'VOID RUNNER'. The exact words VOID and RUNNER in large beautifully designed custom angular science-fiction pixel lettering, stacked at the TOP LEFT, VOID on top, RUNNER underneath, both readable, spanning left 75 pixels and upper 36 rows. Bold futuristic squared-off typography with clever black stencil cuts, no rounded corners. On the RIGHT an athletic space courier with dark helmet and white visor sprinting to the right across a rooftop, dynamic heroic pose, detailed armor, streaming scarf, tall futuristic space colony towers behind and below, distant planet a true pixel circle at upper right. Dramatic black negative space behind the letters, tiny sparse stars, architectural depth and white rim lighting, deliberate expert pixel clusters and restrained ordered dithering. Bottom 9 rows completely black, empty for a start prompt added later. Only title words VOID RUNNER, no subtitle or other text. NO border or UI frame. Black #000000 white #FFFFFF ONLY, no colors or gray, no antialiasing, no ovals or rounded rectangles. Artwork drawn directly as native 128x64 pixels, beautifully balanced readable composition.",
+  "job": "df7ec2b4-931e-4ffb-8024-3a0b34fe4f0c",
+  "url": "https://api.pixellab.ai/mcp/images/df7ec2b4-931e-4ffb-8024-3a0b34fe4f0c/download",
+  "conversion": "No resizing or dithering; retain black/white pixels; clear rows 55–63 for localized start prompt.",
+  "sceneTrial": {
+    "prompt": "A spectacular monochrome 1-bit retro videogame title screen illustration drawn DIRECTLY at native 128x64 pixels. Cinematic science fiction parkour: on the RIGHT HALF a heroic helmeted space courier sprinting toward the right, dynamic leaning forward silhouette, bright angular visor, armored boots, scarf streaming behind, on a sharp industrial rooftop ledge. Behind the runner a deep futuristic orbital colony with tall angular towers, tiny illuminated windows, antennas, layered silhouettes, a large perfectly circular eclipsed planet in upper right sky, sparse stars. Beautiful expert hand-pixelled clusters and selective ordered dithering, dramatic black shadows and white rim lighting, readable figure, rich atmospheric detail without random noise. LEFT HALF (x 0 to 69, y 0 to 51) must be pure black quiet negative space reserved for title lettering to be added later; architecture can run along the lower edge and runner occupies x 75 to 120. Lower 9 rows pure black reserved for start prompt. NO TEXT, NO LETTERS, no labels, no borders, no UI. BLACK #000000 and WHITE #FFFFFF only, no grayscale, no colors, no antialiasing. Rectangular architecture has sharp square corners, no rounded rectangles or ovals; planet is a true circle. Strong polished arcade cover composition.",
+    "job": "bb6fb661-976d-43a6-99be-9b4f9db1a172"
+  }
+}

@@ -3,6 +3,7 @@
 // the block.
 
 import * as Blockly from 'blockly/core';
+import { FavouriteIcon } from './favourites';
 import { t } from '../i18n/i18n';
 
 let openInfo: (type: string) => void = () => {};
@@ -58,7 +59,23 @@ class InfoFlyoutInflater extends Blockly.BlockFlyoutInflater {
   override createBlock(definition: Blockly.utils.toolbox.BlockInfo, workspace: Blockly.WorkspaceSvg): Blockly.BlockSvg {
     const block = super.createBlock(definition, workspace);
     block.addIcon(new InfoIcon(block));
+    if (workspace.targetWorkspace) block.addIcon(new FavouriteIcon(block, definition, workspace.targetWorkspace));
     return block;
+  }
+}
+
+/** Section labels have real SVG rules above and below their category name. */
+class SectionLabelInflater extends Blockly.LabelFlyoutInflater {
+  override load(state: object, flyout: Parameters<Blockly.LabelFlyoutInflater['load']>[1]) {
+    const item = super.load(state, flyout);
+    if ((state as Record<string, unknown>)['web-class'] === 'ab-favourite-heading') {
+      const label = item.getElement() as Blockly.FlyoutButton;
+      const root = label.getSvgRoot();
+      for (const y of [0, label.height]) Blockly.utils.dom.createSvgElement('line',
+        { x1: 0, x2: Math.max(220, label.width), y1: y, y2: y, stroke: '#999', 'stroke-width': 1 }, root);
+      label.width = Math.max(220, label.width);
+    }
+    return item;
   }
 }
 
@@ -68,6 +85,7 @@ export function registerBlockInfo() {
   if (registered) return;
   registered = true;
   Blockly.registry.register(Blockly.registry.Type.FLYOUT_INFLATER, 'block', InfoFlyoutInflater, true);
+  Blockly.registry.register(Blockly.registry.Type.FLYOUT_INFLATER, 'label', SectionLabelInflater, true);
   // Blockly's own Help item opens web pages for some blocks only.
   const menu = Blockly.ContextMenuRegistry.registry;
   if (menu.getItem('blockHelp')) menu.unregister('blockHelp');

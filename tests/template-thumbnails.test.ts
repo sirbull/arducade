@@ -43,3 +43,21 @@ describe('template gallery pictures', () => {
     expect(lit(b, 15, 19, 1, 5)).toBe(true);
   });
 });
+
+it('resolves template display text and keeps the runner thumbnail script without mutating the source', async () => {
+  const { instantiateTemplate } = await import('../src/project/model');
+  const project = templateToProject(TEMPLATE_SOURCES.find(t => t.id === 'endlessrunner')!);
+  const blocks = JSON.stringify(project.blocks);
+  const localized = instantiateTemplate(project, 'en');
+  localized.template!.thumbnail = project.template!.thumbnail;
+  const raw = await thumbnailScreen(project);
+  const translated = await thumbnailScreen(localized);
+  expect(raw).toEqual(translated);
+  expect(raw.some(byte => byte !== 0)).toBe(true);
+  // The gallery must show the splash artwork rather than tapping A to start.
+  const title = project.images.find(image => image.id === 'titleScreen')!.frames[0];
+  for (let y = 0; y < 55; y++) for (let x = 0; x < 128; x++) {
+    expect((raw[(y >> 3) * 128 + x] >> (y & 7)) & 1).toBe(Number(title[y][x]));
+  }
+  expect(JSON.stringify(project.blocks)).toBe(blocks);
+});

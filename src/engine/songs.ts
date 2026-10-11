@@ -11,11 +11,22 @@
 
 import { parseMelody } from './melody';
 
+/** Optional sound shaping; commands are shared by the device and simulator. */
+export interface VoiceSound {
+  volume: number;
+  /** Volume lost on each tracker tick; each new note retriggers the envelope. */
+  decay: number;
+  /** Semitone glide on each tick, for rising zaps or falling blasts. */
+  glide?: 'up' | 'down';
+  vibrato?: { depth: number; ticks: number };
+}
+
 export interface SongDef {
   /** Beats per minute, in steps of 10: the player runs tempo / 10 ticks per ATMlib tempo step. */
   tempo: number;
   /** Note text for each voice, in the order pulse, square, triangle, noise. */
   voices: [string, string, string, string];
+  sounds?: [VoiceSound, VoiceSound, VoiceSound, VoiceSound];
 }
 
 const bars = (text: string, n: number) => Array(n).fill(text).join(' ');
@@ -186,11 +197,14 @@ function delay(out: number[], ticks: number) {
   for (; ticks > 0; ticks -= 64) out.push(159 + Math.min(ticks, 64));
 }
 
-function voice(text: string, ch: number, tempo: number): number[] {
+function voice(text: string, ch: number, tempo: number, sound?: VoiceSound): number[] {
   const out: number[] = [];
   if (ch === 0) out.push(0x9d, Math.min(255, Math.max(1, Math.round(tempo / 10)))); // set tempo
-  out.push(0x40, VOLUME[ch]); // set volume
-  if (FADE[ch]) out.push(0x41, FADE[ch] & 0xff); // volume slide
+  out.push(0x40, sound?.volume ?? VOLUME[ch]); // set volume
+  const fade = sound ? -sound.decay : FADE[ch];
+  if (fade) out.push(0x41, fade & 0xff); // volume slide
+  if (ch !== 3 && sound?.glide) out.push(0x52, sound.glide === 'down' ? 0x80 : 0);
+  if (ch !== 3 && sound?.vibrato) out.push(0x50, sound.vibrato.depth, sound.vibrato.ticks);
   const { steps } = parseMelody(text);
   for (let i = 0; i < steps.length; i += 2) {
     const ticks = steps[i + 1] * TICKS;
@@ -215,7 +229,7 @@ function voice(text: string, ch: number, tempo: number): number[] {
 
 /** ATMlib song data: track table, a start track for each channel, the tracks. */
 export function songBytes(def: SongDef): number[] {
-  const tracks = def.voices.map((text, ch) => voice(text, ch, def.tempo));
+  const tracks = def.voices.map((text, ch) => voice(text, ch, def.tempo, def.sounds?.[ch]));
   const head = [tracks.length];
   let at = 0;
   for (const t of tracks) {

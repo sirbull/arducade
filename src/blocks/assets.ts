@@ -2,6 +2,7 @@
 // tile maps and sprite kinds.
 
 import * as Blockly from 'blockly/core';
+import { SONG_NAMES } from '../engine/songs';
 import { BUILTIN_KINDS } from '../engine/enums';
 import type { Project, PixelRows } from '../project/model';
 import { pixelAt } from '../project/model';
@@ -150,6 +151,29 @@ class TilemapField extends AssetDropdown {
   }
 }
 
+class MelodyField extends AssetDropdown {
+  constructor() { super(() => [...(current?.melodies ?? []).map(m=>[m.name,m.id] as Option), ...SONG_NAMES.map(name=>[String(Blockly.Msg[`AB_SONG_${name.toUpperCase()}`] ?? name),'preset:'+name] as Option)]); }
+  static fromJson() { return new MelodyField(); }
+  protected override doClassValidation_(value?: string) { return typeof value === 'string' ? value : null; }
+}
+
+class SongField extends AssetDropdown {
+  constructor() { super(() => current?.songs?.length ? current.songs.map(m => [m.name, m.id]) : [[noneLabel, '']]); }
+  static fromJson() { return new SongField(); }
+  protected override doClassValidation_(value?: string) { return typeof value === 'string' ? value : null; }
+}
+
+/** Built-ins retain their saved values; the prefix keeps asset IDs unambiguous. */
+export const SONG_ASSET_PREFIX = 'asset:';
+class SongChoiceField extends AssetDropdown {
+  constructor() { super(() => [
+    ...(current?.songs ?? []).map(song => [song.name, SONG_ASSET_PREFIX + song.id] as Option),
+    ...SONG_NAMES.map(name => [String(Blockly.Msg[`AB_SONG_${name.toUpperCase()}`] ?? name), name] as Option),
+  ]); }
+  static fromJson() { return new SongChoiceField(); }
+  protected override doClassValidation_(value?: string) { return typeof value === 'string' ? value : null; }
+}
+
 class KindField extends AssetDropdown {
   constructor() {
     super(kindOptions);
@@ -163,6 +187,9 @@ let registered = false;
 export function registerAssetFields() {
   if (registered) return;
   registered = true;
+  Blockly.fieldRegistry.register('field_ab_melody', MelodyField);
+  Blockly.fieldRegistry.register('field_ab_song', SongField);
+  Blockly.fieldRegistry.register('field_ab_song_choice', SongChoiceField);
   Blockly.fieldRegistry.register('field_ab_image', ImageField);
   Blockly.fieldRegistry.register('field_ab_background', BackgroundField);
   Blockly.fieldRegistry.register('field_ab_tile', TileField);

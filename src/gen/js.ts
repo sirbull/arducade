@@ -3,10 +3,10 @@
 // division by zero gives 0.
 
 import { getApi } from '../engine/api';
-import { checkProgram, typeOf, type TypeInfo } from '../ir/check';
+import { checkProgram, forEachExpr, typeOf, type TypeInfo } from '../ir/check';
 import type { Diagnostic, Expr, Program, Stmt, Ty } from '../ir/ir';
 import { encodeBackground, encodeImage, encodeTilemap, type Project } from '../project/model';
-import { buttonMatch, effectFields, effectNames, enumNumber, eventsOf, hash16, melodies, Names, songs } from './common';
+import { buttonMatch, effectFields, effectNames, enumNumber, eventsOf, hasParallax, hash16, melodies, Names, songs } from './common';
 import { stringLiteral, wrap16 } from './names';
 import { Writer } from './writer';
 import { levelTransitionCode } from './levels';
@@ -41,6 +41,7 @@ class JsGen {
   diagnostics: Diagnostic[] = [];
   locals?: Map<string, Ty>;
   private tmp = 0;
+  private textCapacity = 31;
   private debugIds: string[] = [];
   private melodies: ReturnType<typeof melodies>;
   private songs: ReturnType<typeof songs>;
@@ -48,20 +49,22 @@ class JsGen {
 
   constructor(private program: Program, private project: Project) {
     this.names = new Names(project);
-    this.melodies = melodies(program);
-    this.songs = songs(program);
+    this.melodies = melodies(program, project);
+    this.songs = songs(program, project);
     this.effects = effectNames(program, this.names);
   }
 
   run(): JsResult {
     const { info } = checkProgram(this.program);
     this.info = info;
+    forEachExpr(this.program, e => { if (e.k === 'api' && (e.fn === 'sprites.say' || e.fn.startsWith('sprites.speech'))) this.textCapacity = 63; });
     const w = this.w;
     const p = this.program;
     const pr = this.project;
+    w.line(`E.textCapacity = ${this.textCapacity};`);
 
     for (const img of pr.images) w.line(`const ${this.names.image(img.id)} = E.image([${encodeImage(img.width, img.height, img.frames).join(',')}]);`);
-    for (const bg of pr.backgrounds) w.line(`const ${this.names.image(bg.id)} = E.image([${encodeBackground(bg).join(',')}]);`);
+    for (const bg of pr.backgrounds) w.line(`const ${this.names.image(bg.id)} = E.image([${encodeBackground(bg, hasParallax(p)).join(',')}]);`);
     const tiles = pr.tiles.map((t) => `E.image([${encodeImage(8, 8, [t.pixels]).join(',')}])`);
     let solid = 0;
     pr.tiles.forEach((t, i) => {
@@ -89,7 +92,7 @@ class JsGen {
       w.line(`async function ${this.names.funcs.get(f.name)}(${params}) {`);
       w.indent();
       this.stmts(f.body);
-      if (t.ret !== 'void') w.line(`return ${t.ret === 'bool' ? 'false' : t.ret === 'sprite' ? '255' : '0'};`);
+      if (t.ret !== 'void') w.line(`return ${t.ret === 'bool' ? 'false' : t.ret === 'sprite' ? '255' : t.ret === 'str' ? '""' : '0'};`);
       w.dedent();
       w.line('}');
       this.locals = undefined;
@@ -132,7 +135,7 @@ class JsGen {
     w.indent();
     w.line(`inspect() { return { ${vars.map(([name]) => `${stringLiteral(name)}: ${this.names.vars.get(name)}`).join(', ')} }; },`);
     w.line('init() {');
-    for (const [name, ty] of vars) w.line(`  ${this.names.vars.get(name)} = ${ty === 'sprite' ? '255' : ty === 'bool' ? 'false' : '0'};`);
+    for (const [name, ty] of vars) w.line(`  ${this.names.vars.get(name)} = ${ty === 'sprite' ? '255' : ty === 'bool' ? 'false' : ty === 'str' ? '""' : '0'};`);
     eventsOf(p, 'every').forEach((_, i) => w.line(`  every_${i}.t = 0;`));
     w.line('},');
     w.line(`async start() { ${start.join(' ')} },`);
@@ -252,6 +255,21 @@ class JsGen {
         w.line('}');
         break;
       }
+      case 'drawMode': {
+        const saved = `drawMode${this.tmp++}`;
+        w.line('{');
+        w.indent();
+        w.line(`const ${saved} = E.drawingMode;`);
+        w.line(`E.drawingMode = ${this.expr(s.mode)};`);
+        w.line('try {');
+        w.indent();
+        this.stmts(s.body);
+        w.dedent();
+        w.line(`} finally { E.drawingMode = ${saved}; }`);
+        w.dedent();
+        w.line('}');
+        break;
+      }
       case 'break':
         w.line('break;');
         break;
@@ -279,7 +297,7 @@ class JsGen {
       else parts.push(`String(${this.expr(x)})`);
     };
     add(e);
-    return parts.length ? `(${parts.join(' + ')}).slice(0, 31)` : '""';
+    return parts.length ? `E.limitText(${parts.join(' + ')}, ${this.textCapacity})` : '""';
   }
 
   expr(e: Expr): string {
@@ -322,20 +340,25 @@ class JsGen {
       case 'enum':
         if (e.type === 'image') return this.names.image(e.v) ?? 'null';
         if (e.type === 'tilemap') return this.names.tilemap(e.v) ?? 'null';
-        if (e.type === 'melody') return this.melodies.get(e.v)!.name;
+        if (e.type === 'melodyAsset') return this.melodies.get(`asset:${e.v}`)?.name ?? '[]';
+        if (e.type === 'melody') return this.melodies.get(`text:${e.v}`)!.name;
+        if(e.type==='polyEffect')return this.songs.get(`effect:${e.v}`)?.name ?? 'null';
+        if (e.type === 'songAsset') return this.songs.get(`asset:${e.v}`)?.name ?? 'null';
         if (e.type === 'song') return this.songs.get(e.v)?.name ?? 'null';
         if (e.type === 'effect') return this.effects.get(e.v)?.id ?? 'null';
         return String(enumNumber(e.type, e.v, this.names));
       case 'api': {
         const fn = getApi(e.fn);
         if (!fn) return '0';
+        const first = e.args[0];
+        const tempo = first?.k === 'enum' ? this.project.melodies?.find(m => m.id === first.v)?.tempo ?? 120 : 120;
         const args = fn.args.map((t, i) => {
           const a = e.args[i];
           if (!a) return '0';
           if (t === 'str') return this.text(a);
           return this.expr(a);
         });
-        const code = fn.js.replace(/\$(\d)/g, (_, n) => args[Number(n)] ?? '0');
+        const code = fn.js.replace('$tempo', String(tempo)).replace(/\$(\d)/g, (_, n) => args[Number(n)] ?? '0');
         return fn.async ? `(${code})` : code;
       }
     }

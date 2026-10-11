@@ -5,7 +5,7 @@
 export type Ty = 'num' | 'bool' | 'str' | 'sprite' | 'void';
 
 /** Values chosen from a fixed list, for example a sprite kind or a button. */
-export type EnumType = 'kind' | 'button' | 'flag' | 'prop' | 'dir' | 'sfx' | 'color' | 'image' | 'tile' | 'tilemap' | 'melody' | 'effect' | 'song';
+export type EnumType = 'kind' | 'button' | 'flag' | 'prop' | 'dir' | 'sfx' | 'color' | 'image' | 'tile' | 'tilemap' | 'melody' | 'melodyAsset' | 'effect' | 'song' | 'songAsset' | 'polyEffect';
 
 export type BinOp = '+' | '-' | '*' | '/' | '%' | '==' | '!=' | '<' | '<=' | '>' | '>=' | '&&' | '||';
 
@@ -38,6 +38,7 @@ export type Stmt = Node &
     | { k: 'repeat'; count: Expr; body: Stmt[] }
     | { k: 'for'; name: string; from: Expr; to: Expr; body: Stmt[] }
     | { k: 'forKind'; name: string; kind: Expr; body: Stmt[] }
+    | { k: 'drawMode'; mode: Expr; body: Stmt[] }
     | { k: 'break' }
     | { k: 'continue' }
     | { k: 'return'; value?: Expr }
@@ -113,7 +114,7 @@ export interface Program {
 
 /** A problem found while making or checking the IR. */
 export interface Diagnostic {
-  level: 'error' | 'warning';
+  level: 'error' | 'warning' | 'info';
   /** Translation key. */
   key: string;
   params?: Record<string, string | number>;

@@ -1,4 +1,4 @@
-import type { ImageAsset, LocalizedText, ThumbnailScript, TileAsset, TilemapAsset } from '../project/model';
+import type { ImageAsset, LocalizedText, SongAsset, ThumbnailScript, TileAsset, TilemapAsset } from '../project/model';
 
 /** A template as written in src/templates, turned into a project file by scripts/build-templates.ts. */
 export interface TemplateSource {
@@ -11,6 +11,8 @@ export interface TemplateSource {
   strings: Record<string, Record<string, string>>;
   kinds: string[];
   images: ImageAsset[];
+  backgrounds?: ImageAsset[];
+  songs?: SongAsset[];
   tiles: TileAsset[];
   tilemaps: TilemapAsset[];
   blocks: unknown;

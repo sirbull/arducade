@@ -4,12 +4,45 @@ import { pixelsToDataUrl } from '../blocks/assets';
 import { currentLanguage, t } from '../i18n/i18n';
 import { LIBRARY_IMAGES, LIBRARY_TILE_GROUPS, type LibraryImage, type LibraryTile, type LibraryView } from '../project/library';
 import { localized, type PixelRows } from '../project/model';
+import { LIBRARY_BACKGROUNDS, type LibraryBackground } from '../project/background-library';
 import { openDialog } from './dialogs';
 import { clear, FILM_ICON, h, icon } from './dom';
 
 let view: LibraryView = 'any';
 
 const shows = (v: LibraryView) => view === 'any' || v === 'any' || v === view;
+
+export function openBackgroundLibrary(onPick: (background: LibraryBackground) => void) {
+  const d = openDialog(t('library.backgrounds'), { wide: true });
+  const lang = currentLanguage();
+  const content = h('div', { class: 'background-library-grid' });
+  const detail = h('select', { 'aria-label': t('library.backgroundDetail') },
+    ...['any', 'simple', 'medium', 'rich'].map(value => h('option', { value }, t(`library.detail.${value}`))));
+  const layout = h('select', { 'aria-label': t('library.backgroundLayout') },
+    ...['any', 'play', 'scene'].map(value => h('option', { value }, t(`library.layout.${value}`))));
+  const render = () => {
+    clear(content);
+    const items = LIBRARY_BACKGROUNDS.filter(item =>
+      (detail.value === 'any' || item.detail === detail.value) && (layout.value === 'any' || item.layout === layout.value));
+    if (!items.length) content.append(h('div', {},
+      h('p', { class: 'muted', role: 'status' }, t('library.noBackgrounds')),
+      h('button', { class: 'small', onclick: () => { detail.value = 'any'; render(); } }, t('library.showAllDetails'))));
+    for (const item of items) {
+      content.append(h('button', { class: 'background-library-item', onclick: () => { onPick(item); d.close(); } },
+        h('img', { src: pixelsToDataUrl(item.frames[0], item.width, item.height, 2), alt: '' }),
+        h('strong', {}, localized(item.name, lang)),
+        h('span', { class: 'muted' }, localized(item.genre, lang)),
+        h('small', {}, `${t(`library.detail.${item.detail}`)} · ${t(`library.layout.${item.layout}`)}`)));
+    }
+  };
+  detail.addEventListener('change', render);
+  layout.addEventListener('change', render);
+  d.body.append(h('p', { class: 'muted' }, t('library.helpBackgrounds')),
+    h('div', { class: 'library-view' },
+      h('label', { class: 'inline' }, t('library.backgroundDetail'), detail),
+      h('label', { class: 'inline' }, t('library.backgroundLayout'), layout)), content);
+  render();
+}
 
 export function filmBadge(frames: number): HTMLElement {
   const label = t('library.animated', { n: frames });

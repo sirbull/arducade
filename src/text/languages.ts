@@ -11,6 +11,7 @@ import {
   SFX,
   COLORS,
 } from "../engine/enums";
+import { POLYPHONIC_EFFECT_NAMES } from "../engine/polyphonic-effects";
 import { SONG_NAMES } from "../engine/songs";
 import type { Project } from "../project/model";
 
@@ -30,7 +31,10 @@ const enumNames: Record<string, EnumType> = {
   Direction: "dir",
   Sound: "sfx",
   Song: "song",
+  PolySound: "polyEffect",
   Color: "color",
+  melodies: "melodyAsset",
+  songs: "songAsset",
   images: "image",
   tilemaps: "tilemap",
   tiles: "tile",
@@ -230,7 +234,11 @@ export function parseSource(
           const assets =
             type === "image"
               ? [...project.images, ...project.backgrounds]
-              : type === "tilemap"
+              : type === "songAsset"
+                ? (project.songs ?? [])
+                : type === "melodyAsset"
+                ? (project.melodies ?? [])
+                : type === "tilemap"
                 ? project.tilemaps
                 : type === "tile"
                   ? project.tiles
@@ -286,7 +294,11 @@ export function parseSource(
         const assets =
           type === "image"
             ? [...project.images, ...project.backgrounds]
-            : type === "tilemap"
+            : type === "songAsset"
+                ? (project.songs ?? [])
+                : type === "melodyAsset"
+                ? (project.melodies ?? [])
+                : type === "tilemap"
               ? project.tilemaps
               : type === "tile"
                 ? project.tiles
@@ -301,6 +313,7 @@ export function parseSource(
           dir: Object.keys(HIT),
           sfx: SFX,
           song: SONG_NAMES,
+          polyEffect: POLYPHONIC_EFFECT_NAMES,
           color: Object.keys(COLORS),
         };
         if (allowed[type] && !allowed[type]!.includes(v))
@@ -388,6 +401,10 @@ export function parseSource(
       } while (eat(","));
       end();
       return { k: "comment", text: "" };
+    }
+    if (eat("with_draw_mode")) {
+      const mode = condition();
+      return { k: "drawMode", mode, body: body() };
     }
     if (eat("repeat")) {
       const count = condition();
@@ -645,7 +662,7 @@ export function parseSource(
           (s) =>
             (s.k === "return" && !!s.value) ||
             (s.k === "if" && (hasReturn(s.then) || hasReturn(s.else ?? []))) ||
-            (["while", "repeat", "for", "forKind"].includes(s.k) &&
+            (["while", "repeat", "for", "forKind", "drawMode"].includes(s.k) &&
               hasReturn((s as Extract<Stmt, { body: Stmt[] }>).body)),
         );
       handlers.set(name, b);
@@ -857,9 +874,16 @@ export function generateSource(
     const assets =
       type === "image"
         ? [...project.images, ...project.backgrounds]
-        : type === "tilemap"
+        : type === "songAsset"
+                ? (project.songs ?? [])
+                : type === "melodyAsset"
+                ? (project.melodies ?? [])
+                : type === "tilemap"
           ? project.tilemaps
           : project.tiles;
+    const asset = assets.find(x => x.id === id);
+    if (type === 'songAsset' && asset && /^[A-Za-z_$][\w$]*$/.test(asset.name) && assets.filter(x => x.name === asset.name).length === 1) return `songs.${asset.name}`;
+    if (type === 'melodyAsset' && asset && /^[A-Za-z_$][\w$]*$/.test(asset.name) && assets.filter(x => x.name === asset.name).length === 1) return `melodies.${asset.name}`;
     const name = sanitize(id);
     return (/^[A-Za-z_$][\w$]*$/.test(name) &&
       assets.filter((x) => sanitize(x.id) === name).length === 1) ||
@@ -881,7 +905,7 @@ export function generateSource(
         if (e.type === "melody") return `melody(${quote(e.v)})`;
         if (e.type === "effect") return `effect(${quote(e.v)})`;
         if (e.type === "kind") return kindRef(e.v);
-        if (["image", "tilemap", "tile"].includes(e.type))
+        if (["image", "tilemap", "tile", "melodyAsset", "songAsset"].includes(e.type))
           return assetRef(e.type, e.v);
         return `${namespaces[e.type]}.${e.v}`;
       case "api":
@@ -985,6 +1009,9 @@ export function generateSource(
           }
           break;
         }
+        case "drawMode":
+          block(`with_draw_mode(${expression(s.mode)})`, s.body);
+          break;
         case "break":
         case "continue":
           emit(s.k + suffix);

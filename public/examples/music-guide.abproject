@@ -1,0 +1,151 @@
+{
+ "format": "ardublocks-project",
+ "version": 3,
+ "id": "pmv4c2unqrq23u",
+ "name": "Musikkeksempler – A: mynt, B: skjold",
+ "created": 1791754015670,
+ "modified": 1791754015670,
+ "profile": {
+  "format": "ardublocks-profile",
+  "version": 1,
+  "id": "arduboy",
+  "name": "Arduboy",
+  "builtin": true,
+  "chip": "atmega32u4",
+  "display": {
+   "driver": "ssd1306",
+   "bus": "spi",
+   "i2cAddress": 60,
+   "cs": "D12",
+   "dc": "D4",
+   "rst": "D6",
+   "rotate180": false,
+   "mirror": false,
+   "contrast": 207
+  },
+  "buttons": {
+   "up": "A0",
+   "right": "A1",
+   "left": "A2",
+   "down": "A3",
+   "a": "D7",
+   "b": "D8"
+  },
+  "sound": {
+   "pin1": "D5",
+   "pin2": "D13"
+  }
+ },
+ "pixelColor": "white",
+ "blocks": {
+  "blocks": {
+   "languageVersion": 0,
+   "blocks": [
+    {
+     "type": "ab_on_start",
+     "x": 30,
+     "y": 30,
+     "inputs": {
+      "DO": {
+       "block": {
+        "type": "ab_play_song",
+        "fields": {
+         "SONG": "asset:doc-skogstur",
+         "MODE": "loop"
+        }
+       }
+      }
+     }
+    },
+    {
+     "type": "ab_on_button",
+     "x": 30,
+     "y": 160,
+     "fields": {
+      "BUTTON": "a",
+      "EVENT": "pressed"
+     },
+     "inputs": {
+      "DO": {
+       "block": {
+        "type": "ab_play_named_melody",
+        "fields": {
+         "MELODY": "doc-mynt",
+         "MODE": "once"
+        }
+       }
+      }
+     }
+    },
+    {
+     "type": "ab_on_button",
+     "x": 30,
+     "y": 300,
+     "fields": {
+      "BUTTON": "b",
+      "EVENT": "pressed"
+     },
+     "inputs": {
+      "DO": {
+       "block": {
+        "type": "ab_pitch",
+        "inputs": {
+         "FROM": {
+          "shadow": {
+           "type": "math_number",
+           "fields": {
+            "NUM": 90
+           }
+          }
+         },
+         "TO": {
+          "shadow": {
+           "type": "math_number",
+           "fields": {
+            "NUM": 110
+           }
+          }
+         },
+         "DO": {
+          "block": {
+           "type": "ab_play_poly_effect",
+           "fields": {
+            "SFX": "shield"
+           }
+          }
+         }
+        }
+       }
+      }
+     }
+    }
+   ]
+  }
+ },
+ "melodies": [
+  {
+   "id": "doc-mynt",
+   "name": "mynt",
+   "notes": "C5:0.25 E5:0.25 G5:0.25 C6:0.5 R:0.25",
+   "tempo": 160
+  }
+ ],
+ "songs": [
+  {
+   "id": "doc-skogstur",
+   "name": "skogstur",
+   "tempo": 120,
+   "voices": [
+    "C4:1 E4:1 G4:1 E4:1 D4:1 F4:1 A4:1 F4:1",
+    "E4:4 F4:4",
+    "C3:2 G3:2 F3:2 C3:2",
+    "C4:0.25 R:0.75 C4:0.25 R:0.75 C4:0.25 R:0.75 C4:0.25 R:0.75 C4:0.25 R:0.75 C4:0.25 R:0.75 C4:0.25 R:0.75 C4:0.25 R:0.75"
+   ]
+  }
+ ],
+ "images": [],
+ "backgrounds": [],
+ "tiles": [],
+ "tilemaps": [],
+ "kinds": []
+}

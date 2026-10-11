@@ -45,6 +45,7 @@ export class AtmPlayer {
   osc = [0, 1, 2, 3].map(() => ({ vol: 0, freq: 0, phase: 0 }));
   ch: Channel[] = [];
   /** Bits 4 to 7: the channel still plays. Bits 0 to 3: the channel is muted. */
+  master = 256;
   active = 0xf0;
   cia = 0;
   private ciaCount = 1;
@@ -52,9 +53,12 @@ export class AtmPlayer {
   private trackList = 0;
   private trackBase = 0;
 
-  constructor(private song: number[]) {
+  constructor(private song: number[], private pitch = 100) {
+    this.pitch = Math.max(10, Math.min(1000, pitch));
     this.load();
   }
+
+  setVolume(percent: number) { this.master = Math.floor(Math.max(0, Math.min(100, Math.trunc(percent))) * 256 / 100); }
 
   private byte(at: number) {
     return this.song[at] ?? 0;
@@ -227,9 +231,10 @@ export class AtmPlayer {
       if (!(this.active & (1 << n))) {
         if (n === 3) this.osc[n].vol = ch.vol >> 1;
         else {
-          this.osc[n].freq = ch.freq;
+          this.osc[n].freq = ch.freq ? Math.max(1, Math.min(65535, Math.floor(ch.freq * this.pitch / 100))) : 0;
           this.osc[n].vol = ch.vol;
         }
+        this.osc[n].vol = (this.osc[n].vol * this.master) >> 8;
       }
     }
     return true;
@@ -264,8 +269,10 @@ export class AtmPlayer {
 }
 
 /** The whole song as samples from -1 to 1 at ATM_RATE, at most maxSeconds long. */
-export function renderSong(song: number[], maxSeconds = 120): Float32Array {
-  const player = new AtmPlayer(song);
+export function renderSong(song: number[], maxSeconds = 120, volume = 100, mutedVoices = 0, pitch = 100): Float32Array {
+  const player = new AtmPlayer(song, pitch);
+  player.setVolume(volume);
+  player.active |= mutedVoices & 0x0f;
   const out = new Float32Array(ATM_RATE * maxSeconds);
   let n = 0;
   for (; n < out.length; n++) {
@@ -274,4 +281,43 @@ export function renderSong(song: number[], maxSeconds = 120): Float32Array {
     out[n] = (v - 128) / 128;
   }
   return out.subarray(0, n);
+}
+
+/** Frame-driven fallback used by devices without Timer4. Drums are skipped. */
+/** Duration without allocating or mixing a full PCM buffer. */
+export function songDurationMs(data: number[]): number {
+  const player = new AtmPlayer(data);
+  let duration = 0;
+  while (duration < 120000) {
+    // sample() schedules the next interval before this tick changes tempo.
+    const interval = player.cia;
+    if (!player.playroutine()) break;
+    duration += interval * 1000 / ATM_RATE;
+  }
+  return duration;
+}
+
+export class AtmFallback {
+  private player: AtmPlayer;
+  private next: number;
+  private ended = false;
+  shiftTime(ms: number) { this.next += ms * 1000; }
+  constructor(data: number[], private loop: boolean, now = 0, pitch = 100) {
+    this.player = new AtmPlayer(data, pitch); this.next = now * 1000;
+  }
+  update(nowMs: number): number {
+    if (this.ended) return 0;
+    const now = Math.floor(nowMs) * 1000;
+    for (let i = 0; i < 8 && !this.ended && now >= this.next; i++) {
+      if (!this.player.playroutine()) {
+        if (this.loop) { this.player.load(); this.player.playroutine(); }
+        else this.ended = true;
+      }
+      this.next += this.player.cia * 32;
+    }
+    if (now > this.next) this.next = now;
+    if (this.ended) return 0;
+    const voice = this.player.osc.slice(0, 3).find(o => o.vol && o.freq);
+    return voice ? Math.floor(voice.freq * 31250 / 65536) : 0;
+  }
 }

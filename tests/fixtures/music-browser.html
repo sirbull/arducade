@@ -1,0 +1,99 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><base href="/"><title>ArduCade music browser checks</title>
+<link rel="stylesheet" href="/src/styles.css"><body><button id="run">Run touch and audio checks</button><button id="follow">Run playback checks</button><button id="open">Open recorder</button><button id="blocks">Open block editor</button><div id="workspace" style="height:420px;display:none"></div><pre id="result" role="status">Ready</pre>
+<script type="module">
+import { openMelodyRecorder } from '/src/ui/melody-recorder.ts';
+import { parseMelody } from '/src/engine/melody.ts';
+import { loadLanguage } from '/src/i18n/i18n.ts';
+const sleep = ms => new Promise(r=>setTimeout(r,ms));
+const result = document.querySelector('#result');
+const OriginalContext = window.AudioContext;
+const gains = [];
+window.AudioContext = class extends OriginalContext {
+  createGain() {
+    const node=super.createGain(), set=node.gain.setTargetAtTime.bind(node.gain);
+    node.gain.setTargetAtTime=(value,...args)=>{ gains.push(value); return set(value,...args); }; return node;
+  }
+};
+document.querySelector('#blocks').onclick=async()=>{
+  result.textContent='Opening blocks';
+  try {
+  await loadLanguage('en');
+  const Blockly = await import('blockly/core'); await import('blockly/blocks'); await import('/src/blocks/category.ts');
+  const { defineBlocks }=await import('/src/blocks/defs.ts'); const { buildToolbox }=await import('/src/blocks/toolbox.ts');
+  const { blocklyTheme }=await import('/src/ui/themes.ts'); const { newProject }=await import('/src/project/model.ts');
+  const { setAssetProject }=await import('/src/blocks/assets.ts');
+  const project=newProject('Fixture'); project.melodies.push({id:'intro',name:'intro',notes:'C D E',tempo:120}); project.songs.push({id:'own-song',name:'My tune',tempo:120,voices:['C D E','C:3','C3:3','']}); setAssetProject(project);
+  defineBlocks(); document.querySelector('#workspace').style.display='block';
+  const ws=Blockly.inject('workspace',{toolbox:buildToolbox(),theme:blocklyTheme('color'),media:'/blockly-media/'});
+  const block=ws.newBlock('ab_play_named_melody'); block.initSvg(); block.render(); block.moveBy(30,30);
+  const song=ws.newBlock('ab_play_song');song.initSvg();song.render();song.moveBy(30,130);
+  const stop=ws.newBlock('ab_stop_song');stop.initSvg();stop.render();stop.moveBy(30,200);
+  const effect=ws.newBlock('ab_play_poly_effect');effect.initSvg();effect.render();effect.moveBy(30,270);
+  const beepEffect=ws.newBlock('ab_play_effect');beepEffect.initSvg();beepEffect.render();beepEffect.moveBy(30,335);
+  const options=song.getField('SONG').getOptions(false);
+  if(options[0][1]!=='asset:own-song'||options[1][1]!=='title'||song.getStyleName()!==stop.getStyleName()||song.getStyleName()===block.getStyleName())throw Error('Merged song choices or colours failed');
+  const menu=document.createElement('button');menu.textContent='Show song list';menu.onclick=()=>song.getField('SONG').showEditor();document.body.append(menu);
+  result.textContent='PASS: one Music category, one combined song block, own songs first, matching polyphonic colours and separate beep colour.';
+  document.querySelector('#blocks').disabled=true;
+  } catch(error) {result.textContent='FAIL: '+error.stack;}
+};
+document.querySelector('#open').onclick=async()=>{ await loadLanguage('en'); openMelodyRecorder('C D E F G:2 G:2 A:1 A A A G:4 F:1 F F F E:2 E:2 D:1 D D D C:4',120,()=>{}); };
+document.querySelector('#follow').onclick=async()=>{
+  try {
+    await loadLanguage('en'); openMelodyRecorder('C:0.5, R | C C7',120,()=>{});
+    const dialog=document.querySelector('.melody-recorder'), notes=dialog.querySelector('textarea');
+    const button=name=>[...dialog.querySelectorAll('button')].find(b=>b.textContent.trim()===name);
+    button('Play').click(); await sleep(100);
+    if(dialog.querySelector('.piano-key.active')?.getAttribute('aria-label')!=='C4') throw Error('First note not lit');
+    if(notes.selectionStart!==0 || notes.selectionEnd!==5) throw Error('First token not selected');
+    await sleep(250);
+    if(dialog.querySelector('.piano-key.active') || dialog.querySelector('.melody-playback-notes .active')?.textContent!=='R') throw Error('Rest not tracked');
+    await sleep(260);
+    if(notes.selectionStart!==11 || dialog.querySelector('.piano-key.active')?.getAttribute('aria-label')!=='C4') throw Error('Repeated note not tracked');
+    await sleep(260);
+    if(dialog.querySelector('.piano-key.active')?.getAttribute('aria-label')!=='C7') throw Error('Octave change not tracked');
+    dialog.querySelector('.melody-playback-notes .active').click();
+    if(document.activeElement!==notes || notes.value.slice(notes.selectionStart,notes.selectionEnd)!=='C7') throw Error('Edit jump failed');
+    await sleep(60);
+    if(dialog.querySelector('.piano-key.active')?.getAttribute('aria-label')!=='C7' || gains.at(-1)!==0.05) throw Error('Clicked note did not audition in its inherited octave');
+    await sleep(260);
+    if(dialog.querySelector('.piano-key.active') || gains.at(-1)!==0) throw Error('Clicked note did not finish at its inherited duration');
+    button('Cancel').click(); await sleep(30);
+    result.textContent='PASS: synchronized piano, rests, repeated token positions, octave changes, touch-accessible note audition with inherited octave and duration, editing selection and silence.';
+  } catch(error) { result.textContent='FAIL: '+error.stack; }
+};
+document.querySelector('#run').onclick=async()=>{
+  try {
+    await loadLanguage('en');
+    let saved = '';
+    openMelodyRecorder('C D',120, text=>saved=text);
+    const dialog=document.querySelector('.melody-recorder');
+    const button=name=>[...dialog.querySelectorAll('button')].find(b=>b.textContent.trim()===name || b.getAttribute('aria-label')===name);
+    const notes=dialog.querySelector('textarea');
+    const c=button('C4'),d=button('D4');
+    // Emulate independent touch pointers; synthetic pointers have no native capture.
+    c.setPointerCapture=d.setPointerCapture=()=>{};
+    const event=(target,type,id)=>target.dispatchEvent(new PointerEvent(type,{pointerType:'touch',pointerId:id,button:0,bubbles:true}));
+    button('Record').click();
+    event(c,'pointerdown',41); await sleep(130);
+    event(d,'pointerdown',42); await sleep(130);
+    event(d,'pointercancel',42); await sleep(130);
+    if(c.getAttribute('aria-pressed')!=='true') throw Error('Remaining touch did not resume');
+    event(c,'pointercancel',41);
+    if(dialog.querySelector('.piano-key.active')) throw Error('Cancelled touch remained active');
+    if(gains.at(-1)!==0) throw Error('Touch cancellation left tone playing');
+    button('Stop').click();
+    const steps=parseMelody(notes.value).steps;
+    if(steps.filter((_,i)=>i%2===0).join()!=='262,294,262') throw Error('Last-touch recording failed: '+notes.value);
+    notes.value='C invalid D'; notes.dispatchEvent(new Event('input',{bubbles:true}));
+    if(!button('Use').disabled) throw Error('Invalid notes accepted');
+    notes.value='C D'; notes.dispatchEvent(new Event('input',{bubbles:true}));
+    event(c,'pointerdown',43); window.dispatchEvent(new Event('blur'));
+    if(gains.at(-1)!==0 || dialog.querySelector('.piano-key.active')) throw Error('Blur left tone playing');
+    event(c,'pointerdown',44); button('Cancel').click(); await sleep(30);
+    if(gains.at(-1)!==0 || document.querySelector('dialog')) throw Error('Dialog close left tone playing');
+    if(saved) throw Error('Cancel changed melody');
+    result.textContent='PASS: touch overlap, last key wins, pointercancel, blur, close silences audio, note validation, Cancel preserves notes.';
+  } catch(error) { result.textContent='FAIL: '+error.stack; }
+};
+</script></body></html>

@@ -1,6 +1,6 @@
 {
  "format": "ardublocks-project",
- "version": 1,
+ "version": 3,
  "id": "template-pong",
  "name": "Pong",
  "created": 0,
@@ -4935,6 +4935,8 @@
    ]
   }
  },
+ "melodies": [],
+ "songs": [],
  "images": [
   {
    "id": "paddle",

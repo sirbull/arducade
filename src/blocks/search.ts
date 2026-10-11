@@ -11,6 +11,7 @@ export function searchBlocks(query: string, workspace: Blockly.WorkspaceSvg): En
   const result: Entry[] = [];
   try {
     for (const category of buildToolbox().contents as Entry[]) {
+      if (category.custom === 'FAVOURITES') continue;
       const name = Blockly.utils.parsing.replaceMessageReferences(String(category.name));
       const definition = category.custom
         ? workspace.getToolboxCategoryCallback(String(category.custom))?.(workspace) ?? []

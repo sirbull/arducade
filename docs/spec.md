@@ -176,6 +176,7 @@ Editoren skal være like enkel og forståelig som MakeCode Arcade. Derfor har de
 **Innhold i motoren**
 
 * Sprites med posisjon, fart, akselerasjon, type (Player, Enemy, Projectile, Food, eller egne typer, vist på valgt språk) og animasjon.
+* Skudd kan lages fra en annen sprite eller med blokken «skudd [bilde] fra x [x] y [y] vx [vx] vy [vy]» under Sprites. x og y er skuddets sentrum i spillverdenen; vx og vy er fart i piksler per sekund (positivt mot høyre/ned, negativt mot venstre/opp). Skuddet får typen Skudd og fjernes automatisk utenfor skjermen eller ved veggtreff. Eksempel: når A trykkes, sett projectile til skudd fra x = 0, y = 32, vx = 50, vy = 0 for å skyte inn fra venstre kant uten kameraforskyvning. Med et flyttet kamera brukes skjermkantens koordinater i spillverdenen.
 * Fast maks antall sprites (for eksempel 16), slik at RAM-bruken er kjent på forhånd.
 * Kollisjon mellom sprites, og mellom sprite og skjermkant (stopp, sprett, forsvinn eller gå rundt).
 * "Styr sprite med knappene", med valgfri fart, som i MakeCode.

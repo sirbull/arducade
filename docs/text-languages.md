@@ -59,9 +59,12 @@ snake_case in Python. Constant member names are the same in both languages.
 ## Supported syntax
 
 * Integers with device-compatible signed 16-bit arithmetic, booleans, string
-  literals, `text(...)` for joining text, and `melody("C4:100 D4:100")`.
+  literals and text variables, `text(...)` for joining text, and `melody("C4:1 D4:1")`.
 * Built in songs as `Song` constants: `music.playSong(Song.title, true)`
   (`music.play_song` in Python). See [Songs](songs.md).
+* Custom four-track songs from the Music editor use `songs.theme` and
+  `music.playNamedSong(songs.theme, true)` (`music.play_named_song` in Python).
+  Song assets can also be referenced with `asset("songAsset", "asset-id")`.
 * Named variables and functions, function parameters, calls and return values.
   Game variables have global scope; parameters have function scope.
 * Arithmetic, comparisons, boolean operators, `if`/`else`, `while`, `break`
@@ -74,6 +77,10 @@ snake_case in Python. Constant member names are the same in both languages.
   `choose(condition, yes, no)`.
 * Engine functions listed by autocomplete, line comments, and
   `custom.cpp("...")`. Custom C++ is skipped by the simulator.
+* Drawing scopes: `with_draw_mode(1) { ... }` in JavaScript and
+  `with_draw_mode(1):` with an indented body in Python. Drawings use the
+  selected mode; sprites and particles created inside retain it. See
+  [Drawing modes](drawing-modes.md) for all references and examples.
 
 * Particle effects, at the top level only. `effects.define("smoke")` starts
   a recipe with default values; each following line sets one part, the same
@@ -107,3 +114,42 @@ Register a named function with no parameters:
 Python uses `True`/`False` and `events.life_zero`. Statements at module level
 become an additional start handler. Functions can be declared before or after
 registrations. Event handlers cannot also be called as ordinary functions.
+
+## Named melodies and song volume
+
+The Music tab stores beep melodies with a name, note text and tempo. Reference
+one by name with `melodies.intro`, or by ID with `asset("melodyAsset", "id")` when
+the name contains spaces. Only referenced melodies are exported, and repeated
+calls share one note table. A missing melody is an error.
+
+```javascript
+music.playNamedMelody(melodies.intro, true); // saved tempo, repeat
+music.playMelody(melody("C D E:2 R"), 120, false); // original inline form
+music.setSongVolume(50); // four-voice songs only, 0–100
+```
+
+```python
+music.play_named_melody(melodies.intro, True)
+music.play_melody(melody("C D E:2 R"), 120, False)
+music.set_song_volume(50)
+```
+
+Song volume resets to 100 when the game restarts. It has no effect on beeps or
+songs on devices without four voices. The simulator uses the selected profile.
+
+## Sprite speech
+
+Use `sprite.say(player, text("Score: ", score), 2000)` to show a compact speech
+bubble for two seconds. Zero duration keeps it visible. Configure width,
+placement and colors with `sprite.setSpeechWidth`, `sprite.setSpeechPosition`
+and `sprite.setSpeechColors`; hide with `sprite.hideSpeech`. Python uses
+`set_speech_width`, `set_speech_position`, `set_speech_colors` and `hide_speech`.
+See [Speech bubbles and joined text](speech.md) for examples, pictures and
+device limits.
+
+Polyphonic effects use `music.playPolyphonicEffect(PolySound.coin)` in
+JavaScript and `music.play_polyphonic_effect(PolySound.coin)` in Python.
+`PolySound` choices are `jump`, `coin`, `powerUp`, `laser`, `explosion`,
+`shield`, `win` and `lose`. They play once, pausing the current song and resuming it at its saved position.
+Pitch applies to songs and these effects as well as beep sounds, without
+changing tempo.

@@ -1,6 +1,6 @@
 {
  "format": "ardublocks-project",
- "version": 1,
+ "version": 3,
  "id": "template-shooter",
  "name": "Space shooter",
  "created": 0,
@@ -574,6 +574,8 @@
    ]
   }
  },
+ "melodies": [],
+ "songs": [],
  "images": [
   {
    "id": "ship",

@@ -4,10 +4,11 @@ import { pixelsToDataUrl } from '../blocks/assets';
 import { BUILTIN_KINDS } from '../engine/enums';
 import { currentLanguage, kindName, t } from '../i18n/i18n';
 import type { LibraryImage, LibraryTile } from '../project/library';
+import type { LibraryBackground } from '../project/background-library';
 import { emptyPixels, localized, newId, type ImageAsset, type Project, type TileAsset, type TilemapAsset, type LevelLink } from '../project/model';
 import { confirmDialog, promptDialog, openDialog } from './dialogs';
 import { clear, h, toast } from './dom';
-import { filmBadge, openImageLibrary, openTileLibrary } from './library-dialog';
+import { filmBadge, openBackgroundLibrary, openImageLibrary, openTileLibrary } from './library-dialog';
 import { PixelEditor, pixelToolIcon, resizeRows } from './pixel-editor';
 
 // The engine keeps one solid bit per tile id in 32 bits; id 0 is empty.
@@ -286,6 +287,7 @@ export class BackgroundsPane {
       'div',
       { class: 'asset-list' },
       h('div', { class: 'asset-list-head' }, h('h3', {}, t('backgrounds.title')), h('button', { class: 'primary small', onclick: () => this.add() }, t('backgrounds.add'))),
+      h('button', { class: 'small', onclick: () => openBackgroundLibrary(item => this.addFromLibrary(item)) }, t('library.open')),
       h('p', { class: 'muted small' }, t('backgrounds.help')),
       ...p.backgrounds.map((b) =>
         h(
@@ -353,6 +355,19 @@ export class BackgroundsPane {
     this.selected = bg.id;
     this.host.changed(true);
     this.render();
+  }
+
+  private addFromLibrary(item: LibraryBackground) {
+    const p = this.host.project();
+    const bg: ImageAsset = {
+      id: newId('b'), name: uniqueName(localized(item.name, currentLanguage()), p.backgrounds.map(b => b.name)),
+      width: item.width, height: item.height, frames: structuredClone(item.frames),
+    };
+    p.backgrounds.push(bg);
+    this.selected = bg.id;
+    this.host.changed(true);
+    this.render();
+    toast(t('library.added', { name: bg.name }));
   }
 
   private duplicate(bg: ImageAsset) {
@@ -842,3 +857,5 @@ function resizeMap(map: TilemapAsset, width: number, height: number) {
   map.height = height;
   map.cells = cells;
 }
+
+export { MusicPane } from './music-studio';

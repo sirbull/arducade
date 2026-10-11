@@ -45,7 +45,16 @@ export const API = api({
   'particles.burstFrom': { ret: 'void', args: ['effect', 'num', 'sprite', 'num'], cpp: 'ab::burstFrom($0, $1, $2, $3)', js: 'E.burstFrom($0, $1, $2, $3)', name: 'particles.burstFrom' },
   'particles.clearEffect': { ret: 'void', args: ['effect'], cpp: 'ab::clearEffect($0)', js: 'E.clearEffect($0)', name: 'particles.clearEffect' },
 
+  // Drawing references: 0 normal, 1 underlay, 2 background + map, 3/4 background layers.
+  'draw.spriteReference': { ret: 'num', args: ['sprite'], cpp: 'ab::spriteReference($0)', js: 'E.spriteReference($0)', name: 'screen.spriteReference' },
+  'sprites.setDrawMode': { ret: 'void', args: ['sprite', 'num'], cpp: 'ab::setDrawMode($0, $1)', js: 'E.setDrawMode($0, $1)', name: 'sprite.setDrawMode' },
+
   // Sprites
+  'sprites.say': { ret: 'void', args: ['sprite', 'str', 'num'], cpp: 'ab::say($0, $1, $2)', js: 'E.say($0, $1, $2)', name: 'sprite.say' },
+  'sprites.speechPosition': { ret: 'void', args: ['sprite', 'num'], cpp: 'ab::speechPosition($0, $1)', js: 'E.speechPosition($0, $1)', name: 'sprite.setSpeechPosition' },
+  'sprites.speechWidth': { ret: 'void', args: ['sprite', 'num'], cpp: 'ab::speechWidth($0, $1)', js: 'E.speechWidth($0, $1)', name: 'sprite.setSpeechWidth' },
+  'sprites.speechColors': { ret: 'void', args: ['sprite', 'num', 'num'], cpp: 'ab::speechColors($0, $1, $2)', js: 'E.speechColors($0, $1, $2)', name: 'sprite.setSpeechColors' },
+  'sprites.speechHide': { ret: 'void', args: ['sprite'], cpp: 'ab::speechHide($0)', js: 'E.speechHide($0)', name: 'sprite.hideSpeech' },
   'sprites.create': { ret: 'sprite', args: ['image', 'kind'], cpp: 'ab::create($0, $1)', js: 'E.create($0, $1)', name: 'sprites.create' },
   'sprites.projectile': {
     ret: 'sprite',
@@ -53,6 +62,13 @@ export const API = api({
     cpp: 'ab::createProjectile($0, $1, $2, $3)',
     js: 'E.createProjectile($0, $1, $2, $3)',
     name: 'sprites.createProjectileFromSprite',
+  },
+  'sprites.projectilePosition': {
+    ret: 'sprite',
+    args: ['image', 'num', 'num', 'num', 'num'],
+    cpp: 'ab::createProjectileFromPosition($0, $1, $2, $3, $4)',
+    js: 'E.createProjectileFromPosition($0, $1, $2, $3, $4)',
+    name: 'sprites.createProjectileFromPosition',
   },
   'sprites.get': { ret: 'num', args: ['sprite', 'prop'], cpp: 'ab::getProp($0, $1)', js: 'E.getProp($0, $1)', name: 'sprite.get' },
   'sprites.set': { ret: 'void', args: ['sprite', 'prop', 'num'], cpp: 'ab::setProp($0, $1, $2)', js: 'E.setProp($0, $1, $2)', name: 'sprite.set' },
@@ -102,6 +118,10 @@ export const API = api({
   'background.clear': { ret: 'void', args: [], cpp: 'ab::setBackground(0)', js: 'E.setBackground(null)', name: 'scene.clearBackground' },
   'background.setPosition': { ret: 'void', args: ['num', 'num'], cpp: 'ab::setBackgroundPosition($0, $1)', js: 'E.setBackgroundPosition($0, $1)', name: 'scene.setBackgroundPosition' },
   'background.changePosition': { ret: 'void', args: ['num', 'num'], cpp: 'ab::setBackgroundPosition(ab::bgX + $0, ab::bgY + $1)', js: 'E.setBackgroundPosition(E.bgX + $0, E.bgY + $1)', name: 'scene.changeBackgroundPosition' },
+  'background.layerSet': { ret: 'void', args: ['num', 'image', 'num'], cpp: 'ab::setBackgroundLayer($0, $1, $2)', js: 'E.setBackgroundLayer($0, $1, $2)', name: 'scene.setBackgroundLayer' },
+  'background.layerClear': { ret: 'void', args: ['num'], cpp: 'ab::setBackgroundLayer($0, 0, 0)', js: 'E.setBackgroundLayer($0, null, 0)', name: 'scene.clearBackgroundLayer' },
+  'background.layerPosition': { ret: 'void', args: ['num', 'num', 'num'], cpp: 'ab::setBackgroundLayerPosition($0, $1, $2)', js: 'E.setBackgroundLayerPosition($0, $1, $2)', name: 'scene.setBackgroundLayerPosition' },
+  'background.layerChangePosition': { ret: 'void', args: ['num', 'num', 'num'], cpp: 'ab::changeBackgroundLayerPosition($0, $1, $2)', js: 'E.changeBackgroundLayerPosition($0, $1, $2)', name: 'scene.changeBackgroundLayerPosition' },
   'background.x': { ret: 'num', args: [], cpp: 'ab::bgX', js: 'E.bgX', name: 'scene.backgroundX' },
   'background.y': { ret: 'num', args: [], cpp: 'ab::bgY', js: 'E.bgY', name: 'scene.backgroundY' },
 
@@ -139,12 +159,16 @@ export const API = api({
   'draw.getPixel': { ret: 'bool', args: ['num', 'num'], cpp: '(ab::getPixel($0, $1) != 0)', js: '(E.getPixel($0, $1) !== 0)', name: 'screen.getPixel' },
 
   // Music
+  'music.polyEffect': { ret: 'void', args: ['polyEffect'], cpp: 'ab::playPolyEffect($0)', js: 'E.playPolyEffect($0)', name: 'music.playPolyphonicEffect' },
   'music.effect': { ret: 'void', args: ['sfx'], cpp: 'ab::playSound($0)', js: 'E.playEffect($0)', name: 'music.play' },
   'music.tone': { ret: 'void', args: ['num', 'num'], cpp: 'ab::playTone($0, $1)', js: 'E.playTone($0, $1)', name: 'music.playTone' },
   'music.melody': { ret: 'void', args: ['melody', 'num', 'bool'], cpp: 'ab::playMelody($0, $1, $2)', js: 'E.playMelody($0, $1, $2)', name: 'music.playMelody' },
   'music.pitch': { ret: 'void', args: ['num', 'num'], cpp: 'ab::setPitch($0, $1)', js: 'E.setPitch($0, $1)', name: 'music.setPitch' },
   'music.stop': { ret: 'void', args: [], cpp: 'ab::soundOff()', js: 'E.soundOff()', name: 'music.stopAllSounds' },
+  'music.namedMelody': { ret: 'void', args: ['melodyAsset', 'bool'], cpp: 'ab::playMelody($0, $tempo, $1)', js: 'E.playMelody($0, $tempo, $1)', name: 'music.playNamedMelody' },
+  'music.namedSong': { ret: 'void', args: ['songAsset', 'bool'], cpp: 'ab::playSong($0, $1)', js: 'E.playSong($0, $1)', name: 'music.playNamedSong' },
   'music.song': { ret: 'void', args: ['song', 'bool'], cpp: 'ab::playSong($0, $1)', js: 'E.playSong($0, $1)', name: 'music.playSong' },
+  'music.setSongVolume': { ret: 'void', args: ['num'], cpp: 'ab::setSongVolume($0)', js: 'E.setSongVolume($0)', name: 'music.setSongVolume' },
   'music.stopSong': { ret: 'void', args: [], cpp: 'ab::stopSong()', js: 'E.stopSong()', name: 'music.stopSong' },
 
   // Math

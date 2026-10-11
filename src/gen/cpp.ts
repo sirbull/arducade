@@ -6,7 +6,7 @@ import { BUILTIN_KINDS } from '../engine/enums';
 import { checkProgram, forEachExpr, typeOf, type TypeInfo } from '../ir/check';
 import type { Diagnostic, Expr, Program, Stmt, Ty } from '../ir/ir';
 import { encodeBackground, encodeImage, encodeTilemap, type Project } from '../project/model';
-import { buttonMatch, effectFields, effectNames, enumNumber, eventsOf, hash16, melodies, Names, songs } from './common';
+import { buttonMatch, effectFields, effectNames, enumNumber, eventsOf, hash16, melodies, Names, songs, soundEffects } from './common';
 import { stringLiteral, wrap16 } from './names';
 import { Writer } from './writer';
 import { levelTransitionCode } from './levels';
@@ -37,12 +37,14 @@ class CppGen {
   private tmp = 0;
   private melodies: ReturnType<typeof melodies>;
   private songs: ReturnType<typeof songs>;
+  private sfx: ReturnType<typeof soundEffects>;
   private effects: ReturnType<typeof effectNames>;
 
   constructor(private program: Program, private project: Project) {
     this.names = new Names(project);
     this.melodies = melodies(program);
     this.songs = songs(program);
+    this.sfx = soundEffects(program);
     this.effects = effectNames(program, this.names);
   }
 
@@ -169,6 +171,12 @@ class CppGen {
     if (this.melodies.size) {
       w.line('// Melodies: frequency and length in quarter beats');
       for (const m of this.melodies.values()) w.line(`static const uint16_t ${m.name}[] PROGMEM = {${[...m.steps, 0, 0].join(', ')}};`);
+      w.line();
+    }
+    const sfxTables = [...this.sfx.values()].filter((s) => s.steps.length);
+    if (sfxTables.length) {
+      w.line('// Sound effects: frequency and duration in ms');
+      for (const s of sfxTables) w.line(`static const uint16_t ${s.name}[] PROGMEM = {${[...s.steps, 0, 0].join(', ')}};`);
       w.line();
     }
     if (this.songs.size) {
@@ -497,6 +505,8 @@ class CppGen {
       }
       case 'song':
         return this.songs.get(e.v)?.name ?? '0';
+      case 'sfx':
+        return this.sfx.get(e.v)?.name ?? '0';
       case 'melody': {
         const m = this.melodies.get(e.v)!;
         if (m.bad.length) this.diagnostics.push({ level: 'warning', key: 'diag.badNote', params: { notes: m.bad.join(' ') }, id: e.id });

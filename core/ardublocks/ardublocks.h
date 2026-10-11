@@ -592,20 +592,10 @@ static void updateSound() {
 #endif
 }
 
-// Built in sound effects: frequency and duration pairs.
-static const uint16_t sfxJump[] PROGMEM = {300, 20, 400, 20, 500, 20, 600, 20, 0, 0};
-static const uint16_t sfxCoin[] PROGMEM = {988, 60, 1319, 120, 0, 0};
-static const uint16_t sfxHit[] PROGMEM = {220, 40, 180, 40, 140, 40, 100, 40, 0, 0};
-static const uint16_t sfxPowerUp[] PROGMEM = {523, 60, 659, 60, 784, 60, 1047, 120, 0, 0};
-static const uint16_t sfxExplosion[] PROGMEM = {400, 30, 300, 30, 220, 30, 160, 40, 110, 60, 70, 80, 0, 0};
+// The sound effects of the game over screen: frequency and duration pairs.
+// The game has a table like these for each other effect it plays.
 static const uint16_t sfxWin[] PROGMEM = {523, 100, 659, 100, 784, 100, 1047, 300, 0, 0};
 static const uint16_t sfxLose[] PROGMEM = {392, 150, 330, 150, 262, 300, 0, 0};
-static const uint16_t sfxShoot[] PROGMEM = {1200, 20, 900, 20, 600, 20, 0, 0};
-static const uint16_t *const sfxList[] PROGMEM = {sfxJump, sfxCoin, sfxHit, sfxPowerUp, sfxExplosion, sfxWin, sfxLose, sfxShoot};
-
-static void playEffect(uint8_t id) {
-  if (id < sizeof(sfxList) / sizeof(sfxList[0])) playSound((const uint16_t *)pgm_read_ptr(&sfxList[id]));
-}
 
 // Input -----------------------------------------------------------------
 
@@ -1517,7 +1507,7 @@ static void showGameOver() {
 #ifdef AB_HAS_SONGS
   atm_stop();
 #endif
-  playEffect(gameOverWin ? 5 : 6);
+  playSound(gameOverWin ? sfxWin : sfxLose);
   render(drawGameOver);
   waitForA();
   restart();

@@ -1,6 +1,6 @@
 // Shared parts of the C++ and JavaScript generators.
 
-import { BUILTIN_KINDS, BUTTON_IDS, COLORS, FLAGS, HIT, PROPS, SFX } from '../engine/enums';
+import { BUILTIN_KINDS, BUTTON_IDS, COLORS, FLAGS, HIT, PROPS, SFX, SFX_STEPS, type SfxName } from '../engine/enums';
 import { parseMelody } from '../engine/melody';
 import { SONGS, songBytes, type SongName } from '../engine/songs';
 import { forEachExpr } from '../ir/check';
@@ -120,6 +120,17 @@ export function effectFields(fx: EffectDef): number[] {
     clamp(fx.area[0], 0, 255), clamp(fx.area[1], 0, 255), sp(fx.accel[0]), sp(fx.accel[1]),
     clamp(fx.drag, 0, 100), clamp(fx.wobble, 0, 100),
   ];
+}
+
+/** C++ table for each sound effect the program plays. Win and lose are in ardublocks.h. */
+export function soundEffects(p: Program): Map<string, { name: string; steps: number[] }> {
+  const out = new Map<string, { name: string; steps: number[] }>();
+  forEachExpr(p, (e) => {
+    if (e.k !== 'enum' || e.type !== 'sfx' || out.has(e.v) || !(e.v in SFX_STEPS)) return;
+    const core = { win: 'ab::sfxWin', lose: 'ab::sfxLose' }[e.v];
+    out.set(e.v, { name: core ?? `sfx_${e.v}`, steps: core ? [] : SFX_STEPS[e.v as SfxName] });
+  });
+  return out;
 }
 
 /** Each built in song the program plays, with its constant name and ATMlib data. */

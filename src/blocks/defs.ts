@@ -12,6 +12,7 @@ import { registerEffectBlocks } from './effects';
 import { ICONS, type IconName } from './icons';
 import { NOTE_CHOICES } from '../engine/melody';
 import { SONG_NAMES } from '../engine/songs';
+import { SFX_MENU } from '../engine/enums';
 
 type Arg = Record<string, unknown>;
 
@@ -302,16 +303,7 @@ export const DEFS: Def[] = [
     ...MUSIC,
     msg: 'AB_PLAY_EFFECT',
     args: [
-      dropdown('SFX', [
-        ['AB_SFX_JUMP', 'jump'],
-        ['AB_SFX_COIN', 'coin'],
-        ['AB_SFX_HIT', 'hit'],
-        ['AB_SFX_POWERUP', 'powerUp'],
-        ['AB_SFX_EXPLOSION', 'explosion'],
-        ['AB_SFX_WIN', 'win'],
-        ['AB_SFX_LOSE', 'lose'],
-        ['AB_SFX_SHOOT', 'shoot'],
-      ]),
+      dropdown('SFX', SFX_MENU.map((name) => [`AB_SFX_${name.toUpperCase()}`, name])),
     ],
     statement: true,
   },

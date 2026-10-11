@@ -1,19 +1,33 @@
 # Songs (ATMlib)
 
-ArduCade has six ready made songs with four voices: melody, harmony, bass and
+ArduCade has sixteen ready made songs with four voices: melody, harmony, bass and
 drums. The device plays them with
 [ATMlib](https://github.com/JKirchartz/ATMlib) (Arduboy Tracker Music) by
 TEAM a.r.g., Davey Taylor and Joeri Gantois. The simulator plays them with a
 TypeScript port of the same player.
 
-| Song        | Name in code | Length | Meant to            |
-| ----------- | ------------ | ------ | ------------------- |
-| Title theme | `title`      | 16 s   | repeat              |
-| Adventure   | `adventure`  | 14 s   | repeat              |
-| Boss fight  | `boss`       | 6 s    | repeat              |
-| Level up    | `levelUp`    | 2 s    | play once           |
-| Game over   | `gameOver`   | 7 s    | play once           |
-| Victory     | `victory`    | 5 s    | play once           |
+| Song        | Name in code | Length | Meant to  | Mood                       |
+| ----------- | ------------ | ------ | --------- | -------------------------- |
+| Title theme | `title`      | 16 s   | repeat    | happy, C major             |
+| Adventure   | `adventure`  | 14 s   | repeat    | driving, A minor           |
+| Boss fight  | `boss`       | 6 s    | repeat    | tense, chromatic bass      |
+| Menu        | `menu`       | 17 s   | repeat    | friendly, F major          |
+| Explore     | `explore`    | 21 s   | repeat    | calm, D dorian             |
+| Cave        | `cave`       | 24 s   | repeat    | dark and sparse, E minor   |
+| Underwater  | `underwater` | 19 s   | repeat    | floating, no drums         |
+| Chase       | `chase`      | 11 s   | repeat    | fast, A minor              |
+| Shop        | `shop`       | 15 s   | repeat    | bouncy, G major            |
+| Puzzle      | `puzzle`     | 19 s   | repeat    | thoughtful, staccato       |
+| Castle      | `castle`     | 19 s   | repeat    | proud march, D minor       |
+| Level up    | `levelUp`    | 3 s    | play once | fanfare                    |
+| Game over   | `gameOver`   | 8 s    | play once | sad, falling               |
+| Victory     | `victory`    | 6 s    | play once | fanfare                    |
+| Level start | `start`      | 3 s    | play once | short and bright           |
+| Secret      | `secret`     | 3 s    | play once | rising arpeggio            |
+
+The songs that repeat loop without a gap. The short tunes end with a rest of
+one to three beats, so they can also be repeated, or played again right away
+without running into themselves.
 
 ## Blocks and text code
 
@@ -91,7 +105,7 @@ prints it), the player and the title song (409 bytes) add:
 | Nano (ATmega328P)       | 2906 B  | 251 B     |
 | ATtiny85                | 3504 B  | 251 B     |
 
-The songs are 81 (game over) to 615 (adventure) bytes each. On an ATtiny85 the
+The songs are 85 (game over) to 709 (chase) bytes each. On an ATtiny85 the
 250 bytes are half of its RAM.
 
 ## Adding a song
@@ -113,7 +127,8 @@ The songs are 81 (game over) to 615 (adventure) bytes each. On an ATtiny85 the
    The voices use the note text of the melody block (`parseMelody`). For the
    drums any note is a hit and `R` is a rest. Leave a voice empty (`''`) to
    keep it silent. Write every voice with the same number of beats, so they end
-   together (the test checks it).
+   together, and end a short tune with a rest (`R:2`). Use a tempo in steps of
+   10: the player sets `tempo / 10` ticks per step (the test checks both).
 2. Add `AB_SONG_<NAME IN CAPITALS>` to the `blocks` section of every file in
    `public/locales/`. The block dropdown and the `Song` constants pick the song
    up from `SONGS`.

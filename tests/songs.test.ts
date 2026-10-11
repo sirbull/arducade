@@ -32,7 +32,8 @@ it('writes every song as ATMlib data that ends when its voices do', () => {
     expect(beats.every((b) => b === 0 || b === longest), name).toBe(true);
     const data = songBytes(def);
     expect(data[0]).toBe(4); // four tracks, one for each voice
-    expect(data.length).toBeLessThan(700);
+    expect(data.length).toBeLessThan(800);
+    expect(def.tempo % 10, name).toBe(0);
     const pcm = renderSong(data);
     expect(Math.abs(pcm.length / ATM_RATE - (longest * 60) / def.tempo), name).toBeLessThan(0.1);
     expect(pcm.every((v) => Math.abs(v) < 1)).toBe(true); // the mix never wraps

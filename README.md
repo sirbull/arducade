@@ -44,6 +44,17 @@ API there, so it builds for any of these boards.
 
 Screens: SSD1306, SH1106 and SSD1309, over I2C or SPI.
 
+ESPboy Original, Kit and a DIY preset with direct backlight are available in
+hardware profiles. Games remain black and white at 128x64, centered without
+scaling on the 128x128 ST7735 screen. Copy a preset to edit ESP8266 GPIO,
+MCP23017 button/CS pins, I2C and SPI wiring, expander address and optional
+MCP4725 backlight control. The simulator runs the same game logic at 128x64.
+ESPboy exports an Arduino IDE sketch; browser compilation/upload is unavailable.
+The exported README lists the ESP8266 board package and Adafruit ST7735 library
+setup. Memory meters are rough game-only estimates, excluding the ESP8266 core,
+display libraries, heap and stack; Arduino IDE reports actual build sizes.
+See [ESPboy support](docs/espboy.md) for wiring and limitations.
+
 ## Development
 
 ```

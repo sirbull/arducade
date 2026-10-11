@@ -316,6 +316,15 @@
     "AB_INFO_POSITION_TOOLTIP": "Moves score, health or a created timer. Choose New timer to create another independent timer."
   },
   "ui": {
+    "profile.backlightBrightness": "Backlight brightness",
+    "profile.espboyBusPins": "I2C SDA {sda}, SCL {scl}. SPI MOSI {mosi}, SCK {sck}.",
+
+    "profile.espboyHelp": "ESPboy keeps the game at 128×64 in black and white, centered without scaling. MCP0–MCP15 refer to the MCP23017 expander; GPIO pins refer to the ESP8266. CS is held low, so the display must have its own SPI bus. Copy the preset to match your wiring.",
+    "profile.mcpAddress": "MCP23017 address",
+    "profile.backlightDAC": "MCP4725 backlight control",
+    "profile.dacAddress": "MCP4725 address",
+    "device.espboyEstimate": "Rough game-only estimate. Excludes ESP8266 core, display libraries, heap and stack. Compile the exported sketch in Arduino IDE for actual flash and RAM use.",
+
     "blocks.dropToDelete": "Drop here to delete",
     "ui.ok": "OK",
     "ui.cancel": "Cancel",

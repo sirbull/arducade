@@ -3,6 +3,10 @@
 // the ATtiny85, and the Arduino Wire and SPI libraries everywhere else.
 #pragma once
 
+#if defined(AB_DISPLAY_ESPBOY)
+#include "ab_espboy.h"
+#else
+
 // The ATmega328PB has two I2C and two SPI units. Use the first of each.
 #if defined(__AVR_ATmega328PB__)
 #define TWBR TWBR0
@@ -264,3 +268,5 @@ static void displayPage(uint8_t page, const uint8_t *data) {
 }
 
 } // namespace ab
+
+#endif // AB_DISPLAY_ESPBOY

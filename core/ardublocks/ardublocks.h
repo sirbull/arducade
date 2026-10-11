@@ -557,9 +557,17 @@ static const int8_t buttonPins[BTN_COUNT] = {AB_PIN_UP, AB_PIN_DOWN, AB_PIN_LEFT
 static void readButtons() {
   buttonsPrev = buttons;
   buttons = 0;
+#if defined(AB_DISPLAY_ESPBOY)
+  const uint16_t keys = espMcpRead(0x12) | ((uint16_t)espMcpRead(0x13) << 8);
+  for (uint8_t i = 0; i < BTN_COUNT; i++) {
+    const int8_t pin = buttonPins[i];
+    if (pin >= 0 && (pin >= 64 ? !(keys & (1 << (pin - 64))) : digitalRead(pin) == LOW)) buttons |= 1 << i;
+  }
+#else
   for (uint8_t i = 0; i < BTN_COUNT; i++) {
     if (buttonPins[i] >= 0 && digitalRead(buttonPins[i]) == LOW) buttons |= 1 << i;
   }
+#endif
 #ifdef AB_TWO_BUTTONS
   // Consoles with only left and right: both together are A.
   if ((buttons & (1 << BTN_LEFT)) && (buttons & (1 << BTN_RIGHT))) buttons |= 1 << BTN_A;
@@ -1459,8 +1467,15 @@ static void showGameOver() {
 // Main loop -------------------------------------------------------------
 
 static void begin() {
+#if defined(AB_DISPLAY_ESPBOY)
+  espHardwareBegin();
+#endif
   for (uint8_t i = 0; i < BTN_COUNT; i++) {
+#if defined(AB_DISPLAY_ESPBOY)
+    espPinMode(buttonPins[i], true);
+#else
     if (buttonPins[i] >= 0) pinMode(buttonPins[i], INPUT_PULLUP);
+#endif
   }
 #if defined(AB_PIN_SOUND2)
   pinMode(AB_PIN_SOUND2, OUTPUT);

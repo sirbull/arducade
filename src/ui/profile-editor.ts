@@ -8,6 +8,9 @@ import {
   cloneProfile,
   createCustomProfile,
   DISPLAY_DRIVERS,
+  ESPBOY_DEFAULTS,
+  MCP_PINS,
+  isESPboy,
   hasErrors,
   parseProfile,
   PROFILE_EXTENSION,
@@ -197,8 +200,12 @@ function profileForm(p: Profile, readonly: boolean, onChange: () => void): HTMLE
   const changed = () => {
     onChange();
   };
-  const pinSelect = (value: string | undefined, set: (v: string | undefined) => void, label: string) =>
-    h('label', { class: 'field' }, label, select(value && !pinOptions.some((x) => x.value === value) ? [...pinOptions, { value, label: value }] : pinOptions, value ?? '', (v) => (set(v || undefined), changed()), { disabled: readonly }));
+  const pinSelect = (value: string | undefined, set: (v: string | undefined) => void, label: string, mcp = false) => {
+    const options = [...pinOptions, ...(mcp && isESPboy(p) ? MCP_PINS.map((pin) => ({ value: pin.id, label: pin.id })) : [])];
+    return h('label', { class: 'field' }, label, select(value && !options.some((x) => x.value === value) ? [...options, { value, label: value }] : options, value ?? '', (v) => (set(v || undefined), changed()), { disabled: readonly }));
+  };
+  const addressInput = (label: string, value: number, min: number, max: number, set: (v: number) => void) =>
+    h('label', { class: 'field' }, label, select(Array.from({ length: max - min + 1 }, (_, n) => ({ value: String(min + n), label: `0x${(min + n).toString(16).toUpperCase()}` })), String(value), (v) => (set(Number(v)), changed()), { disabled: readonly }));
 
   const chipOptions = CHIPS.filter((c) => !c.tiny || secretOn || c.id === p.chip).map((c) => ({ value: c.id, label: `${c.name} (${c.boards[0]})${c.browserCompile ? '' : ' *'}` }));
   const form = h(
@@ -226,14 +233,18 @@ function profileForm(p: Profile, readonly: boolean, onChange: () => void): HTMLE
       'fieldset',
       { disabled: readonly },
       h('legend', {}, t('profile.display')),
-      h('label', { class: 'field' }, t('profile.driver'), select(DISPLAY_DRIVERS.map((x) => ({ value: x.id, label: x.name })), p.display.driver, (v) => ((p.display.driver = v as Profile['display']['driver']), changed()))),
+      h('label', { class: 'field' }, t('profile.driver'), select(DISPLAY_DRIVERS.map((x) => ({ value: x.id, label: x.name })), p.display.driver, (v) => {
+        p.display.driver = v as Profile['display']['driver'];
+        if (isESPboy(p)) { p.espboy ??= { ...ESPBOY_DEFAULTS }; p.display.bus = 'spi'; }
+        changed();
+      })),
       h(
         'label',
         { class: 'field' },
         t('profile.bus'),
         select(
           [
-            { value: 'i2c', label: 'I2C' },
+            ...(!isESPboy(p) ? [{ value: 'i2c', label: 'I2C' }] : []),
             { value: 'spi', label: 'SPI' },
           ],
           p.display.bus,
@@ -254,25 +265,33 @@ function profileForm(p: Profile, readonly: boolean, onChange: () => void): HTMLE
               (v) => ((p.display.i2cAddress = Number(v)), changed()),
             ),
           )
-        : [pinSelect(p.display.cs, (v) => (p.display.cs = v), 'CS'), pinSelect(p.display.dc, (v) => (p.display.dc = v), 'DC')],
+        : [pinSelect(p.display.cs, (v) => (p.display.cs = v), 'CS', true), pinSelect(p.display.dc, (v) => (p.display.dc = v), 'DC')],
       pinSelect(p.display.rst, (v) => (p.display.rst = v), 'RST'),
       checkbox(t('profile.rotate'), p.display.rotate180, (v) => ((p.display.rotate180 = v), changed())),
       checkbox(t('profile.mirror'), p.display.mirror, (v) => ((p.display.mirror = v), changed())),
-      h('label', { class: 'field' }, t('profile.contrast'), range(p.display.contrast, (v) => ((p.display.contrast = v), changed()))),
-      h('p', { class: 'muted small' }, t('profile.busPins', { sda: chip.bus.sda ?? '-', scl: chip.bus.scl ?? '-', mosi: chip.bus.mosi ?? '-', sck: chip.bus.sck ?? '-' })),
+      h('label', { class: 'field' }, t(isESPboy(p) ? 'profile.backlightBrightness' : 'profile.contrast'), range(p.display.contrast, (v) => ((p.display.contrast = v), changed()))),
+      h('p', { class: 'muted small' }, t(isESPboy(p) ? 'profile.espboyBusPins' : 'profile.busPins', { sda: (isESPboy(p) ? p.espboy?.sda : chip.bus.sda) ?? '-', scl: (isESPboy(p) ? p.espboy?.scl : chip.bus.scl) ?? '-', mosi: (isESPboy(p) ? p.espboy?.mosi : chip.bus.mosi) ?? '-', sck: (isESPboy(p) ? p.espboy?.sck : chip.bus.sck) ?? '-' })),
     ),
+    ...(isESPboy(p) && p.espboy ? [h('fieldset', { disabled: readonly },
+      h('legend', {}, 'ESPboy'),
+      h('p', { class: 'muted small' }, t('profile.espboyHelp')),
+      ...(['sda', 'scl', 'mosi', 'sck'] as const).map((key) => pinSelect(p.espboy![key], (v) => (p.espboy![key] = v ?? ''), key.toUpperCase())),
+      addressInput(t('profile.mcpAddress'), p.espboy.mcpAddress, 0x20, 0x27, (v) => (p.espboy!.mcpAddress = v)),
+      checkbox(t('profile.backlightDAC'), p.espboy.dacAddress !== undefined, (v) => { p.espboy!.dacAddress = v ? 0x60 : undefined; changed(); }),
+      ...(p.espboy.dacAddress !== undefined ? [addressInput(t('profile.dacAddress'), p.espboy.dacAddress, 0x60, 0x67, (v) => (p.espboy!.dacAddress = v))] : []),
+    )] : []),
     h(
       'fieldset',
       { disabled: readonly },
       h('legend', {}, t('profile.buttons')),
-      ...BUTTONS.map((b) => pinSelect(p.buttons[b], (v) => (p.buttons[b] = v ?? ''), t(`role.button.${b}`))),
+      ...BUTTONS.map((b) => pinSelect(p.buttons[b], (v) => (p.buttons[b] = v ?? ''), t(`role.button.${b}`), true)),
     ),
     h(
       'fieldset',
       { disabled: readonly },
       h('legend', {}, t('profile.sound')),
       pinSelect(p.sound.pin1, (v) => (p.sound.pin1 = v), t('role.sound.pin1')),
-      pinSelect(p.sound.pin2, (v) => (p.sound.pin2 = v), t('role.sound.pin2')),
+      ...(!isESPboy(p) ? [pinSelect(p.sound.pin2, (v) => (p.sound.pin2 = v), t('role.sound.pin2'))] : []),
     ),
     h('div', { class: 'issues-box' }, h('h4', {}, t('profile.checks')), issueList(p)),
   );

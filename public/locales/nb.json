@@ -316,6 +316,15 @@
     "AB_INFO_POSITION_TOOLTIP": "Flytter score, health eller en opprettet timer. Velg Ny timer for å opprette en ny, uavhengig timer."
   },
   "ui": {
+    "profile.backlightBrightness": "Lysstyrke på baklys",
+    "profile.espboyBusPins": "I2C SDA {sda}, SCL {scl}. SPI MOSI {mosi}, SCK {sck}.",
+
+    "profile.espboyHelp": "ESPboy beholder spillet i 128×64 og svart-hvitt, sentrert uten skalering. MCP0–MCP15 er pinner på MCP23017-utvideren; GPIO er pinner på ESP8266. CS holdes lav, så skjermen må ha sin egen SPI-buss. Kopier profilen for å tilpasse koblingene.",
+    "profile.mcpAddress": "MCP23017-adresse",
+    "profile.backlightDAC": "MCP4725-styring av baklys",
+    "profile.dacAddress": "MCP4725-adresse",
+    "device.espboyEstimate": "Grovt anslag for selve spillet. ESP8266-kjerne, skjermbiblioteker, heap og stack er ikke inkludert. Kompiler den eksporterte skissen i Arduino IDE for faktisk flash- og RAM-bruk.",
+
     "blocks.dropToDelete": "Slipp her for å slette",
     "ui.ok": "OK",
     "ui.cancel": "Avbryt",

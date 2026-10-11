@@ -316,6 +316,15 @@
     "AB_INFO_POSITION_TOOLTIP": "Mueve score, health o un temporizador creado. Nuevo temporizador crea otro temporizador independiente."
   },
   "ui": {
+    "profile.backlightBrightness": "Brillo de la iluminación",
+    "profile.espboyBusPins": "I2C SDA {sda}, SCL {scl}. SPI MOSI {mosi}, SCK {sck}.",
+
+    "profile.espboyHelp": "ESPboy mantiene el juego en blanco y negro a 128×64, centrado y sin escalar. MCP0–MCP15 son pines del expansor MCP23017; GPIO son pines del ESP8266. CS se mantiene bajo: la pantalla necesita su propio bus SPI. Copia el perfil para adaptar las conexiones.",
+    "profile.mcpAddress": "Dirección MCP23017",
+    "profile.backlightDAC": "Control de iluminación MCP4725",
+    "profile.dacAddress": "Dirección MCP4725",
+    "device.espboyEstimate": "Estimación aproximada solo del juego. No incluye el núcleo ESP8266, las bibliotecas de pantalla, el heap ni la pila. Compila el sketch exportado en Arduino IDE para obtener el uso real de flash y RAM.",
+
     "blocks.dropToDelete": "Suelta aquí para eliminar",
     "ui.ok": "Aceptar",
     "ui.cancel": "Cancelar",

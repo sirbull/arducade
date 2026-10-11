@@ -316,6 +316,15 @@
     "AB_INFO_POSITION_TOOLTIP": "Déplace score, health ou un minuteur créé. Nouveau minuteur crée un autre minuteur indépendant."
   },
   "ui": {
+    "profile.backlightBrightness": "Luminosité du rétroéclairage",
+    "profile.espboyBusPins": "I2C SDA {sda}, SCL {scl}. SPI MOSI {mosi}, SCK {sck}.",
+
+    "profile.espboyHelp": "ESPboy conserve le jeu en noir et blanc à 128×64, centré sans mise à l’échelle. MCP0–MCP15 sont les broches du MCP23017 ; GPIO désigne celles de l’ESP8266. CS reste bas : l’écran doit avoir son propre bus SPI. Copiez le profil pour adapter le câblage.",
+    "profile.mcpAddress": "Adresse MCP23017",
+    "profile.backlightDAC": "Contrôle du rétroéclairage MCP4725",
+    "profile.dacAddress": "Adresse MCP4725",
+    "device.espboyEstimate": "Estimation approximative du jeu uniquement. Exclut le cœur ESP8266, les bibliothèques écran, le tas et la pile. Compilez le sketch exporté dans Arduino IDE pour connaître l’utilisation réelle de flash et RAM.",
+
     "blocks.dropToDelete": "Déposez ici pour supprimer",
     "ui.ok": "OK",
     "ui.cancel": "Annuler",

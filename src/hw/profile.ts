@@ -1,6 +1,6 @@
 import { CHIPS, findPin, getChip, type Chip } from './chips';
 
-export type DisplayDriver = 'ssd1306' | 'sh1106' | 'ssd1309';
+export type DisplayDriver = 'ssd1306' | 'sh1106' | 'ssd1309' | 'espboy';
 export type DisplayBus = 'i2c' | 'spi';
 export type ButtonId = 'up' | 'down' | 'left' | 'right' | 'a' | 'b';
 export const BUTTONS: ButtonId[] = ['up', 'down', 'left', 'right', 'a', 'b'];
@@ -9,6 +9,7 @@ export const DISPLAY_DRIVERS: { id: DisplayDriver; name: string }[] = [
   { id: 'ssd1306', name: 'SSD1306' },
   { id: 'sh1106', name: 'SH1106' },
   { id: 'ssd1309', name: 'SSD1309' },
+  { id: 'espboy', name: 'ESPboy ST7735 (128×128 TFT)' },
 ];
 
 export interface DisplayConfig {
@@ -26,6 +27,22 @@ export interface DisplayConfig {
   contrast: number;
 }
 
+export interface ESPboyConfig {
+  sda: string;
+  scl: string;
+  mosi: string;
+  sck: string;
+  mcpAddress: number;
+  /** Optional MCP4725 backlight DAC; DIY devices may wire backlight directly. */
+  dacAddress?: number;
+}
+
+export const ESPBOY_DEFAULTS: ESPboyConfig = {
+  sda: 'GPIO4', scl: 'GPIO5', mosi: 'GPIO13', sck: 'GPIO14', mcpAddress: 0x20, dacAddress: 0x60,
+};
+export const MCP_PINS = Array.from({ length: 16 }, (_, n) => ({ id: `MCP${n}`, cpp: String(64 + n), reserved: false, analogOnly: false, noPullup: false, serial: false }));
+export function isESPboy(p: Profile): boolean { return p.display.driver === 'espboy'; }
+
 export interface Profile {
   format: 'ardublocks-profile';
   version: 1;
@@ -34,6 +51,7 @@ export interface Profile {
   /** Built in profiles can not be edited, only copied. */
   builtin?: boolean;
   chip: string;
+  espboy?: ESPboyConfig;
   display: DisplayConfig;
   buttons: Record<ButtonId, string>;
   sound: { pin1?: string; pin2?: string };
@@ -96,6 +114,20 @@ export const SECRET_PROFILES: Profile[] = [
     sound: { pin1: 'PB1' },
   }),
 ];
+
+for (const [id, name, dac] of [
+  ['espboy-original', 'ESPboy Original', true],
+  ['espboy-kit', 'ESPboy Kit', true],
+  ['espboy-diy', 'ESPboy DIY (direct backlight)', false],
+] as const) {
+  BUILTIN_PROFILES.push(profile({
+    id, name, builtin: true, chip: 'esp8266',
+    espboy: { ...ESPBOY_DEFAULTS, dacAddress: dac ? 0x60 : undefined },
+    display: { driver: 'espboy', bus: 'spi', i2cAddress: 0x3c, cs: 'MCP8', dc: 'GPIO16', rotate180: false, mirror: false, contrast: 255 },
+    buttons: { left: 'MCP0', up: 'MCP1', down: 'MCP2', right: 'MCP3', a: 'MCP4', b: 'MCP5' },
+    sound: { pin1: 'GPIO0' },
+  }));
+}
 
 export const DEFAULT_PROFILE_ID = 'arduboy';
 
@@ -163,10 +195,28 @@ export function validateProfile(p: Profile): ProfileIssue[] {
   };
   const uses = pinUses(p);
   const busPins: { pin: string; role: string }[] = [];
-  if (p.display.bus === 'i2c') {
+  if (isESPboy(p)) {
+    const e = p.espboy;
+    if (chip.id !== 'esp8266' || p.display.bus !== 'spi' || !e ||
+        !Number.isInteger(e.mcpAddress) || e.mcpAddress < 0x20 || e.mcpAddress > 0x27 ||
+        (e.dacAddress !== undefined && (!Number.isInteger(e.dacAddress) || e.dacAddress < 0x60 || e.dacAddress > 0x67)) ||
+        (p.sound.pin1 && !findPin(chip, p.sound.pin1)) || p.sound.pin2) {
+      issues.push({ level: 'error', key: 'profile.invalidConfig' });
+    }
+    if (e) {
+      const bus = [['sda', e.sda], ['scl', e.scl], ['mosi', e.mosi], ['sck', e.sck]] as const;
+      for (const [role, pin] of bus) {
+        const info = findPin(chip, pin);
+        if (!info || info.reserved) issues.push({ level: 'error', key: 'profile.pinUnknown', params: { pin, role: `bus.${role}`, chip: chip.name } });
+        busPins.push({ pin, role: `bus.${role}` });
+      }
+      if (new Set(bus.map(([, pin]) => pin)).size !== 4) issues.push({ level: 'error', key: 'profile.invalidConfig' });
+    }
+  }
+  if (!isESPboy(p) && p.display.bus === 'i2c') {
     if (chip.bus.sda) busPins.push({ pin: chip.bus.sda, role: 'bus.sda' });
     if (chip.bus.scl) busPins.push({ pin: chip.bus.scl, role: 'bus.scl' });
-  } else {
+  } else if (!isESPboy(p)) {
     if (chip.bus.mosi) busPins.push({ pin: chip.bus.mosi, role: 'bus.mosi' });
     if (chip.bus.sck) busPins.push({ pin: chip.bus.sck, role: 'bus.sck' });
   }
@@ -181,7 +231,7 @@ export function validateProfile(p: Profile): ProfileIssue[] {
   }
 
   for (const u of uses) {
-    const info = findPin(chip, u.pin);
+    const info = isESPboy(p) && (u.input || u.role === 'display.cs') ? MCP_PINS.find((pin) => pin.id === u.pin) ?? findPin(chip, u.pin) : findPin(chip, u.pin);
     if (!info) {
       issues.push({ level: 'error', key: 'profile.pinUnknown', params: { pin: u.pin, role: u.role, chip: chip.name } });
       continue;
@@ -238,12 +288,15 @@ export function parseProfile(text: string): Profile {
       !DISPLAY_DRIVERS.some((d) => d.id === p.display!.driver) || !['i2c', 'spi'].includes(p.display.bus) ||
       [p.display.cs, p.display.dc, p.display.rst, p.sound.pin1, p.sound.pin2, ...BUTTONS.map((b) => p.buttons![b])].some((v) => v !== undefined && typeof v !== 'string') ||
       [p.display.i2cAddress, p.display.contrast].some((v) => v !== undefined && (typeof v !== 'number' || !Number.isFinite(v)))) throw new Error('file.broken');
+  if (p.espboy && (!record(p.espboy) || ['sda', 'scl', 'mosi', 'sck'].some((k) => typeof (p.espboy as unknown as Record<string, unknown>)[k] !== 'string') ||
+      !Number.isInteger(p.espboy.mcpAddress) || (p.espboy.dacAddress !== undefined && !Number.isInteger(p.espboy.dacAddress)))) throw new Error('file.broken');
   const result: Profile = {
     format: 'ardublocks-profile',
     version: 1,
     id: typeof p.id === 'string' && p.id ? p.id : `custom-${Date.now().toString(36)}`,
     name: typeof p.name === 'string' && p.name ? p.name : 'Profile',
     chip: p.chip,
+    ...(p.espboy ? { espboy: { ...p.espboy } } : {}),
     display: {
       driver: p.display.driver ?? 'ssd1306',
       bus: p.display.bus ?? 'i2c',
@@ -258,6 +311,7 @@ export function parseProfile(text: string): Profile {
     buttons: { ...p.buttons } as Record<ButtonId, string>,
     sound: { ...p.sound },
   };
+  if (isESPboy(result) && hasErrors(validateProfile(result))) throw new Error('file.broken');
   return result;
 }
 
@@ -275,7 +329,7 @@ function clamp(v: number, lo: number, hi: number): number {
 
 function pinCpp(chip: Chip, id: string | undefined): string | undefined {
   if (!id) return undefined;
-  return findPin(chip, id)?.cpp;
+  return MCP_PINS.find((p) => p.id === id)?.cpp ?? findPin(chip, id)?.cpp;
 }
 
 /** Creates the ab_config.h header for a profile. */
@@ -292,6 +346,12 @@ export function profileToConfigH(p: Profile): string {
     `#define AB_DISPLAY_${p.display.driver.toUpperCase()} 1`,
     `#define AB_BUS_${p.display.bus.toUpperCase()} 1`,
   ];
+  if (isESPboy(p)) {
+    const e = p.espboy!;
+    for (const k of ['sda', 'scl', 'mosi', 'sck'] as const) lines.push(`#define AB_ESP_${k.toUpperCase()} ${pinCpp(chip, e[k])}`);
+    lines.push(`#define AB_ESP_MCP_ADDRESS ${e.mcpAddress}`);
+    if (e.dacAddress !== undefined) lines.push(`#define AB_ESP_DAC_ADDRESS ${e.dacAddress}`);
+  }
   if (chip.tiny) {
     lines.push(`#define AB_PIN_SDA ${pinCpp(chip, chip.bus.sda)}`);
     lines.push(`#define AB_PIN_SCL ${pinCpp(chip, chip.bus.scl)}`);

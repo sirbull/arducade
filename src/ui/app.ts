@@ -510,7 +510,7 @@ export class App {
     } catch {
       // Unknown chip, shown as is.
     }
-    $('#profile-name').textContent = `${p.name} (${chip}, ${p.display.driver.toUpperCase()} ${p.display.bus.toUpperCase()})`;
+    $('#profile-name').textContent = `${p.name} (${chip}, ${p.display.driver === 'espboy' ? 'ST7735 128×128 TFT' : p.display.driver.toUpperCase()} ${p.display.bus.toUpperCase()})`;
   }
 
   private renderActivePane() {

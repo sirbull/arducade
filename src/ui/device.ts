@@ -4,7 +4,7 @@
 import { compileInWorker } from '../compile/client';
 import type { CompileOutput } from '../compile/avrgcc';
 import { getChip, usableFlash, type Chip } from '../hw/chips';
-import { hasErrors, validateProfile, profileToConfigH } from '../hw/profile';
+import { hasErrors, validateProfile, profileToConfigH, isESPboy } from '../hw/profile';
 import { t } from '../i18n/i18n';
 import type { Diagnostic } from '../ir/ir';
 import { CORE_HEADERS } from '../project/sketch';
@@ -99,8 +99,9 @@ export class DeviceTools {
     const summary = $('#meter-summary');
     clear(summary);
     summary.append(bar(t('device.flash'), flash, flashMax), bar(t('device.ram'), ram, ramMax));
-    summary.title = estimate ? t('device.estimate') : t('device.exact');
-    el.append(h('p', { class: 'muted small' }, estimate ? t('device.estimate') : t('device.exact')));
+    const explanation = estimate && isESPboy(this.app.project.profile) ? t('device.espboyEstimate') : estimate ? t('device.estimate') : t('device.exact');
+    summary.title = explanation;
+    el.append(h('p', { class: 'muted small' }, explanation));
     if (flash > flashMax) el.append(h('p', { class: 'error small' }, t('device.tooBig')));
     else if (ram > ramMax - 300) el.append(h('p', { class: 'warning small' }, t('device.lowRam')));
   }

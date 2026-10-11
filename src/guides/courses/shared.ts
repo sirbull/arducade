@@ -1,6 +1,6 @@
 import { blk, get, num, set, workspace, type B } from '../../templates/dsl';
 import type { LocalizedText, TileAsset, TilemapAsset } from '../../project/model';
-import { hasTop, type Guide, type GuideStep, type Pattern, type Check } from '../guide';
+import { matchesSolution, type GuideStep, type Check } from '../guide';
 export const L = (en: string, nb: string, es: string, fr: string, de: string): LocalizedText => ({ en, nb, es, fr, de });
 export const create = (name: string, image: string, kind = 'Player') => set(name, blk('ab_sprite_create', { f: { IMAGE: image, KIND: kind } }));
 export const position = (name: string, x: B | number, y: B | number) => blk('ab_sprite_set_position', { i: { SPRITE: get(name), X: typeof x === 'number' ? num(x) : x, Y: typeof y === 'number' ? num(y) : y } });
@@ -26,58 +26,15 @@ export const life = (v: number) => blk('ab_life_set', { i: { VALUE: num(v) } });
 export const score = (v: number) => blk('ab_score_set', { i: { VALUE: num(v) } });
 export const sound = (sfx: string) => blk('ab_play_effect', { f: { SFX: sfx } });
 
-function statements(block: B | undefined): B[] {
-  if (!block) return [];
-  return [block, ...statements((block.next as { block: B } | undefined)?.block)];
-}
-/** Variable spelling is free; numeric settings and event nesting remain checked. */
-function pattern(b: B): Pattern {
-  const fields = Object.fromEntries(Object.entries(b.fields ?? {}).filter(([, v]) => typeof v !== 'object').map(([k, v]) => [k, String(v)]));
-  const inputs: Record<string, Pattern> = {};
-  const contains: Pattern[] = [];
-  for (const [key, value] of Object.entries(b.inputs ?? {})) {
-    const child = (value as { block?: B; shadow?: B }).block ?? (value as { shadow?: B }).shadow;
-    if (!child) continue;
-    if (/^(DO\d*|ELSE|STACK)$/.test(key)) contains.push(...statements(child).map(pattern));
-    else inputs[key] = pattern(child);
-  }
-  return { type: String(b.type), fields, inputs, contains };
-}
-const autoPictures = new WeakSet<GuideStep>();
 export function stage(explanation: LocalizedText, body: B[], events: B[] = [], show?: B[], run?: Check['run']): GuideStep {
   const roots = [blk('ab_on_start', { body }), ...events];
-  const requirements = roots.map(pattern);
+  const solution = structuredClone(workspace(roots));
   const checks: Check[] = [{
-    text: L('The blocks for this step are connected and set correctly', 'Blokkene for trinnet er koblet sammen og stilt inn riktig', 'Los bloques del paso están conectados y configurados', 'Les blocs de cette étape sont reliés et réglés correctement', 'Die Blöcke für diesen Schritt sind verbunden und richtig eingestellt'),
-    ok: c => requirements.every(p => hasTop(c.blocks, p)),
+    text: L('All required blocks are connected in order and use the correct variables', 'Alle nødvendige blokker er koblet i rekkefølge og bruker riktige variabler', 'Todos los bloques necesarios están conectados en orden y usan las variables correctas', 'Tous les blocs nécessaires sont reliés dans l’ordre et utilisent les bonnes variables', 'Alle nötigen Blöcke sind in Reihenfolge verbunden und verwenden die richtigen Variablen'),
+    ok: c => matchesSolution(c.blocks, solution),
   }];
   if (run) checks.push({ text: L('Your game passes the play test', 'Spillet ditt består spilleprøven', 'Tu juego supera la prueba', 'Ton jeu réussit le test', 'Dein Spiel besteht den Spieltest'), ok: () => true, run });
-  const step = { text: explanation, solution: structuredClone(workspace(roots)), show: structuredClone(show ?? roots), checks };
-  if (!show) autoPictures.add(step);
-  return step;
-}
-/** Pictures focus on additions; Help retains the complete cumulative solution. */
-export function focusPictures(guide: Guide): Guide {
-  const tops = (solution: B): B[] => (solution.blocks as { blocks?: B[] } | undefined)?.blocks ?? [];
-  const clean = (block: B): B => { const copy = { ...block }; delete copy.x; delete copy.y; delete copy.next; return copy; };
-  const key = (block: B) => JSON.stringify([block.type, block.fields]);
-  const same = (a: B, b: B) => JSON.stringify(clean(a)) === JSON.stringify(clean(b));
-  guide.steps.forEach((step, i) => {
-    if (!autoPictures.has(step)) return;
-    const before = tops(i ? guide.steps[i-1].solution : guide.start);
-    const changed: B[] = [];
-    for (const block of tops(step.solution)) {
-      const old = before.find(b => key(b) === key(block));
-      if (old && same(old, block)) continue;
-      if (old && block.type === 'ab_on_start') {
-        const body = (b: B) => statements((b.inputs as { DO?: { block: B } } | undefined)?.DO?.block);
-        const previous = body(old);
-        changed.push(...body(block).filter(b => !previous.some(p => same(p,b))).map(clean));
-      } else changed.push(block);
-    }
-    step.show = structuredClone(changed.length ? changed : tops(step.solution));
-  });
-  return guide;
+  return { text: explanation, solution, show: structuredClone(show ?? roots), checks };
 }
 export const tryGame: Check = { text: L('Press ▶ to try the game', 'Trykk ▶ for å prøve spillet', 'Pulsa ▶ para probar el juego', 'Appuie sur ▶ pour essayer le jeu', 'Drücke ▶, um das Spiel zu testen'), ok: c => c.played > 0 };
 export const finishStage = (s: GuideStep): GuideStep => ({ ...s, show: undefined, checks: [...s.checks, tryGame] });

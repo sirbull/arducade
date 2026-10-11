@@ -1,7 +1,7 @@
 import { blk, cmp, get, ifThen, num, random, set, workspace, change, flag } from '../templates/dsl';
 import type { B } from '../templates/dsl';
 import type { LocalizedText } from '../project/model';
-import { hasTop, numIn, type Check, type Guide, type Pattern, type GuideStep } from './guide';
+import { hasTop, matchesSolution, numIn, type Check, type Guide, type Pattern, type GuideStep } from './guide';
 
 const L = (en: string, nb: string, es: string, fr: string, de: string): LocalizedText => ({ en, nb, es, fr, de });
 const create = (name: string, image: string, kind: string) => set(name, blk('ab_sprite_create', { f: { IMAGE: image, KIND: kind } }));
@@ -108,34 +108,116 @@ export const level14: Guide = {
   bonus: inStart(L('Bonus: start with 5 lives.', 'Bonus: start med 5 liv.', 'Extra: empieza con 5 vidas.', 'Bonus : commence avec 5 vies.', 'Bonus: Starte mit 5 Leben.'), {type:'ab_life_set',inputs:{VALUE:numIn(5,5)}}),
 };
 
-const moreCoins = [create('coin2','coin','Food'),pos('coin2',96,48),create('coin3','coin','Food'),pos('coin3',112,48)];
-const timeStart = set('timeLeft',num(20));
+const randomCoinPosition = (name: string) => blk('ab_sprite_set_position', {
+  i: { SPRITE: get(name), X: random(8, 112), Y: random(16, 48) },
+});
+const deluxeCoinBody = [...initial, coins[0], randomCoinPosition('myCoin')];
+const deluxeVelocity = blk('ab_sprite_set_velocity', { i: { SPRITE: get('myEnemy'), VX: num(30), VY: num(22) } });
+const deluxeBouncing: Check = {
+  text: L('The enemy moves and bounces horizontally and vertically', 'Fienden beveger seg og spretter både vannrett og loddrett', 'El enemigo se mueve y rebota horizontal y verticalmente', 'L’ennemi bouge et rebondit horizontalement et verticalement', 'Der Gegner bewegt sich und prallt horizontal und vertikal ab'),
+  ok: () => true,
+  run: async (e, frame) => {
+    const enemy = e.sprites.find(s => s.alive && s.kind === 1);
+    const hero = e.sprites.findIndex(s => s.alive && s.kind === 0);
+    if (!enemy || hero < 0 || !enemy.vx || !enemy.vy) return false;
+    const { x, y, vx, vy } = enemy;
+    let movedX = false, movedY = false, bouncedX = false, bouncedY = false;
+    for (let i = 0; i < 600; i++) {
+      // Keep contact damage separate from this movement check.
+      e.setPosition(hero, enemy.x > 64 * 256 ? 16 : 112, enemy.y > 32 * 256 ? 12 : 56);
+      await frame();
+      movedX ||= enemy.x !== x;
+      movedY ||= enemy.y !== y;
+      bouncedX ||= enemy.vx * vx < 0;
+      bouncedY ||= enemy.vy * vy < 0;
+      if (movedX && movedY && bouncedX && bouncedY) return true;
+      if (e.gameOverPending) return false;
+    }
+    return false;
+  },
+};
+const deluxeDangerBody = [...deluxeCoinBody, ...enemy, deluxeVelocity, bounce, lives];
+const moreCoins = [create('coin2','coin','Food'), randomCoinPosition('coin2'), create('coin3','coin','Food'), randomCoinPosition('coin3')];
+const timeStart = set('timeLeft',num(300));
 const lose = ifThen(cmp('LTE',get('timeLeft'),num(0)),[blk('ab_game_over',{f:{WIN:'lose'}})]);
 const timer = (finish: boolean) => blk('ab_on_every',{f:{MS:1000},body:[change('timeLeft',-1), ...(finish ? [lose] : [])]});
-const win = ifThen(cmp('GTE',blk('ab_score'),num(3)),[blk('ab_game_over',{f:{WIN:'win'}})]);
-const castleBody = [...dangerBody,...moreCoins,timeStart];
+const win = ifThen(cmp('GTE',blk('ab_score'),num(100)),[blk('ab_game_over',{f:{WIN:'win'}})]);
+const castleBody = [...deluxeDangerBody,...moreCoins,timeStart];
 const castleEvents = [overlap('Food',[score(),respawn(),win]),overlap('Enemy',hurt),timer(true)];
 const timedOut: Check = {text:L('The game ends when time runs out', 'Spillet slutter når tiden går ut', 'El juego termina al agotarse el tiempo', 'Le jeu se termine quand le temps est écoulé', 'Das Spiel endet, wenn die Zeit abläuft'),ok:()=>true,
   run:async(e,frame)=>{
-    await frame(0,600); await frame(0,590);
+    // Keep the timeout check independent of random coin positions and contact damage.
+    e.sprites.forEach((s, i) => { if (s.alive) { e.setPosition(i, s.kind === 0 ? 16 : 96, s.kind === 0 ? 56 : 20); e.setVelocity(i, 0, 0); } });
+    for (let remaining = 18749; remaining > 0; remaining -= 600) await frame(0, Math.min(remaining, 600));
     if (e.gameOverPending) return false;
-    await frame(0,100);
+    await frame(0, 2);
     return e.gameOverPending && !e.gameOverWin;
   }};
-const victory: Check = {text:L('Collecting 3 coins wins the game', '3 mynter gir seier', 'Recoger 3 monedas gana el juego', 'Ramasser 3 pièces fait gagner', '3 Münzen bringen den Sieg'),ok:()=>true,
-  run:async(e,frame)=>{ await frame(1<<3,115); return e.score>=3 && e.gameOverPending && e.gameOverWin; }};
+const victory: Check = {text:L('Collecting 100 coins wins, but 99 does not', '100 mynter gir seier, men 99 gjør ikke det', 'Recoger 100 monedas gana, pero 99 no', '100 pièces font gagner, mais pas 99', '100 Münzen bringen den Sieg, aber 99 nicht'),ok:()=>true,
+  run:async(e,frame)=>{
+    const hero = e.sprites.findIndex(s => s.alive && s.kind === 0);
+    const food = e.sprites.flatMap((s, i) => s.alive && s.kind === 3 ? [i] : []);
+    if (hero < 0 || food.length !== 3 || e.score !== 0) return false;
+    e.sprites.forEach((s, i) => { if (s.alive && s.kind === 1) { e.setPosition(i, 0, 0); e.setVelocity(i, 0, 0); } });
+    for (let count = 1; count <= 100; count++) {
+      food.forEach(i => e.setPosition(i, 112, 48));
+      const collected = food[(count - 1) % food.length];
+      e.setPosition(collected, 64, 32);
+      e.setPosition(hero, 64, 32);
+      await frame();
+      if (e.score !== count || (count < 100 && e.gameOverPending)) return false;
+      const coin = e.sprites[collected];
+      if (!coin.alive || coin.x < 8 * 256 || coin.x > 112 * 256 || coin.y < 16 * 256 || coin.y > 48 * 256) return false;
+    }
+    return e.gameOverPending && e.gameOverWin;
+  }};
+
+// Each chapter builds on the previous one, starting with an empty workspace.
+// Validate the cumulative code, including sprite references, ordering and random ranges.
+const deluxeStep = (s: GuideStep): GuideStep => ({ ...s, checks: [
+  ...s.checks,
+  { text: L('All blocks are connected as shown', 'Alle blokkene er koblet sammen som vist', 'Todos los bloques están conectados como se muestra', 'Tous les blocs sont reliés comme indiqué', 'Alle Blöcke sind wie gezeigt verbunden'),
+    ok: c => matchesSolution(c.blocks, s.solution) },
+] });
+const deluxePrelude: GuideStep[] = [
+  step(L('Start with “on start” from Game. Inside, create a Player sprite with the hero picture and name its variable mySprite. Add “set position” for mySprite: x 16, y 48. The screen is 128 by 64 pixels; x goes right and y goes down.', 'Start med «når spillet starter» fra Spill. Inni lager du en Spiller-sprite med heltebildet og variabelnavnet mySprite. Legg til «sett posisjon» for mySprite: x 16, y 48. Skjermen er 128 ganger 64 punkter; x går mot høyre og y nedover.', 'Empieza con «al iniciar» de Juego. Dentro, crea un sprite Jugador con el héroe y la variable mySprite. Fija su posición: x 16, y 48. La pantalla es de 128 por 64 píxeles; x va a la derecha e y hacia abajo.', 'Commence par «au démarrage» depuis Jeu. Crée dedans un sprite Joueur avec le héros et la variable mySprite. Place-le à x 16, y 48. L’écran mesure 128 sur 64 pixels ; x va à droite et y vers le bas.', 'Beginne mit „beim Start“ aus Spiel. Erstelle darin einen Spieler mit dem Heldenbild und der Variable mySprite. Setze seine Position auf x 16, y 48. Der Bildschirm hat 128 mal 64 Pixel; x geht nach rechts, y nach unten.'), start(initial.slice(0, 2)), [], [blk('ab_on_start', { body: initial.slice(0, 2) })]),
+  step(L('Under the position block, add “animate” from Sprites for mySprite, every 200 ms. It switches between the hero’s pictures to make its legs move.', 'Under posisjon-blokken legger du «animer» fra Sprites for mySprite, hver 200 ms. Den bytter mellom heltens bilder slik at beina beveger seg.', 'Debajo de la posición, añade «animar» de Sprites para mySprite cada 200 ms. Alterna las imágenes del héroe para mover las piernas.', 'Sous la position, ajoute «animer» depuis Sprites pour mySprite toutes les 200 ms. Cela alterne les images du héros pour faire bouger ses jambes.', 'Füge unter der Position „animieren“ aus Sprites für mySprite alle 200 ms ein. Es wechselt die Heldenbilder und bewegt so die Beine.'), start(initial.slice(0, 3)), [], [initial[2]]),
+  step(L('Add “move with buttons” from Controller for mySprite: vx 60, vy 60. These speeds let you move in all four directions using arrows or the simulator’s on-screen buttons.', 'Legg til «flytt med knappene» fra Kontroller for mySprite: vx 60, vy 60. Denne farten lar deg gå i alle fire retninger med piltastene eller knappene på simulatorskjermen.', 'Añade «mover con botones» de Controlador para mySprite: vx 60, vy 60. Muévete en las cuatro direcciones con flechas o botones en pantalla.', 'Ajoute «déplacer avec les boutons» depuis Contrôleur pour mySprite : vx 60, vy 60. Utilise les flèches ou les boutons à l’écran dans les quatre directions.', 'Füge „mit Tasten bewegen“ aus Controller für mySprite hinzu: vx 60, vy 60. Nutze Pfeile oder Bildschirmtasten für alle vier Richtungen.'), start(initial.slice(0, 4)), [], [initial[3]]),
+  step(L('Add the sprite flag “stay in screen” from Sprites for mySprite and turn it on. The hero now stops at the screen edges.', 'Legg til sprite-flagget «hold deg på skjermen» fra Sprites for mySprite og slå det på. Nå stopper helten ved skjermkantene.', 'Activa «quedarse en pantalla» de Sprites para mySprite. El héroe se detiene en los bordes.', 'Active «rester à l’écran» depuis Sprites pour mySprite. Le héros s’arrête aux bords.', 'Aktiviere „im Bildschirm bleiben“ aus Sprites für mySprite. Der Held hält am Rand an.'), start(initial), [], [initial[4]]),
+  step(L('Create a Food sprite with the coin picture and variable myCoin in “on start”. Add its position block. From Math, use “pick random” for x (8 to 112) and y (16 to 48). The two random numbers place the coin inside the screen at each new start, below the score and hearts.', 'Lag en Mat-sprite med myntbildet og variabelen myCoin i «når spillet starter». Legg til posisjon-blokken. Fra Matte bruker du «tilfeldig tall» for x (8 til 112) og y (16 til 48). De to tilfeldige tallene plasserer mynten innenfor skjermen ved hver ny start, under poengene og hjertene.', 'Crea un sprite Comida con la moneda y variable myCoin en «al iniciar». Añade su posición con «número al azar» de Matemáticas: x de 8 a 112, y de 16 a 48. Empieza dentro de la pantalla, bajo los puntos y corazones.', 'Crée un sprite Nourriture avec la pièce et la variable myCoin au démarrage. Positionne-le avec deux nombres au hasard depuis Maths : x de 8 à 112, y de 16 à 48. Il commence dans l’écran, sous le score et les cœurs.', 'Erstelle beim Start eine Essen-Münze mit der Variable myCoin. Setze ihre Position mit Zufallszahlen aus Mathe: x von 8 bis 112, y von 16 bis 48. So startet sie im Bildschirm unter Punkten und Herzen.'), start(deluxeCoinBody), [coinMade], deluxeCoinBody.slice(initial.length)),
+  ...level13.steps.slice(2, 5).map((s, i) => ({ ...s, solution: start(deluxeCoinBody, [overlap('Food', [[], [score()], [score(), respawn()]][i])]) })),
+  ...level14.steps.slice(0, 5).map((s, i) => ({ ...s,
+    ...(i === 1 ? {
+      text: L('Set myEnemy’s velocity to vx 30, vy 22. vx moves it sideways and vy moves it downwards, so it travels diagonally across the play area. Both speeds are in pixels per second.', 'Sett farten til myEnemy til vx 30, vy 22. vx flytter den sidelengs og vy nedover, så den går diagonalt over spilleflaten. Begge hastighetene er i punkter per sekund.', 'Fija la velocidad de myEnemy en vx 30, vy 22. vx lo mueve de lado y vy hacia abajo: cruza el área en diagonal. Ambas velocidades se miden en píxeles por segundo.', 'Règle la vitesse de myEnemy à vx 30, vy 22. vx le déplace sur le côté et vy vers le bas : il traverse le terrain en diagonale. Les vitesses sont en pixels par seconde.', 'Setze die Geschwindigkeit von myEnemy auf vx 30, vy 22. vx bewegt ihn seitlich, vy nach unten: Er läuft diagonal über das Spielfeld. Beide Werte sind Pixel pro Sekunde.'),
+      show: [deluxeVelocity],
+      checks: [enemyMade, inStart(L('Set both horizontal and vertical velocity', 'Sett både vannrett og loddrett fart', 'Fija velocidad horizontal y vertical', 'Règle les vitesses horizontale et verticale', 'Setze horizontale und vertikale Geschwindigkeit'), { type: 'ab_sprite_set_velocity', inputs: { VX: numIn(30, 30), VY: numIn(22, 22) } })],
+    } : {}),
+    ...(i === 2 ? {
+      text: L('Turn on “bounce on wall” from Sprites for myEnemy. At the left and right edges vx reverses; at the top and bottom vy reverses. The slime now moves up, down and sideways instead of staying on one line.', 'Slå på «sprett mot vegg» fra Sprites for myEnemy. Ved venstre og høyre kant snur vx; ved toppen og bunnen snur vy. Nå beveger slimet seg opp, ned og sidelengs i stedet for å holde seg på én linje.', 'Activa «rebotar en pared» de Sprites para myEnemy. En los bordes izquierdo y derecho se invierte vx; arriba y abajo, vy. El limo se mueve en ambas direcciones.', 'Active «rebondir sur les murs» depuis Sprites pour myEnemy. À gauche et à droite, vx s’inverse ; en haut et en bas, vy s’inverse. Le slime se déplace dans les deux directions.', 'Aktiviere „an Wand abprallen“ aus Sprites für myEnemy. Links und rechts kehrt vx um; oben und unten vy. Der Schleim bewegt sich nun auf und ab und seitlich.'),
+      checks: [enemyMade, deluxeBouncing],
+    } : {}),
+    solution: start(deluxeDangerBody.slice(0, deluxeCoinBody.length + [2, 3, 4, 5, 5][i]), i === 4 ? dangerEvents : coinEvents),
+  })),
+];
 export const castle1: Guide = {
   id:'w1-castle',number:'1-5',title:L('Coin hunt deluxe','Myntjakt deluxe','Caza de monedas deluxe','Chasse aux pièces deluxe','Münzjagd deluxe'),
   description:L('Your first complete game: coins, an enemy and a time limit.', 'Ditt første hele spill: mynter, en fiende og en tidsfrist.', 'Tu primer juego completo: monedas, un enemigo y un límite de tiempo.', 'Ton premier jeu complet : des pièces, un ennemi et un temps limité.', 'Dein erstes vollständiges Spiel: Münzen, ein Gegner und ein Zeitlimit.'),
-  images:['hero-run','coin','slime'],start:start(dangerBody,dangerEvents),
+  images:['hero-run','coin','slime'],start:workspace([]),
+  chapters: [
+    { start: 0, title: L('Build the hero', 'Lag helten', 'Crea el héroe', 'Crée le héros', 'Baue den Helden') },
+    { start: 4, title: L('Random coins and points', 'Tilfeldige mynter og poeng', 'Monedas al azar y puntos', 'Pièces au hasard et points', 'Zufällige Münzen und Punkte') },
+    { start: 8, title: L('Enemy and lives', 'Fiende og liv', 'Enemigo y vidas', 'Ennemi et vies', 'Gegner und Leben') },
+    { start: 13, title: L('100 coins against the clock', '100 mynter på tid', '100 monedas contra reloj', '100 pièces contre la montre', '100 Münzen gegen die Uhr') },
+  ],
   steps:[
-    step(L('Welcome to the castle! Add two more Food coins, at x 96 and x 112, both at y 48. Use separate variables coin2 and coin3. The same contact event works for every Food sprite.', 'Velkommen til slottet! Legg til to Mat-mynter, på x 96 og x 112, begge på y 48. Bruk egne variabler coin2 og coin3. Den samme treff-hendelsen virker for alle Mat-sprites.', '¡Bienvenido al castillo! Añade dos monedas Comida en x 96 y x 112, ambas en y 48. Usa variables coin2 y coin3. El mismo evento funciona para todos los sprites Comida.', 'Bienvenue au château ! Ajoute deux pièces Nourriture à x 96 et x 112, toutes deux à y 48. Utilise coin2 et coin3. Le même événement fonctionne pour tous les sprites Nourriture.', 'Willkommen im Schloss! Füge zwei Essen-Münzen bei x 96 und x 112 hinzu, beide bei y 48. Nutze coin2 und coin3. Dasselbe Ereignis funktioniert für alle Essen-Sprites.'),start([...dangerBody,...moreCoins],dangerEvents),[{
+    ...deluxePrelude,
+    step(L('Welcome to the castle! Add two more Food coins, with random x (8 to 112) and y (16 to 48), just like myCoin. Use separate variables coin2 and coin3. The same contact event works for every Food sprite.', 'Velkommen til slottet! Legg til to Mat-mynter, med tilfeldig x (8 til 112) og y (16 til 48), akkurat som myCoin. Bruk egne variabler coin2 og coin3. Den samme treff-hendelsen virker for alle Mat-sprites.', '¡Bienvenido al castillo! Añade dos monedas Comida con x al azar (8 a 112) e y al azar (16 a 48), como myCoin. Usa variables coin2 y coin3. El mismo evento funciona para todos los sprites Comida.', 'Bienvenue au château ! Ajoute deux pièces Nourriture avec x au hasard (8 à 112) et y au hasard (16 à 48), comme myCoin. Utilise coin2 et coin3. Le même événement fonctionne pour tous les sprites Nourriture.', 'Willkommen im Schloss! Füge zwei Essen-Münzen mit zufälligem x (8 bis 112) und y (16 bis 48) hinzu, wie myCoin. Nutze coin2 und coin3. Dasselbe Ereignis funktioniert für alle Essen-Sprites.'),start([...deluxeDangerBody,...moreCoins],dangerEvents),[{
       text:L('There are 3 coins in the game','Det er 3 mynter i spillet','Hay 3 monedas en el juego','Il y a 3 pièces dans le jeu','Es gibt 3 Münzen im Spiel'),ok:()=>true,run:async(e)=>e.sprites.filter(s=>s.alive&&s.kind===3).length===3}],moreCoins),
-    step(L('Create a variable named timeLeft in Variables. In “on start”, set it to 20. A variable remembers a value; this one remembers how many seconds remain.', 'Lag en variabel kalt timeLeft i Variabler. Sett den til 20 i «når spillet starter». En variabel husker en verdi; denne husker hvor mange sekunder som er igjen.', 'Crea una variable timeLeft en Variables. En «al iniciar», fíjala en 20. Una variable recuerda un valor; esta recuerda los segundos restantes.', 'Crée une variable timeLeft dans Variables. Dans «au démarrage», mets-la à 20. Une variable mémorise une valeur ; celle-ci retient les secondes restantes.', 'Erstelle in Variablen timeLeft. Setze sie in „beim Start“ auf 20. Eine Variable merkt sich einen Wert; diese merkt sich die übrigen Sekunden.'),start(castleBody,dangerEvents),[inStart(L('Set a variable to 20','Sett en variabel til 20','Fija una variable en 20','Mets une variable à 20','Setze eine Variable auf 20'),{type:'variables_set',inputs:{VALUE:numIn(20,20)}})], [timeStart]),
+    step(L('Create a variable named timeLeft in Variables. In “on start”, set it to 300. A variable remembers a value; this one remembers how many seconds remain.', 'Lag en variabel kalt timeLeft i Variabler. Sett den til 300 i «når spillet starter». En variabel husker en verdi; denne husker hvor mange sekunder som er igjen.', 'Crea una variable timeLeft en Variables. En «al iniciar», fíjala en 300. Una variable recuerda un valor; esta recuerda los segundos restantes.', 'Crée une variable timeLeft dans Variables. Dans «au démarrage», mets-la à 300. Une variable mémorise une valeur ; celle-ci retient les secondes restantes.', 'Erstelle in Variablen timeLeft. Setze sie in „beim Start“ auf 300. Eine Variable merkt sich einen Wert; diese merkt sich die übrigen Sekunden.'),start(castleBody,dangerEvents),[inStart(L('Set a variable to 300','Sett en variabel til 300','Fija una variable en 300','Mets une variable à 300','Setze eine Variable auf 300'),{type:'variables_set',inputs:{VALUE:numIn(300,300)}})], [timeStart]),
     step(L('Drag “every 1000 ms” from Game onto the workspace. 1000 milliseconds is one second. Inside, change timeLeft by -1, so it counts down once per second.', 'Dra «hver 1000 ms» fra Spill ut på flaten. 1000 millisekunder er ett sekund. Inni endrer du timeLeft med -1, så den teller ned én gang i sekundet.', 'Arrastra «cada 1000 ms» desde Juego. 1000 milisegundos son un segundo. Dentro, cambia timeLeft por -1 para contar hacia atrás.', 'Glisse «toutes les 1000 ms» depuis Jeu. 1000 millisecondes font une seconde. Dedans, change timeLeft de -1 pour compter à rebours.', 'Zieh „alle 1000 ms“ aus Spiel auf die Fläche. 1000 Millisekunden sind eine Sekunde. Ändere darin timeLeft um -1, damit sie herunterzählt.'),start(castleBody,[...dangerEvents,timer(false)]),[structure(L('Count down every second','Tell ned hvert sekund','Cuenta atrás cada segundo','Compte à rebours chaque seconde','Zähle jede Sekunde herunter'),{type:'ab_on_every',fields:{MS:'1000'},contains:[{type:'math_change',inputs:{DELTA:numIn(-1,-1)}}]})],[timer(false)]),
     step(L('From Logic, put an “if” under the countdown. If timeLeft ≤ 0, use “game over: lose” from Game. An if block only runs its inside blocks when its question is true.', 'Fra Logikk legger du «hvis» under nedtellingen. Hvis timeLeft ≤ 0, bruk «spill slutt: tap» fra Spill. En hvis-blokk kjører bare blokkene inni når spørsmålet er sant.', 'Desde Lógica, pon «si» debajo. Si timeLeft ≤ 0, usa «fin del juego: perder» de Juego. Un bloque si ejecuta su interior cuando la condición es verdadera.', 'Depuis Logique, mets «si» sous le compte à rebours. Si timeLeft ≤ 0, utilise «fin du jeu : perdu». Un bloc si exécute son contenu quand sa condition est vraie.', 'Setze aus Logik „wenn“ unter den Countdown. Wenn timeLeft ≤ 0, nutze „Spielende: verloren“. Ein Wenn-Block führt seinen Inhalt aus, wenn seine Bedingung wahr ist.'),start(castleBody,[...dangerEvents,timer(true)]),[timedOut],[timer(true)]),
-    step(L('In the coin contact event, after moving the coin, add another if: if score ≥ 3, game over: win. Now your game has both a way to win and a way to lose!', 'I myntens treff-hendelse, etter at mynten flyttes, legger du til en hvis: hvis poeng ≥ 3, spill slutt: seier. Nå har spillet både en måte å vinne og en måte å tape på!', 'En el evento de moneda, después de moverla, añade si: si puntos ≥ 3, fin del juego: ganar. ¡Ya puedes ganar o perder!', 'Dans l’événement de pièce, après l’avoir déplacée, ajoute si : si score ≥ 3, fin du jeu : gagné. On peut maintenant gagner ou perdre !', 'Füge im Münzereignis nach dem Versetzen ein Wenn hinzu: Wenn Punkte ≥ 3, Spielende: gewonnen. Jetzt kann man gewinnen und verlieren!'),start(castleBody,castleEvents),[timedOut,victory],[win]),
-    step(L('Press ▶ and collect three coins before 20 seconds pass. Avoid the slime! Try again with a different route. You have made your first complete game.', 'Trykk ▶ og samle tre mynter før 20 sekunder har gått. Unngå slimet! Prøv igjen med en annen vei. Du har laget ditt første hele spill.', 'Pulsa ▶ y recoge tres monedas antes de 20 segundos. ¡Evita el limo! Prueba otra ruta. Has creado tu primer juego completo.', 'Appuie sur ▶ et ramasse trois pièces en moins de 20 secondes. Évite le slime ! Essaie un autre chemin. Tu as créé ton premier jeu complet.', 'Drücke ▶ und sammle drei Münzen vor Ablauf der 20 Sekunden. Meide den Schleim! Probiere einen anderen Weg. Du hast dein erstes vollständiges Spiel gebaut.'),start(castleBody,castleEvents),[play,timedOut,victory]),
-  ],
-  bonus: event(L('Bonus: add a victory sound before winning.', 'Bonus: legg til en seierslyd før du vinner.', 'Extra: añade un sonido de victoria antes de ganar.', 'Bonus : ajoute un son de victoire avant de gagner.', 'Bonus: Füge vor dem Sieg einen Siegton hinzu.'),'Food',[{type:'ab_play_effect',fields:{SFX:'win'}}]),
+    step(L('In the coin contact event, after moving the coin, add another if: if score ≥ 100, game over: win. Use the score value from Info in the comparison from Logic. Now your game has both a way to win and a way to lose!', 'I myntens treff-hendelse, etter at mynten flyttes, legger du til en hvis: hvis poeng ≥ 100, spill slutt: seier. Bruk poengverdien fra Info i sammenligningen fra Logikk. Nå har spillet både en måte å vinne og en måte å tape på!', 'En el evento de moneda, después de moverla, añade si: si puntos ≥ 100, fin del juego: ganar. Usa el valor de puntos de Info en la comparación de Lógica. ¡Ya puedes ganar o perder!', 'Dans l’événement de pièce, après l’avoir déplacée, ajoute si : si score ≥ 100, fin du jeu : gagné. Utilise la valeur du score depuis Info dans la comparaison de Logique. On peut maintenant gagner ou perdre !', 'Füge im Münzereignis nach dem Versetzen ein Wenn hinzu: Wenn Punkte ≥ 100, Spielende: gewonnen. Nutze den Punktewert aus Info im Vergleich aus Logik. Jetzt kann man gewinnen und verlieren!'),start(castleBody,castleEvents),[timedOut,victory],[win]),
+    step(L('Press ▶ and collect 100 coins before 300 seconds pass. Avoid the slime! Try again with a different route. You have made your first complete game.', 'Trykk ▶ og samle 100 mynter før 300 sekunder har gått. Unngå slimet! Prøv igjen med en annen vei. Du har laget ditt første hele spill.', 'Pulsa ▶ y recoge 100 monedas antes de 300 segundos. ¡Evita el limo! Prueba otra ruta. Has creado tu primer juego completo.', 'Appuie sur ▶ et ramasse 100 pièces en moins de 300 secondes. Évite le slime ! Essaie un autre chemin. Tu as créé ton premier jeu complet.', 'Drücke ▶ und sammle 100 Münzen vor Ablauf der 300 Sekunden. Meide den Schleim! Probiere einen anderen Weg. Du hast dein erstes vollständiges Spiel gebaut.'),start(castleBody,castleEvents),[play,timedOut,victory,deluxeBouncing]),
+  ].map(deluxeStep),
+  bonus: event(L('Bonus: inside the score ≥ 100 if block, add the win sound from Music before “game over: win”.', 'Bonus: inni hvis-blokken for poeng ≥ 100 legger du seierslyden fra Musikk før «spill slutt: seier».', 'Extra: dentro de si puntos ≥ 100, añade el sonido de victoria de Música antes de ganar.', 'Bonus : dans si score ≥ 100, ajoute le son de victoire depuis Musique avant la fin du jeu.', 'Bonus: Füge im Wenn-Block Punkte ≥ 100 den Siegton aus Musik vor dem Spielende hinzu.'),'Food',[{type:'ab_play_effect',fields:{SFX:'win'}}]),
 };

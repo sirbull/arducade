@@ -135,8 +135,11 @@ export function blocksOfType(blocks: Json, type: string): Json[] {
  * variables must remain distinct. Blockly saves references as either names or IDs. */
 export function matchesSolution(blocks: Json, solution: Json, flexibleNumbers = false): boolean {
   type Bindings = Map<string, string>;
-  const variable = (value: any): string => typeof value === 'object' ? value.name ?? value.id :
-    blocks.variables?.find((v: Json) => v.id === value)?.name ?? String(value);
+  const variable = (value: any): string => {
+    if (typeof value === 'object' && value.name) return value.name;
+    const id = typeof value === 'object' ? value.id : value;
+    return blocks.variables?.find((v: Json) => v.id === id)?.name ?? String(id);
+  };
   const bind = (bindings: Bindings, want: string, have: string): boolean => {
     if (bindings.has(want)) return bindings.get(want) === have;
     if ([...bindings.values()].includes(have)) return false;

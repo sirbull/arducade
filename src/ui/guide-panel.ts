@@ -33,7 +33,7 @@ export function blockPicture(el: HTMLElement, blocks: Json[], theme: ThemeId, ma
     theme: blocklyTheme(theme),
     renderer: 'geras',
     rendererOverrides: BLOCK_RENDERER,
-    move: { scrollbars: false, drag: true, wheel: true },
+    move: { scrollbars: true, drag: true, wheel: true },
     zoom: { controls: false, wheel: false, startScale: 0.8, minScale: overview ? 0.05 : 0.3 },
     sounds: false,
     media: 'blockly-media/',
@@ -46,6 +46,8 @@ export function blockPicture(el: HTMLElement, blocks: Json[], theme: ThemeId, ma
     if (overview) Blockly.Events.enable();
   }
   const fit = async () => {
+    // Block sizes are not final until Blockly has rendered every connected block.
+    await Blockly.renderManagement.finishQueuedRenders();
     if (!el.isConnected) return;
     if (overview) {
       const tops = ws.getTopBlocks(true);
@@ -242,6 +244,9 @@ export class GuidePanel {
     const chapter = g.chapters?.slice().reverse().find((c) => c.start <= state.step);
     if (chapter) this.content.append(h('p', { class: 'guide-chapter muted small' }, localized(chapter.title, lang)));
     this.content.append(h('p', { class: 'guide-text' }, localized(step.text, lang)));
+    for (const instruction of step.setup ?? []) {
+      this.content.append(h('p', { class: 'guide-text' }, localized(instruction, lang)));
+    }
     if (step.show) {
       const pic = h('div', { class: 'guide-picture', role: 'img', 'aria-label': t('guide.picture') });
       this.content.append(h('p', { class: 'muted small guide-label' }, t('guide.picture')), pic);

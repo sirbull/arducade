@@ -5,6 +5,7 @@ import type { LocalizedText } from '../project/model';
 import { blocksOfType, hasTop, numIn, type Check, type Guide, type Pattern } from './guide';
 import { level13, level14, castle1 } from './world1-games';
 import { COURSES } from './courses';
+import { auditGuide } from './audit';
 
 const L = (en: string, nb: string, es: string, fr: string, de: string): LocalizedText => ({ en, nb, es, fr, de });
 
@@ -256,4 +257,4 @@ export const level12: Guide = {
   },
 };
 
-export const GUIDES: Guide[] = [level11, level12, level13, level14, castle1, ...COURSES];
+export const GUIDES: Guide[] = [...[level11, level12, level13, level14, castle1].map(auditGuide), ...COURSES];

@@ -4,5 +4,5 @@ import { petGuide } from './pet';
 import { ticTacToe } from './tictactoe';
 import { bombGuide } from './bombs';
 import { jumper } from './jumper';
-import { focusPictures } from './shared';
-export const COURSES = [maze, states, ticTacToe, bombGuide, petGuide, jumper].map(focusPictures);
+import { auditGuide } from '../audit';
+export const COURSES = [maze, states, ticTacToe, bombGuide, petGuide, jumper].map(auditGuide);

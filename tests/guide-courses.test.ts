@@ -32,7 +32,11 @@ describe('progressive courses',()=>{
   });
   it('shows additions in the step picture while keeping the complete code under Help',()=>{
     const maze=COURSES[0];
-    expect(maze.steps[1].show!.map(b=>b.type)).toEqual(['variables_set','ab_sprite_set_position']);
+    const start = maze.steps[1].show![0];
+    expect(start.type).toBe('ab_on_start');
+    expect(start.inputs.DO.block.type).toBe('variables_set');
+    expect(start.inputs.DO.block.inputs.VALUE.block.type).toBe('ab_sprite_create');
+    expect(start.inputs.DO.block.next.block.type).toBe('ab_sprite_set_position');
     expect(maze.steps[1].solution.blocks.blocks[0].type).toBe('ab_on_start');
     expect(maze.steps.at(-1)!.show).toBeUndefined();
   });

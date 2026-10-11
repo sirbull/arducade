@@ -30,7 +30,7 @@ describe('guides', () => {
       });
 
       it('has text in every language', () => {
-        const texts = [g.title, g.description, ...g.chapters?.map(c => c.title) ?? [], ...g.steps.flatMap((s) => [s.text, s.hint, ...s.checks.map((c) => c.text)]), g.bonus?.text].filter(Boolean);
+        const texts = [g.title, g.description, ...g.chapters?.map(c => c.title) ?? [], ...g.steps.flatMap((s) => [s.text, s.hint, ...s.setup ?? [], ...s.checks.map((c) => c.text)]), g.bonus?.text].filter(Boolean);
         for (const text of texts) expect(Object.keys(text!).sort()).toEqual(['de', 'en', 'es', 'fr', 'nb']);
       });
     });

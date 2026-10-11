@@ -15,6 +15,23 @@ npm run build
 Resultatet ligger i mappen `dist/`. Den er rundt 25 MB, og det meste er
 kompilatoren.
 
+### Google Analytics på produksjonsdomenet
+
+Opprett `.env.local` i prosjektroten med din egen målings-ID før du bygger:
+
+```dotenv
+VITE_GA_MEASUREMENT_ID=G-DINMAALINGSID
+```
+
+Filen ignoreres av Git. Den faktiske ID-en skal ikke legges i kildekoden eller
+denne dokumentasjonen. Analytics lastes bare i produksjonsbygg på
+`arducade.bullfolio.no`; lokal utvikling og andre domener sender ingen data.
+Uten variabelen bygges siden uten aktiv Analytics.
+
+ID-en blir synlig i de publiserte JavaScript-filene, slik Googles nettlesertag
+krever. Den gir ingen tilgang til Analytics-kontoen eller rapportene.
+Last opp innholdet i `dist/`, aldri `.env.local`.
+
 ## 2. Slå på HTTPS
 
 Opplasting til enheten (Web Serial) virker bare over HTTPS.

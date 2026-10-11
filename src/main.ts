@@ -1,8 +1,10 @@
 import './styles.css';
+import { installAnalytics } from './analytics';
 import { App } from './ui/app';
 import { installScrollGuard } from './ui/scroll-guard';
 import { installBlocklyDialogs } from './blocks/var-types';
 
+installAnalytics();
 installScrollGuard();
 installBlocklyDialogs();
 const app = new App();

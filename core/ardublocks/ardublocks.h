@@ -819,9 +819,10 @@ static bool justPressed(uint8_t b) { return (buttons & ~buttonsPrev) & (1 << b);
 
 static void waitForA() {
   // Wait until A is released, then pressed and released again.
-  do { readButtons(); waitMs(10); } while (isPressed(BTN_A));
-  do { readButtons(); waitMs(10); } while (!isPressed(BTN_A));
-  do { readButtons(); waitMs(10); } while (isPressed(BTN_A));
+  // updateSound ends a sound effect, which would otherwise hold its first note.
+  do { readButtons(); updateSound(); waitMs(10); } while (isPressed(BTN_A));
+  do { readButtons(); updateSound(); waitMs(10); } while (!isPressed(BTN_A));
+  do { readButtons(); updateSound(); waitMs(10); } while (isPressed(BTN_A));
   buttonsPrev = buttons = 0;
 }
 

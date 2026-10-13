@@ -42,8 +42,13 @@ let toastTimer = 0;
 export function toast(message: string, kind: 'info' | 'error' | 'ok' = 'info') {
   let el = document.getElementById('toast');
   if (!el) {
-    el = h('div', { id: 'toast', role: 'status', 'aria-live': 'polite' });
+    el = h('div', { id: 'toast', role: 'status', 'aria-live': 'polite', popover: 'manual' });
     document.body.append(el);
+  }
+  // A modal dialog blurs everything below it. Reopening the popover lifts the toast above the newest dialog.
+  if (typeof el.showPopover === 'function') {
+    if (el.matches(':popover-open')) el.hidePopover();
+    el.showPopover();
   }
   el.textContent = message;
   el.className = `show ${kind}`;

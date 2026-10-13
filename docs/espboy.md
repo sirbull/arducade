@@ -103,6 +103,31 @@ profile is chip capacity; partitioning reduces space available to firmware.
 - [Official TFT configuration](https://github.com/ESPboy-edu/ESPboy_ArduinoIDE_Libraries/blob/master/TFT_eSPI-master/User_Setup.h)
 - [Adafruit ST7735 library](https://github.com/adafruit/Adafruit-ST7735-Library)
 
+## Sound holds on the game over screen
+
+If a tone continues while **GAME OVER / PRESS A** is displayed, export the
+Arduino sketch again from the current ArduCade version. Replace the entire
+sketch folder, including `ardublocks.h`, then compile and upload the new `.bin`.
+Updating only the `.ino` leaves the old engine in use. The engine must continue
+updating sound effects while it waits for A; otherwise an effect's current tone
+can keep playing indefinitely.
+
+![Platformer waiting for A on the ESPboy game over screen](images/espboy-game-over.png)
+
+For example, in Platformer, walk into the enemy on the right until all three
+lives are gone. The descending game over effect should finish and leave the
+speaker silent while this screen remains visible. Press A (X in the emulator)
+to start again.
+
+The [ESPboy emulator](https://joyrider3774.xyz/espboy_emulator/ESPboy_Emulator.html)
+can test the actual compiled `.bin` through **Open file…**. Its source is
+available at [joyrider3774/espboy_emulator](https://github.com/joyrider3774/espboy_emulator).
+On 2026-10-13, the supplied Platformer binary reproduced a sustained 392 Hz
+tone. Its compiled game over wait loops read buttons and delay without updating
+sound. A fresh build using the current engine completed the effect and became
+silent in the same emulator scenario. Physical ESPboy validation is still
+needed.
+
 ## Hardware test handoff
 
 No physical ESPboy was available during implementation. Compile success does

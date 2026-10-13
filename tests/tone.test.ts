@@ -18,10 +18,41 @@ const src: FileSource = {
   wasm: async (name) => new Uint8Array(readFileSync(join(base, 'tools', `${name}.wasm`))),
 };
 const haveTools = existsSync(join(base, 'tools/cc1plus.wasm'));
-const headers = Object.fromEntries(['ardublocks.h', 'ab_display.h', 'ab_font.h'].map((f) => [f, readFileSync(join(__dirname, '../core/ardublocks', f), 'utf8')]));
+const headers = Object.fromEntries(['ardublocks.h', 'ab_display.h', 'ab_font.h', 'ab_atm.h'].map((f) => [f, readFileSync(join(__dirname, '../core/ardublocks', f), 'utf8')]));
 const num = (v: number) => ({ k: 'num' as const, v });
 describe.skipIf(!haveTools)('sound on the device', () => {
 const api = (fn: string, ...args: number[]) => ({ k: 'expr' as const, e: { k: 'api' as const, fn, args: args.map(num) } });
+it.each([false, true])('finishes the game over effect while waiting for A (tracker: %s)', async (tracker) => {
+  const program = { ...emptyProgram(), events: [{ k: 'start' as const, body: [
+    ...(tracker ? [{ k: 'expr', e: { k: 'api', fn: 'music.song', args: [{ k: 'enum', type: 'song', v: 'title' }, { k: 'bool', v: true }] } }] : []),
+    { k: 'expr', e: { k: 'api', fn: 'music.effect', args: [{ k: 'enum', type: 'sfx', v: 'lose' }] } },
+    { k: 'expr', e: { k: 'api', fn: 'game.over', args: [{ k: 'bool', v: false }] } },
+  ] }] };
+  // Like ESPboy, the Nano uses the tone pin rather than the Timer4 mixer.
+  const profile = BUILTIN_PROFILES.find((p) => p.id === 'nano-ssd1306-i2c')!;
+  const out = await compileGame(src, { mcu: 'atmega328p', game: generateCpp(program as never, newProject('Game over')).code, config: profileToConfigH(profile), headers });
+  const flash = new Uint16Array(0x4000);
+  new Uint8Array(flash.buffer).set(parseHex(out.hex));
+  const cpu = new CPU(flash, 2048);
+  new AVRTimer(cpu, timer0Config); new AVRTimer(cpu, timer1Config); new AVRTimer(cpu, timer2Config);
+  const portB = new AVRIOPort(cpu, portBConfig);
+  const portD = new AVRIOPort(cpu, portDConfig);
+  for (let b = 2; b < 8; b++) portD.setPin(b, true); // A remains released.
+  const twi = new AVRTWI(cpu, twiConfig, 16e6);
+  twi.eventHandler = { start: () => twi.completeStart(), stop: () => twi.completeStop(), connectToSlave: () => twi.completeConnect(true), writeByte: () => twi.completeWrite(true), readByte: () => twi.completeRead(0xff) };
+  const edges: number[] = [];
+  portB.addListener((v, old) => { if ((v ^ old) & 2) edges.push(cpu.cycles); });
+  while (cpu.cycles < 16e6 * 1.8) { avrInstruction(cpu); cpu.tick(); }
+  expect(edges.length).toBeGreaterThan(200);
+  const started = edges[0];
+  for (const [from, to, hz] of [[0.04, 0.13, 392], [0.20, 0.28, 330], [0.37, 0.52, 262]]) {
+    const note = edges.filter(c => c >= started + from * 16e6 && c < started + to * 16e6);
+    const measured = (note.length - 1) / 2 / ((note[note.length - 1] - note[0]) / 16e6);
+    expect(Math.abs(measured - hz)).toBeLessThan(4);
+  }
+  expect((edges[edges.length - 1] - started) / 16e6).toBeLessThan(0.7);
+  expect(portB.pinState(1)).toBe(0);
+}, 120000);
 it.each([
   ['', [], 440],
   [' with the pitch at 200 percent', [api('music.pitch', 200, 200)], 880],
